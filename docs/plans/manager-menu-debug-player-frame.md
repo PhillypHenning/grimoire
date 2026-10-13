@@ -1,4 +1,4 @@
-# Grimoire: in-game manager menu, Debug component, player frame
+# Grimoire: manager menu, Debug component, player, pet, party and target frames
 
 > **Progress (2026-10-13, on the PC):**
 > - **Milestone 1:** code and docs done on branch `wip/manager-menu`; every `.lua` passes `scripts/check-lua.ps1`. Waiting on the in-game checks below, then merge.
@@ -7,8 +7,9 @@
 >   - Fixed while finishing: the launcher kept its on-screen spot when its size changes (offsets are converted for the new scale); settings changed while a module is off apply when it's turned back on; unknown option types are skipped.
 > - **Extra, done:** Health/Power never dim in combat or while not full (`isBusy` option on `RegisterMover`).
 > - **Milestone 3:** code and docs done (2026-10-13), done before Milestone 2 at Phil's request. Changes from the plan below: left-click opens a micro-menu (Character Info … Game Menu + Grimoire) instead of targeting; the portrait is an animated 3D model by default (Classic 2D as a setting) and plays emotes (cheer on level-up, laugh or cry on death, wave when someone joins the party or the pet appears); the pet frame is kept when Blizzard's player frame is hidden; the default "Player" group was dropped after Phil tried it. ADR 0004 written. Waiting on in-game testing.
->   - **Added (Phil's request):** a pet frame and pet bars, a size smaller than the player's: `PetFrame` (unit watch, left-click target, right-click pet menu, hides Blizzard's `PetFrame`) and `PetHealth` / `PetPower` (hidden without a pet except in move mode). Then split into their own add-on, `Grimoire_Pet`; the shared bar and portrait code moved to core (`Core/UnitFrames.lua`: `NewUnitBar`, `NewUnitPortrait`).
 > - **Milestone 2:** not started.
+> - **Milestone 4** (pet, party, target frames): pet frame done (`Grimoire_Pet`, with the shared bar and portrait code moved to core in `Core/UnitFrames.lua`); party and target frames not started; target debuffs need Phil's decision.
+> - **Backlog:** raid frames.
 
 ## Context
 You're testing Grimoire on the PC and have hit these:
@@ -177,6 +178,77 @@ Phil didn't want frames grouped automatically. The code was removed, and `Core/D
 
 ---
 
+## Milestone 4: pet, party and target frames
+
+Everything here follows ADR 0004: Blizzard's frame is hidden by default, with a "Hide Blizzard …" toggle that needs a `/reload` to turn off.
+
+**"Locked together" (Phil's request):** a party or target frame is **one mover**. Its portraits and bars are children laid out inside it, not separate movers, so move mode shows a single overlay and nothing can be split off. This isn't a mover group (those are user-made and can be broken up); it's one frame.
+
+### 1. Pet frame: done (`Grimoire_Pet`, 2026-10-13)
+- `PetFrame` (animated portrait, 48 px; left-click targets, right-click pet menu), `PetHealth`, `PetPower`.
+- Shown only while you have a pet, and always in move mode. Hides Blizzard's `PetFrame`.
+- Built on core's unit frames (`Core/UnitFrames.lua`). See `docs/features/pet/`.
+
+### Core: unit frame building blocks (`Grimoire/Core/UnitFrames.lua`)
+Today `NewUnitBar` / `NewUnitPortrait` make whole modules, one mover each. Party and target frames need the same pieces *inside* one frame. So, split them:
+- `Grimoire.CreateUnitPortrait(parent, unit, opts)` and `Grimoire.CreateUnitBar(parent, unit, kind, opts)` build the widgets, with their update methods and events.
+- `NewUnitBar` / `NewUnitPortrait` become thin module wrappers around them. Player and Pet behave exactly as now.
+- New widget pieces:
+  - Classic round 2D portrait (gold ring, like Blizzard's party and target frames), alongside the existing square 3D/2D box.
+  - Level coloured by difficulty (`GetQuestDifficultyColor` / `GetDifficultyColor`).
+  - Keybinding badge (below).
+  - Out-of-range dimming per child frame (`UnitInRange`), which is separate from mover dimming. Core still owns the mover's alpha; this sets the child's.
+
+### 2. Party frames (new add-on `Grimoire_Party`, module `Party`)
+- **One mover, "Party":** up to four member frames stacked inside it, top to bottom in party order (`party1`–`party4`).
+  - Each member: classic round portrait, name (class colour, ADR 0003), level, health and power bars, a leader icon, and a dead/ghost/offline state.
+  - Can't be split: the members aren't movers.
+- **Secure:** each member is a `SecureUnitButtonTemplate` button (`unit = partyN`, left-click target, right-click unit menu) shown with `RegisterUnitWatch`.
+  - This uses no `SecureGroupHeaderTemplate`, because Forever may be missing it (it ships in the same file as the `SecureAuraHeaderTemplate` it doesn't have).
+  - Party units fill in order, so slots 1..n are always the shown ones.
+- **Keybinding badge (Phil's request):** each portrait shows the key bound to its target command, in small text over the portrait.
+  - Bindings: `TARGETPARTYMEMBER1`–`4` via `GetBindingKey`, shortened with `GetBindingText(key, "KEY_ABBR_")` or similar (e.g. "F2", "S-2").
+  - Refreshes on `UPDATE_BINDINGS`. Nothing is shown when the command isn't bound.
+- **Move mode:** shows four placeholder members so the frame can be placed when you're not in a party.
+- **Hides** Blizzard's `PartyMemberFrame1`–`4` (Classic) or `PartyFrame` (newer clients); setting "Hide Blizzard party frames".
+- **Settings:** Size (portrait 32/40/48), Show bars' % (toggle), Spacing (compact/normal), Show in raid (toggle, default off; until raid frames exist), Hide Blizzard party frames.
+
+### 3. Target frame (new add-on `Grimoire_Target`, module `Target`)
+- **One mover, "Target":** classic round portrait, name, level (difficulty colour; "??" for skull), and health and power bars, all locked together inside it.
+  - Elite/rare dragon border (Blizzard's `UI-TargetingFrame-Elite` / `-Rare` art, ADR 0001), and the PvP icon.
+- **Secure:** `SecureUnitButtonTemplate`, `unit = target`, shown with `RegisterUnitWatch`.
+  - Left-click: target (no-op on itself; kept for consistency). Right-click: unit menu.
+- **Updates** on `PLAYER_TARGET_CHANGED`, plus `UNIT_*` events for `target`.
+  - Health % for mobs, which is what Classic gives. Values are only shown where the client provides them.
+- **Move mode:** a placeholder target so it can be placed with nothing targeted.
+- **Hides** Blizzard's `TargetFrame`. Its children are moved out first (ADR 0004 rule 4): `ComboFrame` on Classic, and the target-of-target frame if present.
+- **Settings:** Size (portrait 48/64/80), Show %, Hide Blizzard target frame.
+- **Open question for Phil:** Blizzard's target frame shows the target's debuffs (your DoTs). Hiding it loses them. Either:
+  - (a) add target auras to Grimoire's target frame (display only; your own debuffs larger, Classic-style), or
+  - (b) keep Blizzard's target auras visible some other way.
+
+  Recommended: (a). Needed before this ships for a Warlock.
+
+### Docs
+- New feature docs `docs/features/party/` and `docs/features/target/` (TEMPLATE.md, diagrams, screenshots folder).
+- Core doc (unit-frame building blocks), docs index, README layout, ADR 0002 diagram, `.pkgmeta` (`Grimoire_Party`, `Grimoire_Target`).
+
+### Files
+- **Core:** `Grimoire/Core/UnitFrames.lua` (split into widgets + module wrappers), `Grimoire/Core/Util.lua` (ring and elite/rare art in `Grimoire.media`)
+- **New add-ons:** `Grimoire_Party/` (`.toc`, `Party.lua`), `Grimoire_Target/` (`.toc`, `Target.lua`)
+- **Re-run** `scripts/link-addons.ps1` for both new folders.
+
+---
+
+## Backlog
+Not scheduled. Pull an item into a milestone when it's wanted.
+- **Raid frames** (Phil, 2026-10-13): a compact grid for up to 40, built on the same unit-frame building blocks as party frames.
+  - Locked together like the party frame.
+  - Hides Blizzard's raid frames (`CompactRaidFrameManager` / `CompactRaidFrameContainer`).
+  - Decide with Phil: health-only tiles vs. portraits, sort by group or role, debuff highlighting for dispels.
+
+---
+
 ## Docs (updated in each milestone)
 - **ADR 0004**: components replace the Blizzard UI they duplicate. Hidden by default, a per-component toggle, and `/reload` to restore.
 - **ADR 0005**: modules describe their settings; core turns those descriptions into the menu.
@@ -222,4 +294,19 @@ Phil didn't want frames grouped automatically. The code was removed, and `Core/D
   - Each frame drags on its own (no automatic grouping); a group you make yourself drags as one.
   - Dragging is blocked in combat.
   - Turning off "Hide Blizzard player frame" plus `/reload` brings Blizzard's frame back.
+- **In game, Milestone 4:**
+  - **Pet:** summon and dismiss: the pet frame and bars appear and disappear, in combat too. Right-click opens the pet menu.
+  - **Party:**
+    - In a party, members fill the slots in order; leaving shrinks the list.
+    - Move mode shows one "Party" overlay, and members can't be dragged apart.
+    - Each portrait shows its binding (F2–F5 by default), and it updates after rebinding.
+    - Out-of-range members dim.
+    - Blizzard's party frames are gone.
+  - **Target:**
+    - Targeting shows the frame; clearing the target hides it.
+    - Elite and rare borders appear.
+    - Portrait and bars move as one.
+    - Combo points (other classes) and target-of-target aren't lost.
+    - Blizzard's target frame is gone.
+    - Target debuffs, as decided.
 - Each milestone is its own commit and push; you `git pull`, re-link if there's a new add-on, and restart.
