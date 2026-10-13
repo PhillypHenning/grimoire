@@ -13,7 +13,7 @@ A movable portrait of your character, animated in 3D by default, with your name 
 
 ```mermaid
 flowchart LR
-    B[Blizzard player frame:<br/>fixed top-left, static bars] ==> G["Grimoire: portrait, bars and shards<br/>in one movable 'Player' group"]
+    B[Blizzard player frame:<br/>fixed top-left] ==> G[Grimoire: a movable portrait<br/>beside the movable bars]
     M[Micro menu buttons<br/>bottom-right] ==> C[Same panels from<br/>a left-click on your portrait]
 ```
 
@@ -53,8 +53,6 @@ end)
 
 **The pet frame survives.** On Classic, `PetFrame` is a child of `PlayerFrame`, so hiding one would hide both. It's moved to `UIParent` at the same spot first.
 
-**Default "Player" group** ([`Core/Movers.lua`](../../../Grimoire/Core/Movers.lua)). The portrait, Health, Power and Warlock Resources each pass `defaultGroup = "Player"`, so they start out moving together. Core applies it once per frame per profile and never over a group you picked; no component depends on another ([ADR 0002](../../adr/0002-every-component-is-a-toggleable-addon.md)).
-
 ## Design decisions
 
 - **Left-click is a menu, not "target yourself"** (your call). F1 still targets you. Right-click stays Blizzard's player menu.
@@ -83,7 +81,7 @@ Stored in `GrimoireDB.profiles[<profile>].modules.PlayerFrame`. In the menu: **C
 
 ## Screenshots
 
-_TODO: add to `screenshots/`. Suggested: the Player group, the click menu, an emote mid-animation._
+_TODO: add to `screenshots/`. Suggested: the frame next to the bars, the click menu, an emote mid-animation._
 
 ## Open questions / roadmap
 

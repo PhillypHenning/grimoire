@@ -106,9 +106,8 @@ end
 ---@param key string unique, stable id used as the saved-variable key
 ---@param label string shown on the drag handle
 ---@param default table { point, relativeTo, relativePoint, x, y }
----@param opts? { dim?: boolean, isBusy?: fun(): boolean, defaultGroup?: string } dim: "Dim when idle"
----  starts on; isBusy: while it returns true the frame (and its group) never dims;
----  defaultGroup: the group the frame joins the first time it registers in a profile
+---@param opts? { dim?: boolean, isBusy?: fun(): boolean } dim: "Dim when idle" starts on;
+---  isBusy: while it returns true the frame (and its group) never dims
 function Grimoire:RegisterMover(frame, key, label, default, opts)
 	frame:SetMovable(true)
 	frame:SetClampedToScreen(true)
@@ -136,17 +135,6 @@ function Grimoire:RegisterMover(frame, key, label, default, opts)
 	local dim = self.db.profile.moverDim
 	if dim[key] == nil then
 		dim[key] = opts and opts.dim or false
-	end
-	-- Components can't depend on each other (ADR 0002), so a shared default group is
-	-- just a name each one passes. It's applied once per frame per profile, and never
-	-- over a group you picked yourself.
-	local applied = self.db.profile.moverDefaultsApplied
-	if opts and opts.defaultGroup and not applied[key] then
-		applied[key] = true
-		local groups = Groups()
-		if not groups[key] then
-			groups[key] = opts.defaultGroup
-		end
 	end
 	self:UpdateMoverHandle(key)
 	self:ApplyMoverPosition(key)

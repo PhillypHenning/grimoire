@@ -88,7 +88,7 @@ local M = Grimoire:NewModule("Bags", {
 function M:ApplySettings(key) --[[ re-layout ]] end
 ```
 
-`Module:RegisterMover(frame, label, default, { dim, isBusy, suffix, defaultGroup })` registers a mover keyed `module.name .. (suffix or "")`. `isBusy` returning true keeps the frame and its group from dimming. `defaultGroup` puts the frame in a named group the first time it registers in a profile (tracked in `profile.moverDefaultsApplied`), unless you've already grouped it.
+`Module:RegisterMover(frame, label, default, { dim, isBusy, suffix })` registers a mover keyed `module.name .. (suffix or "")`. `isBusy` returning true keeps the frame and its group from dimming.
 
 The `conflicts` list is what makes gradual migration safe. You can keep an old add-on installed while Grimoire's replacement matures, and the two won't fight.
 

@@ -36,6 +36,18 @@ function Grimoire:InitializeDatabase()
 	raw.profileKeys[charKey] = profileName
 	raw.profiles[profileName] = copyDefaults(self.defaults.profile, raw.profiles[profileName] or {})
 
+	-- A short-lived build grouped the player frames into "Player" automatically. Undo
+	-- that once (groups you make are named "Group N", so they're untouched).
+	local profile = raw.profiles[profileName]
+	if profile.moverDefaultsApplied then
+		for key in pairs(profile.moverDefaultsApplied) do
+			if profile.moverGroups[key] == "Player" then
+				profile.moverGroups[key] = nil
+			end
+		end
+		profile.moverDefaultsApplied = nil
+	end
+
 	self.db = {
 		raw = raw,
 		global = raw.global,

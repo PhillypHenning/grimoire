@@ -26,7 +26,6 @@ function Bar:Build()
 	self:RegisterMover(frame, self:GetLabel(), self.defaultPosition, {
 		dim = true,
 		isBusy = function() return self:IsBusy() end,
-		defaultGroup = "Player", -- with the portrait and class resources
 	})
 end
 

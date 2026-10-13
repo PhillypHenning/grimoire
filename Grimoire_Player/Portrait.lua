@@ -159,7 +159,6 @@ function M:Build()
 	self:RegisterMover(frame, "Player frame", { "TOPRIGHT", "UIParent", "CENTER", -118, -168 }, {
 		dim = true,
 		isBusy = function() return Grimoire:InCombat() end,
-		defaultGroup = "Player",
 	})
 end
 

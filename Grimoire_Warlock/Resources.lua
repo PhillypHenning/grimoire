@@ -36,7 +36,7 @@ function M:Build()
 
 	self:ApplySettings()
 	self:RegisterMover(frame, "Warlock Resources",
-		{ "TOPLEFT", "UIParent", "CENTER", -114, -216 }, { dim = true, defaultGroup = "Player" })
+		{ "TOPLEFT", "UIParent", "CENTER", -114, -216 }, { dim = true })
 end
 
 function M:ApplySettings()

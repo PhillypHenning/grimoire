@@ -6,7 +6,7 @@
 >   - **Added (Phil's request):** `Grimoire_Tweaks` with a `Graphics` module (his `/console` graphics settings as menu choices, reapplied at login, undoable) and `/grim cvars` to dump every CVar for finding more.
 >   - Fixed while finishing: the launcher kept its on-screen spot when its size changes (offsets are converted for the new scale); settings changed while a module is off apply when it's turned back on; unknown option types are skipped.
 > - **Extra, done:** Health/Power never dim in combat or while not full (`isBusy` option on `RegisterMover`).
-> - **Milestone 3:** code and docs done (2026-10-13), done before Milestone 2 at Phil's request. Changes from the plan below: left-click opens a micro-menu (Character Info … Game Menu + Grimoire) instead of targeting; the portrait is an animated 3D model by default (Classic 2D as a setting) and plays emotes (cheer on level-up, laugh or cry on death, wave when someone joins the party or the pet appears); the pet frame is kept when Blizzard's player frame is hidden. ADR 0004 written. Waiting on in-game testing.
+> - **Milestone 3:** code and docs done (2026-10-13), done before Milestone 2 at Phil's request. Changes from the plan below: left-click opens a micro-menu (Character Info … Game Menu + Grimoire) instead of targeting; the portrait is an animated 3D model by default (Classic 2D as a setting) and plays emotes (cheer on level-up, laugh or cry on death, wave when someone joins the party or the pet appears); the pet frame is kept when Blizzard's player frame is hidden; the default "Player" group was dropped after Phil tried it. ADR 0004 written. Waiting on in-game testing.
 > - **Milestone 2:** not started.
 
 ## Context
@@ -21,7 +21,7 @@ You're testing Grimoire on the PC and have hit these:
 Your choices:
 - **Manager:** a nested pop-up menu. Settings are on/off toggles or a pick from preset values.
 - **Grimoire button:** left-click opens the menu, right-click toggles move mode.
-- **Default group:** the new player frame, Health, Mana and Warlock Resources start in one "Player" group.
+- ~~**Default group:** the new player frame, Health, Mana and Warlock Resources start in one "Player" group.~~ Dropped after testing: no automatic grouping.
 
 I can't run the game, so the work ships in three milestones. Each is pushed separately and you test it before I start the next.
 
@@ -166,7 +166,8 @@ Each component gets an `options` list and `ApplySettings`:
   - Show portrait.
 - Its own mover. Because it's protected, it can't be dragged in combat; `BeginMoverDrag` already blocks that.
 
-### Default group (core, `Grimoire/Core/Movers.lua`)
+### ~~Default group~~ (dropped 2026-10-13)
+Phil didn't want frames grouped automatically. The code was removed, and `Core/Database.lua` ungroups the "Player" group once for profiles that already got it. The original plan, for reference:
 - `RegisterMover` gains a `defaultGroup` option.
   - The first time a frame registers in a profile, it joins that group. This is tracked in `profile.moverDefaultsApplied[key]`, so it happens once.
   - It's skipped if you've already grouped that frame yourself.
@@ -217,7 +218,7 @@ Each component gets an `options` list and `ApplySettings`:
   - The 3D portrait animates; it cheers on level-up, laughs or cries on death, waves when a party member or pet appears.
   - The pet frame is still there after Blizzard's player frame is hidden.
   - Resting and combat icons work.
-  - The Player group drags as one.
+  - Each frame drags on its own (no automatic grouping); a group you make yourself drags as one.
   - Dragging is blocked in combat.
   - Turning off "Hide Blizzard player frame" plus `/reload` brings Blizzard's frame back.
 - Each milestone is its own commit and push; you `git pull`, re-link if there's a new add-on, and restart.
