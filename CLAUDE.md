@@ -7,7 +7,10 @@ Phil's personal WoW Forever UI suite. It's just for him, not a public release. H
 - Classic-era rules: soul shards are bag items (item 6265), not a power type.
 - Forever lacks some Blizzard templates, fonts and functions: **no `SecureAuraHeaderTemplate`**, **no `TextStatusBarTextSmall`** font, **no `ToggleSpellBook`** (seen 2026-10-13). Inheriting a missing template or font is a hard error: pick fonts with `Grimoire.Font(name, fallback)`, guard templates, and look Blizzard functions up at call time (`_G[name]`) with a fallback. Check for a template before inheriting from it (`C_XMLUtil.GetTemplateInfo`), and have the module's `IsAvailable` report a missing one.
 - CVar names are case-insensitive but must be exact (`groundEffectDist`, not `groundeffectdistance`). `/grim cvars` (Grimoire_Tweaks) dumps every CVar to `SavedVariables\Grimoire_Tweaks.lua`, which you can read directly on this PC.
-- Secret values (retail Midnight) probably don't exist here, but guard with `Grimoire.IsSecret` / `AnySecret` anyway.
+- **Forever runs Blizzard's modern (retail) UI code on classic game data**: Edit Mode, `CompactPartyFrame`, Menu API, `ObjectiveTrackerFrame`, `WorldMapFrame:AddDataProvider`, `C_QuestLog`. Read retail behaviour, not Classic 1.x FrameXML, when touching Blizzard frames.
+- **Secret values exist here** (seen 2026-10-13: Blizzard code "attempt to compare a secret number value"). Guard every unit value with `Grimoire.IsSecret` / `AnySecret`, and keep Blizzard code from running tainted: anything Grimoire writes onto Blizzard frames can make their code fail on secrets.
+- **Don't reparent Edit Mode frames** (PlayerFrame, TargetFrame, …) under Grimoire frames: Edit Mode reads their parents and becomes tainted (seen: `ADDON_ACTION_FORBIDDEN … TargetUnit()` from `EditModeManager.RefreshTargetAndFocus`).
+- BugGrabber saves its errors to `SavedVariables\!BugGrabber.lua` on `/reload`; read that file directly instead of asking for screenshots.
 - Beta ends 2026-10-22; launch is 2026-11-04.
 
 ## Dev loop (Windows PC)
