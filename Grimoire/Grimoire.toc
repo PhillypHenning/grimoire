@@ -23,4 +23,5 @@ Core\Movers.lua
 Core\UnitFrames.lua
 Core\Commands.lua
 Core\Menu.lua
+Core\AddOnButtons.lua
 Core\Bootstrap.lua

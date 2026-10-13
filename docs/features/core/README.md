@@ -187,6 +187,7 @@ Code that more than one component needs lives in core, so components never depen
 | `Grimoire.CreateStatusBar` / `UpdateUnitBar` / `SetUnitRightClickMenu` / `UnitLevelText` / `BindingLabel` | `Core/UnitFrames.lua` | Pieces for frames holding several units in one mover (party, target): bars with Dead/Ghost/Offline, the unit menu, difficulty-coloured level, short keybind labels |
 | `Grimoire:NewUnitBar(name, opts)` / `NewUnitPortrait(name, opts)` | `Core/UnitFrames.lua` | Health/power bar and portrait modules for any unit (player, pet); hide without the unit, except in move mode |
 | `Grimoire.CreateStatusBar` / `UpdateUnitBar` / `SetUnitRightClickMenu` / `UnitLevelText` / `BindingLabel` | `Core/UnitFrames.lua` | Pieces for frames holding several units in one mover (party, target): bars with Dead/Ghost/Offline, the unit menu, difficulty-coloured level, short keybind labels |
+| `Grimoire:GetAddOnButtonMenu()` / `GetAddOnButtons()` | `Core/AddOnButtons.lua` | Other add-ons' minimap buttons (LibDBIcon/LDB via `LibStub`, plus loose minimap buttons) as menu entries: Open, Options, Show on minimap; hidden ones saved in `profile.addonButtons` |
 | `Grimoire.CreateRoundButton(name, parent?)` | `Core/Widgets.lua` | Minimap-style round button (Grimoire button, Notes button); set `button.icon` |
 | `Grimoire.CreateScrollArea(parent, name, child?)` | `Core/Widgets.lua` | Scroll frame with scrollbar |
 | `Grimoire.CreateDisplaySlot` / `SetDisplaySlotItem` | `Core/Widgets.lua` | Read-only item slot (tooltip, shift-click link) for cached items |

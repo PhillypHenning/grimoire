@@ -69,6 +69,8 @@ function Player:GetClickMenu()
 		end
 	end
 	entries[#entries + 1] = { isDivider = true }
+	-- Other add-ons' minimap buttons (Core/AddOnButtons.lua).
+	entries[#entries + 1] = { text = ADDONS or "Add-ons", children = Grimoire:GetAddOnButtonMenu() }
 	entries[#entries + 1] = { text = "Grimoire", children = Grimoire:GetMainMenu() }
 	return entries
 end

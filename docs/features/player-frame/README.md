@@ -51,6 +51,12 @@ end)
 
 **The click menu follows the micro menu.** Each entry appears only if that micro button exists and is shown (so Talents appears at level 10, Guild only on clients that have it). It calls the panel's toggle function, falling back to clicking the micro button. It checks `IsShown`, not `IsVisible`, so the menu keeps working after the micro menu itself is hidden.
 
+**Add-ons ▸: other add-ons' minimap buttons** ([`Core/AddOnButtons.lua`](../../../Grimoire/Core/AddOnButtons.lua), Phil's request). Every add-on with a minimap button gets an entry with **Open** (its left-click), **Options** (its right-click) and **✓ Show on minimap**, plus **Hide all minimap buttons** at the end. Buttons are found at runtime: LibDBIcon / LibDataBroker launchers through `LibStub` (no dependency), and any other named button on the minimap. Hidden buttons are saved per profile in `profile.addonButtons` and re-hidden after login and whenever LibDBIcon creates a button.
+
+```lua
+entries[#entries + 1] = { text = ADDONS or "Add-ons", children = Grimoire:GetAddOnButtonMenu() }
+```
+
 **Built on core's unit portrait.** `Grimoire:NewUnitPortrait` (in [`Core/UnitFrames.lua`](../../../Grimoire/Core/UnitFrames.lua)) builds the secure button, 3D model or 2D texture, name, level, size and style settings, and hiding the Blizzard frame. This module adds the click menu, status icons and emotes. [Grimoire Pet](../pet/README.md) uses the same base.
 
 **Emotes are model animations.** `PlayerModel:SetAnimation` with the emote animation IDs: wave 67, cheer 68, laugh 70, cry 77. The model returns to standing on `OnAnimFinished`, or after 3 seconds on clients without it.
@@ -83,6 +89,8 @@ Stored in `GrimoireDB.profiles[<profile>].modules.PlayerFrame`. In the menu: **C
 | `emotes` | true | toggle | Cheer, laugh/cry, wave |
 | `hideBlizzard` | true | toggle (needs `/reload` to turn off) | Hide Blizzard's player frame |
 
+Minimap buttons: `GrimoireDB.profiles[<profile>].addonButtons` = `{ hidden = { ["ldb:Questie"] = true, … }, hideAll = false }`, changed from **Add-ons ▸** in the click menu.
+
 ## Screenshots
 
 _TODO: add to `screenshots/`. Suggested: the frame next to the bars, the click menu, an emote mid-animation._
@@ -91,3 +99,4 @@ _TODO: add to `screenshots/`. Suggested: the frame next to the bars, the click m
 
 - Verify in game: `togglemenu` vs. the dropdown player menu on Forever; `OnAnimFinished` on `PlayerModel`; the emote animation IDs; the pet frame's position after hiding.
 - More emotes? (e.g. flex on a killing blow, dance when resting.)
+- Verify in game: every add-on you use appears under Add-ons ▸ with the right name, Open and Options do what its minimap button does, and hidden buttons stay hidden after `/reload`.
