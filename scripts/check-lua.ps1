@@ -27,7 +27,8 @@ if (-not (Test-Path $luac)) {
 $failed = $false
 $addons = Get-ChildItem -Path $repo -Directory -Filter "Grimoire*"
 
-foreach ($file in $addons | Get-ChildItem -Recurse -Filter "*.lua") {
+$scripts = Get-ChildItem -Path (Join-Path $repo "scripts") -Recurse -Filter "*.lua"
+foreach ($file in @($addons | Get-ChildItem -Recurse -Filter "*.lua") + @($scripts)) {
     & $luac -p $file.FullName
     if ($LASTEXITCODE -ne 0) { $failed = $true }
 }
