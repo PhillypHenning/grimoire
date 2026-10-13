@@ -6,7 +6,8 @@ My personal, modular UI suite for WoW Forever. The goal is to replace as many th
 
 ```
 Grimoire/              Core: modules, saved variables, windows, movers, manager menu, combat queue, slash commands
-Grimoire_Player/       Player and pet frames (animated portraits, replace Blizzard's) and health/power bars, each movable
+Grimoire_Player/       Player frame (animated portrait, replaces Blizzard's) and health/power bars, each movable
+Grimoire_Pet/          Pet frame and pet health/power bars, shown while you have a pet
 Grimoire_Warlock/      Warlock resources: soul shard count (LoadOnDemand, Warlocks only)
 Grimoire_Auras/        Makes the default buff frame movable, groupable and sizable
 Grimoire_Bags/         Combined bag window with search and sort

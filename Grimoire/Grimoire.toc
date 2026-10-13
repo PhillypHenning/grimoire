@@ -20,6 +20,7 @@ Core\Containers.lua
 Core\Widgets.lua
 Core\Modules.lua
 Core\Movers.lua
+Core\UnitFrames.lua
 Core\Commands.lua
 Core\Menu.lua
 Core\Bootstrap.lua

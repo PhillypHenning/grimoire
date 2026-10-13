@@ -26,6 +26,7 @@ flowchart TD
     Auctions[Grimoire_Auctions] --> Core
     Notes[Grimoire_Notes] --> Core
     Player[Grimoire_Player] --> Core
+    Pet[Grimoire_Pet] --> Core
     Warlock[Grimoire_Warlock] --> Core
     Auras[Grimoire_Auras] --> Core
     Launcher[Grimoire_Launcher] --> Core

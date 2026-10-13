@@ -1,13 +1,13 @@
-# Player and pet bars
+# Player bars
 
 - **Add-on:** `Grimoire_Player`
-- **Modules:** `Health`, `Power`, `PetHealth`, `PetPower`
+- **Modules:** `Health`, `Power` (built on core's unit bars, [`Core/UnitFrames.lua`](../../../Grimoire/Core/UnitFrames.lua))
 - **Status:** Scaffolded, untested in game
-- **Replaces:** Player and pet health/mana bar add-ons
+- **Replaces:** Player health/mana bar add-ons
 
 ## Summary
 
-A health bar and a power bar (mana, or rage/energy for other classes), each its own movable frame, plus a smaller pair for your pet. Pet bars show only while you have a pet (and always in move mode). Put them under your character, group them so they move together, and let them dim when nothing's changing.
+A health bar and a power bar (mana, or rage/energy for other classes), each its own movable frame. Your pet's bars are in [Grimoire Pet](../pet/README.md). Put them under your character, group them so they move together, and let them dim when nothing's changing.
 
 ## What it solves
 
@@ -29,7 +29,7 @@ flowchart LR
 
 ## Code highlights
 
-**One bar, four modules** ([`Bars.lua`](../../../Grimoire_Player/Bars.lua)). The bar code is shared; a `Health` or `Power` kind and a unit (`player` or `pet`) make each module. They are separate modules, so each can be toggled (`/grim disable PetPower`) and moved on its own.
+**Built on core's unit bars** ([`Bars.lua`](../../../Grimoire_Player/Bars.lua)). Each bar is one `Grimoire:NewUnitBar` call: a kind (`health` or `power`), a unit and its defaults. [Grimoire Pet](../pet/README.md) builds its bars the same way. They are separate modules, so each can be toggled (`/grim disable Power`) and moved on its own.
 
 **Activity only on real changes.** A bar that's regenerating reports activity every tick and stays bright; a full bar stops reporting and dims after the idle time (1.5s by default):
 
@@ -75,19 +75,10 @@ Stored in `GrimoireDB.profiles[<profile>].modules.Health` / `.Power`. In the men
 | `height` | 16 (Health), 12 (Power) | Health 12 / 16 / 20 / 24; Power 8 / 10 / 12 / 16 | Bar height |
 | `manaColor` | `{0, 0, 1}` | — | Power only: mana color |
 
-Pet bars: `.modules.PetHealth` / `.PetPower`. In the menu: **Components ▸ Player ▸ Pet health / Pet power**. They default to under the player bars, beside the pet frame.
-
-| Key | Default | Menu choices | Description |
-| --- | --- | --- | --- |
-| `showText` | true (Pet health), false (Pet power) | toggle | Show % on the bar |
-| `width` | 150 | 120 / 150 / 180 / 220 | Bar width |
-| `height` | 12 (Pet health), 8 (Pet power) | Pet health 8 / 10 / 12 / 16; Pet power 6 / 8 / 10 / 12 | Bar height |
-| `manaColor` | `{0, 0, 1}` | — | Pet power only: mana color (other pets use Blizzard's power colours) |
-
 ## Screenshots
 
 _TODO: add to `screenshots/`. Suggested: changing (bright), idle (dim), grouped in move mode._
 
 ## Open questions / roadmap
 
-- Target and pet bars on the same code.
+- Target bars on the same code (`NewUnitBar` with `unit = "target"`).
