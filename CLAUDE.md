@@ -5,7 +5,7 @@ Phil's personal WoW Forever UI suite. It's just for him, not a public release. H
 ## The game client
 - WoW Forever is a **Classic-family client** (it shows as "Classic WoW"). Build 1.60.1 → `## Interface: 16001` in every `.toc`. The client version is in `.build.info` in the World of Warcraft folder; interface = major×10000 + minor×100 + patch. A wrong number shows add-ons as "Incompatible", which can't be overridden.
 - Classic-era rules: soul shards are bag items (item 6265), not a power type.
-- Forever lacks some Blizzard templates: **no `SecureAuraHeaderTemplate`** (seen 2026-10-13). Check for a template before inheriting from it (`C_XMLUtil.GetTemplateInfo`), and have the module's `IsAvailable` report a missing one.
+- Forever lacks some Blizzard templates and functions: **no `SecureAuraHeaderTemplate`**, **no `ToggleSpellBook`** (seen 2026-10-13). Look Blizzard functions up at call time (`_G[name]`) with a fallback. Check for a template before inheriting from it (`C_XMLUtil.GetTemplateInfo`), and have the module's `IsAvailable` report a missing one.
 - CVar names are case-insensitive but must be exact (`groundEffectDist`, not `groundeffectdistance`). `/grim cvars` (Grimoire_Tweaks) dumps every CVar to `SavedVariables\Grimoire_Tweaks.lua`, which you can read directly on this PC.
 - Secret values (retail Midnight) probably don't exist here, but guard with `Grimoire.IsSecret` / `AnySecret` anyway.
 - Beta ends 2026-10-22; launch is 2026-11-04.

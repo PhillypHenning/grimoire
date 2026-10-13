@@ -45,27 +45,42 @@ local function ShowGameMenu()
 	end
 end
 
+-- { micro button, label, toggle function or its global name, argument }. Names are looked
+-- up when clicked: Forever doesn't have all of them (no ToggleSpellBook), and a
+-- missing one falls back to clicking the micro button itself.
 local MICRO_MENU = {
-	{ "CharacterMicroButton", CHARACTER_BUTTON or "Character Info", function() ToggleCharacter("PaperDollFrame") end },
-	{ "SpellbookMicroButton", SPELLBOOK_ABILITIES_BUTTON or "Spellbook & Abilities", function() ToggleSpellBook(BOOKTYPE_SPELL) end },
-	{ "TalentMicroButton", TALENTS_BUTTON or "Talents", function() ToggleTalentFrame() end },
-	{ "QuestLogMicroButton", QUESTLOG_BUTTON or "Quest Log", function() ToggleQuestLog() end },
-	{ "SocialsMicroButton", SOCIAL_BUTTON or "Social", function() ToggleFriendsFrame() end },
+	{ "CharacterMicroButton", CHARACTER_BUTTON or "Character Info", "ToggleCharacter", "PaperDollFrame" },
+	{ "SpellbookMicroButton", SPELLBOOK_ABILITIES_BUTTON or "Spellbook & Abilities", "ToggleSpellBook", BOOKTYPE_SPELL },
+	{ "TalentMicroButton", TALENTS_BUTTON or "Talents", "ToggleTalentFrame" },
+	{ "QuestLogMicroButton", QUESTLOG_BUTTON or "Quest Log", "ToggleQuestLog" },
+	{ "SocialsMicroButton", SOCIAL_BUTTON or "Social", "ToggleFriendsFrame" },
 	{ "GuildMicroButton", GUILD or "Guild" },
 	{ "LFGMicroButton", DUNGEONS_BUTTON or "Group Finder" },
-	{ "WorldMapMicroButton", WORLDMAP_BUTTON or "World Map", function() ToggleWorldMap() end },
+	{ "WorldMapMicroButton", WORLDMAP_BUTTON or "World Map", "ToggleWorldMap" },
 	{ "MainMenuMicroButton", MAINMENU_BUTTON or "Game Menu", ShowGameMenu },
-	{ "HelpMicroButton", HELP_BUTTON or "Help Request", function() ToggleHelpFrame() end },
+	{ "HelpMicroButton", HELP_BUTTON or "Help Request", "ToggleHelpFrame" },
 }
+
+local function OpenPanel(item, button)
+	local toggle = item[3]
+	if type(toggle) == "string" then
+		toggle = _G[toggle]
+	end
+	if not (toggle and pcall(toggle, item[4])) then
+		button:Click()
+	end
+end
 
 function Player:GetClickMenu()
 	local entries = { { text = UnitName("player"), isTitle = true } }
 	for _, item in ipairs(MICRO_MENU) do
 		local button = _G[item[1]]
 		if button and button:IsShown() then
-			-- Prefer the toggle function; clicking the micro button is the fallback.
-			local open = item[3] or function() button:Click() end
-			entries[#entries + 1] = { text = item[2], func = open, disabled = not button:IsEnabled() }
+			entries[#entries + 1] = {
+				text = item[2],
+				func = function() OpenPanel(item, button) end,
+				disabled = not button:IsEnabled(),
+			}
 		end
 	end
 	entries[#entries + 1] = { isDivider = true }

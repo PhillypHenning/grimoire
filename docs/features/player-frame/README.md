@@ -97,6 +97,7 @@ _TODO: add to `screenshots/`. Suggested: the frame next to the bars, the click m
 
 ## Open questions / roadmap
 
+- Found in game (2026-10-13): Forever has no `ToggleSpellBook`, so the Spellbook entry errored. Toggle functions are now looked up when clicked, and a missing or failing one falls back to clicking the micro button.
 - Verify in game: `togglemenu` vs. the dropdown player menu on Forever; `OnAnimFinished` on `PlayerModel`; the emote animation IDs; the pet frame's position after hiding.
 - More emotes? (e.g. flex on a killing blow, dance when resting.)
 - Verify in game: every add-on you use appears under Add-ons ▸ with the right name, Open and Options do what its minimap button does, and hidden buttons stay hidden after `/reload`.
