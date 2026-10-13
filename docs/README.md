@@ -22,8 +22,6 @@ Each component is its own add-on and can be switched on or off in the in-game Ad
 
 New component? Copy [`features/TEMPLATE.md`](features/TEMPLATE.md) to `features/<component>/README.md` and put screenshots in `features/<component>/screenshots/`.
 
-New component? Copy [`features/TEMPLATE.md`](features/TEMPLATE.md) to `features/<component>/README.md` and put screenshots in `features/<component>/screenshots/`.
-
 ## Prophecy
 
 [Plan format, version 1](prophecy/FORMAT.md): the text format Prophecy plans are written in, for people and agents writing plans outside the game.
