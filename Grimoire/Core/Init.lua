@@ -10,7 +10,7 @@ local Grimoire = {
 	moduleOrder = {},
 	callbacks = {},
 	defaults = {
-		profile = { movers = {}, windows = {}, modules = {} },
+		profile = { movers = {}, modules = {} },
 		global = { characters = {} },
 	},
 }

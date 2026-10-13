@@ -8,6 +8,7 @@ move-folders:
   Grimoire/Grimoire_Bank: Grimoire_Bank
   Grimoire/Grimoire_Auctions: Grimoire_Auctions
   Grimoire/Grimoire_Notes: Grimoire_Notes
+  Grimoire/Grimoire_Launcher: Grimoire_Launcher
 
 ignore:
   - scripts

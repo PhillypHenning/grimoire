@@ -12,6 +12,7 @@ Each component is its own add-on and can be switched on or off in the in-game Ad
 | [Bank](features/bank/README.md) | `Grimoire_Bank` | Scaffolded, untested in game |
 | [Auctions](features/auctions/README.md) | `Grimoire_Auctions` | Scaffolded, untested in game |
 | [Notes](features/notes/README.md) | `Grimoire_Notes` | Scaffolded, untested in game |
+| [Launcher](features/launcher/README.md) | `Grimoire_Launcher` | Scaffolded, untested in game |
 
 New component? Copy [`features/TEMPLATE.md`](features/TEMPLATE.md) to `features/<component>/README.md` and put screenshots in `features/<component>/screenshots/`.
 

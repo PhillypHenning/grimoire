@@ -26,6 +26,7 @@ flowchart TD
     Auctions[Grimoire_Auctions] --> Core
     Notes[Grimoire_Notes] --> Core
     Warlock[Grimoire_Warlock] --> Core
+    Launcher[Grimoire_Launcher] --> Core
     Bags -. "optional: GetModule('Bank')" .-> Bank
     Bags -. "optional: GetModule('Auctions')" .-> Auctions
 ```

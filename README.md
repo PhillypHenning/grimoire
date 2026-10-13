@@ -11,6 +11,7 @@ Grimoire_Bags/         Combined bag window with search and sort
 Grimoire_Bank/         Bank snapshot + viewer
 Grimoire_Auctions/     Auction snapshot + viewer
 Grimoire_Notes/        Account-wide notes
+Grimoire_Launcher/     Movable Grimoire button: move mode + menu
 scripts/               Dev tooling (Windows junction linker)
 docs/                  Component docs (summary, diagrams, screenshots) and ADRs
 ```
@@ -42,7 +43,7 @@ function M:OnDisable() end         -- events + callbacks are released automatica
 
 **Callback bus.** `Grimoire:Fire(name, ...)` / `Grimoire:RegisterCallback(name, owner, fn)`. Built-in events: `Ready`, `CombatStart`, `CombatEnd`, `MoversUnlocked`, `MoversLocked`, `ModuleEnabled`, `ModuleDisabled`. External add-ons can listen to these through the global `Grimoire`.
 
-**Movers.** `Grimoire:RegisterMover(frame, key, label, defaultPoint)` makes any frame draggable via `/grimoire unlock`. Positions are saved per profile.
+**Movers.** `Grimoire:RegisterMover(frame, key, label, defaultPoint)` makes any frame draggable in move mode (the Launcher button, or `/grimoire unlock`). Windows from `Grimoire:CreateWindow` are movers automatically. Positions are saved per profile.
 
 **Combat safety.** `Grimoire:RunOutOfCombat(fn)` defers protected-frame changes until combat ends.
 
@@ -52,7 +53,7 @@ function M:OnDisable() end         -- events + callbacks are released automatica
 
 ## Slash commands
 
-`/grimoire` (or `/grim`) lists all commands. Core: `unlock`, `lock`, `reset [frame]`, `modules`, `enable <module>`, `disable <module>`, `profile [name]`. Components add their own: `bags`, `bank`, `auctions`, `notes`.
+`/grimoire` (or `/grim`) lists all commands. Core: `unlock`, `lock`, `reset [frame]`, `modules`, `enable <module>`, `disable <module>`, `profile [name]`. Components add their own: `bags`, `bank`, `auctions`, `notes`, `icon`.
 
 ## Dev setup (Windows)
 

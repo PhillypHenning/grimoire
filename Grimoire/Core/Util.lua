@@ -25,6 +25,10 @@ Grimoire.media = {
 	dialogHeader = "Interface\\DialogFrame\\UI-DialogBox-Header",
 	emptySlot = "Interface\\PaperDoll\\UI-Backpack-EmptySlot",
 	rowHighlight = "Interface\\QuestFrame\\UI-QuestTitleHighlight",
+	-- Round classic button (the minimap-button look, free-floating)
+	roundButtonBorder = "Interface\\Minimap\\MiniMap-TrackingBorder",
+	roundButtonBackground = "Interface\\Minimap\\UI-Minimap-Background",
+	roundButtonHighlight = "Interface\\Minimap\\UI-Minimap-ZoomButton-Highlight",
 }
 
 function Grimoire.FormatAgo(timestamp)

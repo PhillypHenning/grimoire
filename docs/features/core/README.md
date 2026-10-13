@@ -137,14 +137,15 @@ Code that more than one component needs lives in core, so components never depen
 
 | Helper | File | Purpose |
 | --- | --- | --- |
-| `Grimoire:CreateWindow(key, title)` | `Core/Widgets.lua` | Classic dialog window: header, close button, Escape to close, remembered position |
+| `Grimoire:CreateWindow(key, title)` | `Core/Widgets.lua` | Classic dialog window: header, close button, Escape to close; registered as mover `<key>Window` |
+| `Grimoire.OpenMenu(anchor, entries)` | `Core/Widgets.lua` | Context menu via Blizzard's Menu API, or `UIDropDownMenu` on older clients |
 | `Grimoire.CreateScrollArea(parent, name, child?)` | `Core/Widgets.lua` | Scroll frame with scrollbar |
 | `Grimoire.CreateDisplaySlot` / `SetDisplaySlotItem` | `Core/Widgets.lua` | Read-only item slot (tooltip, shift-click link) for cached items |
 | `Grimoire.GetBagIDs` / `GetBankIDs` / `ReadContainer` | `Core/Containers.lua` | Inventory reading, including both bank-bag and bank-tab layouts |
 | `Grimoire:GetCharacterStore()` | `Core/Characters.lua` | Account-wide, per-character storage in `GrimoireDB.global.characters` |
 | `Grimoire:FormatCharacterName` / `ClassColorText` / `GetClassColor` | `Core/Characters.lua` | Class-colored character names and text ([ADR 0003](../../adr/0003-show-character-and-class-color.md)) |
 | `Grimoire:GetCharactersWith(field)` | `Core/Characters.lua` | Characters with stored data, current first |
-| `Grimoire.CreateCharacterPicker(parent, field, onChange)` | `Core/Widgets.lua` | Class-colored character selector (Blizzard menu, or cycles on older clients) |
+| `Grimoire.CreateCharacterPicker(parent, field, onChange)` | `Core/Widgets.lua` | Class-colored character selector (uses `OpenMenu`, or cycles if no menu API) |
 | `Grimoire.FormatAgo` / `FormatMoney` | `Core/Util.lua` | "3h ago", coin strings |
 | `Module:RegisterEvent` | `Core/Modules.lua` | Silently skips events this client doesn't have |
 

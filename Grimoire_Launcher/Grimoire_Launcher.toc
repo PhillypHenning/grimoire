@@ -1,0 +1,10 @@
+## Interface: 16001
+## Title: |cff8788eeGrimoire|r Launcher
+## Notes: A movable Grimoire button: click to move frames, right-click for a menu.
+## Author: Phil Henning
+## Version: @project-version@
+## RequiredDeps: Grimoire
+## Group: Grimoire
+## Category: Grimoire
+
+Launcher.lua
