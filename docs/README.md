@@ -22,6 +22,10 @@ Each component is its own add-on and can be switched on or off in the in-game Ad
 
 New component? Copy [`features/TEMPLATE.md`](features/TEMPLATE.md) to `features/<component>/README.md` and put screenshots in `features/<component>/screenshots/`.
 
+## Prophecy
+
+[Plan format, version 1](prophecy/FORMAT.md): the text format Prophecy plans are written in, for people and agents writing plans outside the game.
+
 ## Architecture decision records
 
 | ADR | Title | Status |
@@ -31,6 +35,7 @@ New component? Copy [`features/TEMPLATE.md`](features/TEMPLATE.md) to `features/
 | [0003](adr/0003-show-character-and-class-color.md) | Show which character owns data, in class colors | Accepted |
 | [0004](adr/0004-components-replace-blizzard-ui.md) | Components replace the Blizzard UI they duplicate | Accepted |
 | [0005](adr/0005-modules-describe-their-settings.md) | Modules describe their settings; core builds the menu | Accepted |
+| [0006](adr/0006-prophecy-plans-are-pasted-text.md) | Prophecy plans are pasted text, stored in saved variables | Accepted |
 
 Number new ADRs sequentially and never edit an accepted one's decision. Supersede it with a new ADR instead.
 
