@@ -10,7 +10,7 @@ Each component is its own add-on and can be switched on or off in the in-game Ad
 | [Manager menu](features/menu/README.md) | `Grimoire` (core) | Scaffolded, untested in game |
 | [Player bars](features/player-bars/README.md) | `Grimoire_Player` | Scaffolded, untested in game |
 | [Warlock resources](features/warlock-resources/README.md) | `Grimoire_Warlock` | Scaffolded, untested in game |
-| [Auras](features/auras/README.md) | `Grimoire_Auras` | Scaffolded, untested in game |
+| [Auras](features/auras/README.md) | `Grimoire_Auras` | Blocked: no secure aura header on Forever |
 | [Bags](features/bags/README.md) | `Grimoire_Bags` | Scaffolded, untested in game |
 | [Bank](features/bank/README.md) | `Grimoire_Bank` | Scaffolded, untested in game |
 | [Auctions](features/auctions/README.md) | `Grimoire_Auctions` | Scaffolded, untested in game |

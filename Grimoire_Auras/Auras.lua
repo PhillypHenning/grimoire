@@ -194,6 +194,27 @@ function Aura:ApplySettings()
 	end)
 end
 
+-- Forever doesn't ship every Blizzard template. Without the secure header there's
+-- nothing to build on, so the modules stay off and Blizzard's buff frame stays.
+local hasSecureHeader
+local function HasSecureAuraHeader()
+	if hasSecureHeader == nil then
+		if C_XMLUtil and C_XMLUtil.GetTemplateInfo then
+			hasSecureHeader = C_XMLUtil.GetTemplateInfo("SecureAuraHeaderTemplate") ~= nil
+		else
+			hasSecureHeader = pcall(CreateFrame, "Frame", nil, nil, "SecureAuraHeaderTemplate")
+		end
+	end
+	return hasSecureHeader
+end
+
+function Aura:IsAvailable()
+	if not HasSecureAuraHeader() then
+		return false, "no secure aura header on this client"
+	end
+	return true
+end
+
 -- Picks up stack and timer changes on auras that kept their index.
 function Aura:Refresh()
 	for _, child in ipairs({ self.header:GetChildren() }) do

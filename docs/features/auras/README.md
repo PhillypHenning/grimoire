@@ -2,7 +2,7 @@
 
 - **Add-on:** `Grimoire_Auras`
 - **Modules:** `Buffs`, `Debuffs`
-- **Status:** Scaffolded, untested in game
+- **Status:** Blocked on Forever: the client has no `SecureAuraHeaderTemplate` (2026-10-13), so both modules stay off
 - **Replaces:** The default buff frame; buff-mover add-ons
 
 ## Summary
@@ -68,5 +68,6 @@ _TODO: add to `screenshots/`. Suggested: buffs and debuffs apart, weapon enchant
 
 ## Open questions / roadmap
 
-- Verify in game: `SecureAuraHeaderTemplate` and `cancelaura` on Forever, weapon enchants (`weaponTemplate` / `target-slot`), debuff border texture.
+- **Forever has no `SecureAuraHeaderTemplate`** (tested 2026-10-13: "Couldn't find inherited node"). `IsAvailable` now checks for it, so Buffs and Debuffs report "no secure aura header on this client" in the menu and Blizzard's buff frame stays. Needs a different approach (see the plan).
+- Verify in game if a header-based version returns: `cancelaura` on Forever, weapon enchants (`weaponTemplate` / `target-slot`), debuff border texture.
 - Optional cooldown spiral instead of the text timer.

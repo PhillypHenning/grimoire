@@ -2,6 +2,7 @@
 
 > **Progress (2026-10-13, on the PC):**
 > - **Milestone 1:** code and docs done on branch `wip/manager-menu`; every `.lua` passes `scripts/check-lua.ps1`. Waiting on the in-game checks below, then merge.
+>   - **Found in game:** Forever has no `SecureAuraHeaderTemplate`, so Grimoire Auras failed on login. Buffs and Debuffs now report themselves unavailable and Blizzard's buff frame stays. Open decision for Phil: move and restyle Blizzard's own buff frame, or draw our own (non-secure) aura buttons.
 >   - Fixed while finishing: the launcher kept its on-screen spot when its size changes (offsets are converted for the new scale); settings changed while a module is off apply when it's turned back on; unknown option types are skipped.
 > - **Extra, done:** Health/Power never dim in combat or while not full (`isBusy` option on `RegisterMover`).
 > - **Milestones 2 and 3:** not started.
