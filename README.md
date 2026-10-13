@@ -6,7 +6,7 @@ My personal, modular UI suite for WoW Forever. The goal is to replace as many th
 
 ```
 Grimoire/              Core: modules, saved variables, windows, movers, combat queue, slash commands
-Grimoire_Warlock/      Warlock resource bar (LoadOnDemand, Warlocks only)
+Grimoire_Warlock/      Warlock health, mana and shard bar (LoadOnDemand, Warlocks only)
 Grimoire_Bags/         Combined bag window with search and sort
 Grimoire_Bank/         Bank snapshot + viewer
 Grimoire_Auctions/     Auction snapshot + viewer

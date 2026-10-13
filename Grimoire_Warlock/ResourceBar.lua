@@ -5,115 +5,123 @@ local SOUL_SHARD_ITEM = 6265
 local SOUL_SHARD_ICON_FALLBACK = "Interface\\Icons\\INV_Misc_Gem_Amethyst_02"
 local POWER_MANA = Enum.PowerType.Mana
 
+-- Classic player frame colors: health is pure green, mana pure blue.
+local HEALTH_COLOR = { r = 0, g = 1, b = 0 }
+local MANA_COLOR = (PowerBarColor and PowerBarColor.MANA) or { r = 0, g = 0, b = 1 }
+
 local M = Grimoire:NewModule("WarlockResourceBar", {
 	class = "WARLOCK",
 	defaults = {
 		width = 220,
+		healthHeight = 16,
 		manaHeight = 12,
-		shardSlots = 10, -- icons shown; the exact count is always shown as text
-		shardSpacing = 2,
-		showManaText = true,
-		alphaInCombat = 1,
-		alphaOutOfCombat = 0.4,
-		manaColor = { r = 0, g = 0, b = 1 }, -- classic mana blue
+		barSpacing = 2,
+		shardSize = 26,
+		showBarText = true,
+		alphaWhenFull = 0.4, -- a full bar fades out of combat; anything else stays bright
 	},
 })
+
+local function CreateBar(parent, height, color)
+	local inset = Grimoire.media.classicInset
+	local border = CreateFrame("Frame", nil, parent, "BackdropTemplate")
+	border:SetHeight(height + inset * 2)
+	Grimoire.ApplyClassicBackdrop(border)
+
+	local bar = CreateFrame("StatusBar", nil, border)
+	bar:SetPoint("TOPLEFT", inset, -inset)
+	bar:SetPoint("BOTTOMRIGHT", -inset, inset)
+	bar:SetStatusBarTexture(Grimoire.media.statusbar)
+	bar:SetStatusBarColor(color.r, color.g, color.b)
+	bar.text = bar:CreateFontString(nil, "OVERLAY", "TextStatusBarText")
+	bar.text:SetPoint("CENTER")
+	bar.border = border
+	return bar
+end
 
 function M:Build()
 	local db = self.db
 	local inset = Grimoire.media.classicInset
-	local shardSize = (db.width - (db.shardSlots - 1) * db.shardSpacing) / db.shardSlots
 
 	local frame = CreateFrame("Frame", "GrimoireWarlockResourceBar", UIParent)
-	frame:SetSize(db.width + inset * 2, db.manaHeight + inset * 2 + db.shardSpacing + shardSize)
+	frame:SetSize(db.width + inset * 2,
+		db.healthHeight + db.manaHeight + inset * 4 + db.barSpacing * 2 + db.shardSize)
 	self.frame = frame
 
-	local manaBorder = CreateFrame("Frame", nil, frame, "BackdropTemplate")
-	manaBorder:SetPoint("TOPLEFT")
-	manaBorder:SetPoint("TOPRIGHT")
-	manaBorder:SetHeight(db.manaHeight + inset * 2)
-	Grimoire.ApplyClassicBackdrop(manaBorder)
+	self.health = CreateBar(frame, db.healthHeight, HEALTH_COLOR)
+	self.health.border:SetPoint("TOPLEFT")
+	self.health.border:SetPoint("TOPRIGHT")
 
-	local mana = CreateFrame("StatusBar", nil, manaBorder)
-	mana:SetPoint("TOPLEFT", inset, -inset)
-	mana:SetPoint("BOTTOMRIGHT", -inset, inset)
-	mana:SetStatusBarTexture(Grimoire.media.statusbar)
-	mana:SetStatusBarColor(db.manaColor.r, db.manaColor.g, db.manaColor.b)
-	mana.text = mana:CreateFontString(nil, "OVERLAY", "TextStatusBarText")
-	mana.text:SetPoint("CENTER")
-	self.mana = mana
+	self.mana = CreateBar(frame, db.manaHeight, MANA_COLOR)
+	self.mana.border:SetPoint("TOPLEFT", self.health.border, "BOTTOMLEFT", 0, -db.barSpacing)
+	self.mana.border:SetPoint("TOPRIGHT", self.health.border, "BOTTOMRIGHT", 0, -db.barSpacing)
 
-	local icon = C_Item.GetItemIconByID(SOUL_SHARD_ITEM) or SOUL_SHARD_ICON_FALLBACK
-	self.shards = {}
-	for i = 1, db.shardSlots do
-		local shard = frame:CreateTexture(nil, "ARTWORK")
-		shard:SetTexture(icon)
-		shard:SetSize(shardSize, shardSize)
-		shard:SetPoint("TOPLEFT", manaBorder, "BOTTOMLEFT", inset + (i - 1) * (shardSize + db.shardSpacing), -db.shardSpacing)
-		self.shards[i] = shard
-	end
-
-	self.shardText = frame:CreateFontString(nil, "OVERLAY", "NumberFontNormal")
-	self.shardText:SetPoint("LEFT", self.shards[db.shardSlots], "RIGHT", 4, 0)
+	-- One shard icon with the count beside it.
+	local shard = CreateFrame("Frame", nil, frame)
+	shard:SetSize(db.shardSize, db.shardSize)
+	shard:SetPoint("TOPLEFT", self.mana.border, "BOTTOMLEFT", inset, -db.barSpacing)
+	shard.icon = shard:CreateTexture(nil, "ARTWORK")
+	shard.icon:SetAllPoints()
+	shard.icon:SetTexture(C_Item.GetItemIconByID(SOUL_SHARD_ITEM) or SOUL_SHARD_ICON_FALLBACK)
+	shard.count = shard:CreateFontString(nil, "OVERLAY", "NumberFontNormal")
+	shard.count:SetPoint("LEFT", shard, "RIGHT", 4, 0)
+	self.shard = shard
 
 	Grimoire:RegisterMover(frame, "WarlockResourceBar", "Warlock Resources", { "CENTER", "UIParent", "CENTER", 0, -200 })
 end
 
-function M:UpdateMana()
-	local current, max = UnitPower("player", POWER_MANA), UnitPowerMax("player", POWER_MANA)
-	local bar = self.mana
+-- Fills the bar and its % text. Records whether it's full for fading; a secret
+-- value can't be compared, so it counts as not full and the bar stays bright.
+function M:SetBarValue(bar, current, max)
 	-- StatusBar accepts secret values directly.
 	bar:SetMinMaxValues(0, max)
 	bar:SetValue(current)
 
-	if not self.db.showManaText then
+	local secret = Grimoire.AnySecret(current, max)
+	bar.full = not secret and current >= max
+
+	if not self.db.showBarText then
 		bar.text:SetText("")
-	elseif Grimoire.AnySecret(current, max) then
+	elseif secret then
 		-- Can't divide secrets into a percentage; let the widget render the raw value.
 		bar.text:SetText(current)
 	else
 		bar.text:SetFormattedText("%d%%", max > 0 and math.floor(current / max * 100) or 0)
 	end
+	self:UpdateVisibility()
 end
 
-local function SetShardFilled(shard, filled)
-	shard:SetDesaturated(not filled)
-	shard:SetAlpha(filled and 1 or 0.35)
+function M:UpdateHealth()
+	self:SetBarValue(self.health, UnitHealth("player"), UnitHealthMax("player"))
+end
+
+function M:UpdateMana()
+	self:SetBarValue(self.mana, UnitPower("player", POWER_MANA), UnitPowerMax("player", POWER_MANA))
 end
 
 function M:UpdateShards()
 	local count = C_Item.GetItemCount(SOUL_SHARD_ITEM)
-	self.shardText:SetText(count)
-
-	if Grimoire.IsSecret(count) then
-		-- Lighting individual icons needs comparisons, which secrets forbid.
-		for _, shard in ipairs(self.shards) do
-			SetShardFilled(shard, false)
-		end
-		return
-	end
-
-	for i, shard in ipairs(self.shards) do
-		SetShardFilled(shard, i <= count)
-	end
+	self.shard.count:SetText(count)
+	-- Grey out at zero; a secret count can't be compared, so leave it lit.
+	self.shard.icon:SetDesaturated(not Grimoire.IsSecret(count) and count == 0)
 end
 
+-- Each bar fades on its own once full, out of combat. The shard icon fades only
+-- when both bars have, so the whole thing goes quiet while resting.
 function M:UpdateVisibility()
-	local alpha
-	if Grimoire.moversUnlocked then
-		alpha = 1
-	elseif Grimoire:InCombat() then
-		alpha = self.db.alphaInCombat
-	else
-		alpha = self.db.alphaOutOfCombat
-	end
-	self.frame:SetAlpha(alpha)
+	local forceShow = Grimoire.moversUnlocked or Grimoire:InCombat()
+	local dimmed = self.db.alphaWhenFull
+	local healthDim = not forceShow and self.health.full
+	local manaDim = not forceShow and self.mana.full
+	self.health.border:SetAlpha(healthDim and dimmed or 1)
+	self.mana.border:SetAlpha(manaDim and dimmed or 1)
+	self.shard:SetAlpha((healthDim and manaDim) and dimmed or 1)
 end
 
 function M:Refresh()
+	self:UpdateHealth()
 	self:UpdateMana()
 	self:UpdateShards()
-	self:UpdateVisibility()
 end
 
 function M:OnPowerEvent(_, _, powerType)
@@ -128,6 +136,9 @@ function M:OnEnable()
 	end
 	self.frame:Show()
 
+	self:RegisterUnitEvent("UNIT_HEALTH", "player", "UpdateHealth")
+	self:RegisterUnitEvent("UNIT_HEALTH_FREQUENT", "player", "UpdateHealth")
+	self:RegisterUnitEvent("UNIT_MAXHEALTH", "player", "UpdateHealth")
 	self:RegisterUnitEvent("UNIT_POWER_FREQUENT", "player", "OnPowerEvent")
 	self:RegisterUnitEvent("UNIT_MAXPOWER", "player", "OnPowerEvent")
 	self:RegisterEvent("BAG_UPDATE_DELAYED", "UpdateShards")
