@@ -3,7 +3,7 @@
 - **Add-on:** `Grimoire_Bank`
 - **Module:** `Bank`
 - **Status:** Scaffolded, untested in game
-- **Opened from:** the *Bank* button in [Bags](../bags/README.md), or `/grimoire bank`
+- **Opened from:** the *Bank* button in [Bags](../bags/README.md), the [Grimoire menu](../menu/README.md) (*Open ▸ Bank*), or `/grim bank`
 
 ## Summary
 

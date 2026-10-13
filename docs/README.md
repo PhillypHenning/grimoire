@@ -7,6 +7,7 @@ Each component is its own add-on and can be switched on or off in the in-game Ad
 | Component | Add-on | Status |
 | --- | --- | --- |
 | [Core framework](features/core/README.md) | `Grimoire` | Scaffolded |
+| [Manager menu](features/menu/README.md) | `Grimoire` (core) | Scaffolded, untested in game |
 | [Player bars](features/player-bars/README.md) | `Grimoire_Player` | Scaffolded, untested in game |
 | [Warlock resources](features/warlock-resources/README.md) | `Grimoire_Warlock` | Scaffolded, untested in game |
 | [Auras](features/auras/README.md) | `Grimoire_Auras` | Scaffolded, untested in game |
@@ -25,6 +26,8 @@ New component? Copy [`features/TEMPLATE.md`](features/TEMPLATE.md) to `features/
 | [0001](adr/0001-prefer-classic-style-ui.md) | Prefer classic-style UI | Accepted |
 | [0002](adr/0002-every-component-is-a-toggleable-addon.md) | Every component is a separately toggleable add-on | Accepted |
 | [0003](adr/0003-show-character-and-class-color.md) | Show which character owns data, in class colors | Accepted |
+| 0004 | Components replace the Blizzard UI they duplicate | Planned (Milestone 3) |
+| [0005](adr/0005-modules-describe-their-settings.md) | Modules describe their settings; core builds the menu | Accepted |
 
 Number new ADRs sequentially and never edit an accepted one's decision. Supersede it with a new ADR instead.
 

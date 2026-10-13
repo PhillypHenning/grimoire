@@ -5,7 +5,7 @@ My personal, modular UI suite for WoW Forever. The goal is to replace as many th
 ## Layout
 
 ```
-Grimoire/              Core: modules, saved variables, windows, movers, combat queue, slash commands
+Grimoire/              Core: modules, saved variables, windows, movers, manager menu, combat queue, slash commands
 Grimoire_Player/       Health and power bars, each movable
 Grimoire_Warlock/      Warlock resources: soul shard count (LoadOnDemand, Warlocks only)
 Grimoire_Auras/        Buffs and debuffs as separate frames (replaces the default buff frame)
@@ -13,8 +13,8 @@ Grimoire_Bags/         Combined bag window with search and sort
 Grimoire_Bank/         Bank snapshot + viewer
 Grimoire_Auctions/     Auction snapshot + viewer
 Grimoire_Notes/        Account-wide notes
-Grimoire_Launcher/     Movable Grimoire button: move mode + menu
-scripts/               Dev tooling (Windows junction linker)
+Grimoire_Launcher/     Movable Grimoire button: left-click menu, right-click move mode
+scripts/               Dev tooling: link-addons.ps1 (junctions), check-lua.ps1 (syntax + .toc check)
 docs/                  Component docs (summary, diagrams, screenshots) and ADRs
 ```
 
@@ -29,8 +29,14 @@ Each top-level `Grimoire*` folder is a separate WoW add-on that can be switched 
 **Modules.** Every feature is a module:
 
 ```lua
+local ADDON_NAME = ...
 local M = Grimoire:NewModule("MyFeature", {
+    addon     = ADDON_NAME,        -- groups the module under its add-on in the menu
+    label     = "My feature",      -- display name
     defaults  = { width = 200 },   -- merged into M.db (per profile)
+    options   = {                  -- settings the in-game menu shows (ADR 0005)
+        { type = "choice", key = "width", label = "Width", values = { { 200, "200" }, { 260, "260" } } },
+    },
     class     = "WARLOCK",         -- optional class gate
     conflicts = { "ElvUI" },       -- optional: auto-skip when these add-ons are loaded
 })
@@ -40,12 +46,15 @@ function M:OnEnable()
     self:RegisterUnitEvent("UNIT_HEALTH", "player", "Update")
     self:RegisterCallback("CombatStart", "Update")
 end
+function M:ApplySettings(key) end  -- a menu setting changed; apply it live
 function M:OnDisable() end         -- events + callbacks are released automatically
 ```
 
-**Callback bus.** `Grimoire:Fire(name, ...)` / `Grimoire:RegisterCallback(name, owner, fn)`. Built-in events: `Ready`, `CombatStart`, `CombatEnd`, `MoversUnlocked`, `MoversLocked`, `ModuleEnabled`, `ModuleDisabled`. External add-ons can listen to these through the global `Grimoire`.
+**In-game menu.** Left-click the Grimoire button (or `/grim menu`) to open windows, toggle move mode, turn components and modules on or off, change their settings, and reload. It's built from what's installed and what each module declares; see [docs/features/menu](docs/features/menu/README.md).
 
-**Movers.** `Grimoire:RegisterMover(frame, key, label, defaultPoint)` makes any frame draggable in move mode (the Launcher button, or `/grimoire unlock`). Windows from `Grimoire:CreateWindow` are movers automatically. In move mode, shift-click frames and right-click → *Group with selected* to move them together; *Dim when idle* fades a frame or group after 1.5s without changes. Positions, groups and dimming are saved per profile.
+**Callback bus.** `Grimoire:Fire(name, ...)` / `Grimoire:RegisterCallback(name, owner, fn)`. Built-in events: `Ready`, `CombatStart`, `CombatEnd`, `MoversUnlocked`, `MoversLocked`, `ModuleEnabled`, `ModuleDisabled`, `PositionsReset`. External add-ons can listen to these through the global `Grimoire`.
+
+**Movers.** `Grimoire:RegisterMover(frame, key, label, defaultPoint)` makes any frame draggable in move mode (right-click the Grimoire button, or `/grimoire unlock`). Windows from `Grimoire:CreateWindow` are movers automatically. In move mode, shift-click frames and right-click → *Group with selected* to move them together; *Dim when idle* fades a frame or group after `idleSeconds` (1.5s by default; Layout menu) without changes, unless a member reports itself busy. Positions, groups and dimming are saved per profile.
 
 **Combat safety.** `Grimoire:RunOutOfCombat(fn)` defers protected-frame changes until combat ends.
 
@@ -55,7 +64,7 @@ function M:OnDisable() end         -- events + callbacks are released automatica
 
 ## Slash commands
 
-`/grimoire` (or `/grim`) lists all commands. Core: `unlock`, `lock`, `reset [frame]`, `modules`, `enable <module>`, `disable <module>`, `profile [name]`. Components add their own: `bags`, `bank`, `auctions`, `notes`, `icon`.
+`/grimoire` (or `/grim`) lists all commands. Core: `menu`, `unlock`, `lock`, `reset [frame]`, `modules`, `enable <module>`, `disable <module>`, `profile [name]`. Components add their own: `bags`, `bank`, `auctions`, `notes`, `icon`.
 
 ## Dev setup (Windows)
 
@@ -67,7 +76,11 @@ function M:OnDisable() end         -- events + callbacks are released automatica
    Adjust `-GameDir` to the actual Forever client folder.
 3. In game, confirm the interface number with `/dump select(4, GetBuildInfo())` and update `## Interface:` in every `.toc` if it differs from `16001` (Forever 1.60.1). The client version is also in `.build.info` in the World of Warcraft folder: interface = major × 10000 + minor × 100 + patch.
 4. Edit, then `/reload` in game to see changes.
-5. Recommended: VS Code with the **WoW API** (Ketho) and **Lua** (LuaLS) extensions (prompted via `.vscode/extensions.json`). In game, install **BugGrabber + BugSack** to catch Lua errors.
+5. Before pushing, check syntax and `.toc` file lists (needs Lua once: `winget install DEVCOM.Lua`):
+   ```powershell
+   .\scripts\check-lua.ps1
+   ```
+6. Recommended: VS Code with the **WoW API** (Ketho) and **Lua** (LuaLS) extensions (prompted via `.vscode/extensions.json`). In game, install **BugGrabber + BugSack** to catch Lua errors.
 
 ## Releasing
 

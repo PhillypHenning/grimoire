@@ -73,8 +73,12 @@ end
 -- Changes one setting from the menu and lets the module apply it live.
 function Grimoire:SetModuleSetting(module, key, value)
 	module.db[key] = value
-	if module.ApplySettings and module:IsEnabled() then
-		module:Call("ApplySettings", key)
+	if module.ApplySettings then
+		if module:IsEnabled() then
+			module:Call("ApplySettings", key)
+		else
+			module.settingsChanged = true -- applied the next time it's enabled
+		end
 	end
 	for _, option in ipairs(module.options) do
 		if option.key == key and option.reload then
@@ -92,6 +96,10 @@ function Grimoire:EnableModule(name)
 	if not available then return false, reason end
 	module.state = "enabled"
 	module:Call("OnEnable")
+	if module.settingsChanged then
+		module.settingsChanged = nil
+		module:Call("ApplySettings")
+	end
 	self:Fire("ModuleEnabled", name)
 	return true
 end

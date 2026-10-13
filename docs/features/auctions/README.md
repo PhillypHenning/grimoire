@@ -3,7 +3,7 @@
 - **Add-on:** `Grimoire_Auctions`
 - **Module:** `Auctions`
 - **Status:** Scaffolded, untested in game
-- **Opened from:** the *Auctions* button in [Bags](../bags/README.md), or `/grimoire auctions`
+- **Opened from:** the *Auctions* button in [Bags](../bags/README.md), the [Grimoire menu](../menu/README.md) (*Open ▸ Auctions*), or `/grim auctions`
 
 ## Summary
 

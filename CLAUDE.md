@@ -12,7 +12,8 @@ Phil's personal WoW Forever UI suite. It's just for him, not a public release. H
 - The repo folders are linked into `<game>\Interface\AddOns` with junctions: `scripts\link-addons.ps1 -GameDir <game>`. Re-run it when a new `Grimoire_*` folder appears.
 - Lua edits: `/reload`. `.toc` changes, new add-ons or new files: **restart the game**.
 - BugGrabber + BugSack catch errors. Saved data: `<game>\WTF\Account\<ACCOUNT>\SavedVariables\Grimoire.lua`.
-- There's no Lua syntax checker set up yet. Ask Phil before installing one (e.g. `winget`/scoop Lua for `luac -p`).
+- Before pushing, run `scripts\check-lua.ps1` (`luac -p` on every file plus a `.toc` file-list check). Lua 5.4 is installed with `winget install DEVCOM.Lua` (luac is in `%LOCALAPPDATA%\Programs\Lua\bin`). This PC has no Python.
+- Game folder on this PC: `C:\Program Files (x86)\World of Warcraft\_classic_beta_`; the character is the Warlock "Manflesh" on Classic Beta PvE. Baganator is installed there, and while it's loaded Grimoire Bags turns itself off (declared conflict).
 
 ## Architecture rules (see docs/adr)
 - **ADR 0001:** classic Blizzard look. All asset paths go through `Grimoire.media`; use Blizzard fonts, colors and icons; no bundled textures.
@@ -31,7 +32,7 @@ Phil's personal WoW Forever UI suite. It's just for him, not a public release. H
 - New architectural decisions get a new numbered ADR. Never edit an accepted ADR's decision.
 
 ## Current work
-See `docs/plans/manager-menu-debug-player-frame.md`. Milestone 1 (manager menu) is on branch `wip/manager-menu`.
+See `docs/plans/manager-menu-debug-player-frame.md`. Milestone 1 (manager menu) is done on branch `wip/manager-menu`, waiting for in-game testing.
 
 ## Working with Phil
 - He tests in game and reports back. Ask for BugSack text, `/grim modules` output, or screenshots rather than guessing.

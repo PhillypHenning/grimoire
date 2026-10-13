@@ -1,7 +1,8 @@
 # Grimoire: in-game manager menu, Debug component, player frame
 
-> **Progress (2026-10-13, handed over from the Mac):**
-> - **Milestone 1:** code is written on branch `wip/manager-menu` but not syntax-checked or tried in game. Still to do: the docs (`docs/features/menu/`, ADR 0005, updates to launcher, bags, player-bars, auras and core docs, README commands, `/grim menu`), then test in game and merge.
+> **Progress (2026-10-13, on the PC):**
+> - **Milestone 1:** code and docs done on branch `wip/manager-menu`; every `.lua` passes `scripts/check-lua.ps1`. Waiting on the in-game checks below, then merge.
+>   - Fixed while finishing: the launcher kept its on-screen spot when its size changes (offsets are converted for the new scale); settings changed while a module is off apply when it's turned back on; unknown option types are skipped.
 > - **Extra, done:** Health/Power never dim in combat or while not full (`isBusy` option on `RegisterMover`).
 > - **Milestones 2 and 3:** not started.
 
@@ -191,7 +192,7 @@ Each component gets an `options` list and `ApplySettings`:
 - **Reused, not rewritten:** `Grimoire.OpenMenu`, `CreateWindow`, `RegisterMover` and `BeginMoverDrag`'s combat check, `HideBlizzardFrame`, `RunOutOfCombat`, `ClassColorText`, `GetModule`, and `IsEnabled` for late-bound links between components.
 
 ## Verification
-- **On the Mac, before each push:** check every `.lua` file for syntax errors with `luac -p`. This needs `brew install lua` once; I'll ask before installing. Also check that each `.toc` file list matches the files on disk.
+- **Before each push:** run `scripts/check-lua.ps1` (every `.lua` through `luac -p`, and each `.toc` file list against the disk). Lua is installed on the PC (`winget install DEVCOM.Lua`).
 - **In game, Milestone 1:**
   - The button is bigger.
   - Left-click shows the menu; right-click toggles move mode.

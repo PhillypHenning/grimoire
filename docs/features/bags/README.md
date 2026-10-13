@@ -4,11 +4,11 @@
 - **Module:** `Bags`
 - **Status:** Scaffolded, untested in game
 - **Replaces:** Bagnon / Baganator / AdiBags / ArkInventory (declared as conflicts)
-- **Related:** [Bank](../bank/README.md), [Auctions](../auctions/README.md) (separate, optional add-ons)
+- **Related:** [Bank](../bank/README.md), [Auctions](../auctions/README.md), [Notes](../notes/README.md) (separate, optional add-ons)
 
 ## Summary
 
-All your bags in one classic-style window. Items work exactly as in Blizzard's bags (right-click to use, drag to move, shift-click to link). The window adds search, a Sort button, free-slot count, your gold, and buttons to open the Bank and Auctions viewers.
+All your bags in one classic-style window. Items work exactly as in Blizzard's bags (right-click to use, drag to move, shift-click to link). The window adds search, a Sort button, free-slot count, your gold, and buttons to open Notes and the Bank and Auctions viewers.
 
 ## What it solves
 
@@ -78,7 +78,7 @@ end
 if frame and frame:IsShown() and Grimoire.IsPlayerBag(frame:GetID()) then frame:Hide() end
 ```
 
-**Optional components ([ADR 0002](../../adr/0002-every-component-is-a-toggleable-addon.md)).** The Bank and Auctions buttons appear only when those add-ons are enabled:
+**Optional components ([ADR 0002](../../adr/0002-every-component-is-a-toggleable-addon.md)).** The Notes, Bank and Auctions buttons appear only when those add-ons are enabled. The search box stretches to fill whatever room the buttons leave:
 
 ```lua
 local module = Grimoire:GetModule("Bank")
@@ -98,13 +98,17 @@ button:SetShown(module and module:IsEnabled())
 
 ## Settings
 
-| Key | Default | Description |
-| --- | --- | --- |
-| `columns` | 10 | Slots per row |
+Stored in `GrimoireDB.profiles[<profile>].modules.Bags`. In the menu: **Components ▸ Bags**. A new column count is laid out straight away (`ApplySettings` clears the layout signature and refreshes an open window).
+
+| Key | Default | Menu choices | Description |
+| --- | --- | --- | --- |
+| `columns` | 10 | 8 / 10 / 12 / 14 | Slots per row |
+
+While Baganator, Bagnon, AdiBags or ArkInventory is loaded, the module stays off and the menu shows "(conflicts with …)".
 
 ## Screenshots
 
-_TODO: closed vs open, search active, after sort, Bank/Auctions buttons visible vs hidden._
+_TODO: closed vs open, search active, after sort, Notes/Bank/Auctions buttons visible vs hidden._
 
 ## Open questions / roadmap
 

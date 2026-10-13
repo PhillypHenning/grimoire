@@ -55,12 +55,12 @@ header:SetAttribute("template", "GrimoireAuraButtonTemplate")
 
 ## Settings
 
-Stored in `GrimoireDB.profiles[<profile>].modules.Buffs` / `.Debuffs` (apply after `/reload`).
+Stored in `GrimoireDB.profiles[<profile>].modules.Buffs` / `.Debuffs`. In the menu: **Components ▸ Auras ▸ Buffs / Debuffs**. Changes apply live: `ApplySettings` updates the header's `wrapAfter` / `maxWraps` attributes and the holder size, deferred with `RunOutOfCombat` because the header is protected.
 
-| Key | Default | Description |
-| --- | --- | --- |
-| `perRow` | 16 | Icons per row |
-| `rows` | 2 (Buffs), 1 (Debuffs) | Maximum rows |
+| Key | Default | Menu choices | Description |
+| --- | --- | --- | --- |
+| `perRow` | 16 | 8 / 12 / 16 / 20 | Icons per row |
+| `rows` | 2 (Buffs), 1 (Debuffs) | 1 / 2 / 3 | Maximum rows |
 
 ## Screenshots
 

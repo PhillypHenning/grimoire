@@ -31,19 +31,31 @@ local M = Grimoire:NewModule("Launcher", {
 	},
 })
 
+-- Point offsets are in the button's own (scaled) units, so a saved position is
+-- converted to the new scale to keep the button where it was on screen.
 function M:ApplySettings()
-	self.button:SetScale(self.db.scale)
+	local scale = self.db.scale
+	local pos = self.db.position
+	local savedScale = self.db.positionScale or 1
+	if savedScale ~= scale then
+		pos[3], pos[4] = pos[3] * savedScale / scale, pos[4] * savedScale / scale
+		self.db.positionScale = scale
+	end
+	self.button:SetScale(scale)
+	self:ApplyPosition()
 end
 
 function M:ResetPosition()
 	self.db.position = nil
+	self.db.positionScale = nil
 	Grimoire.CopyDefaults(self.defaults, self.db)
-	self:ApplyPosition()
+	self:ApplySettings()
 end
 
 function M:SavePosition()
 	local point, _, relativePoint, x, y = self.button:GetPoint(1)
 	self.db.position = { point, relativePoint, x, y }
+	self.db.positionScale = self.button:GetScale()
 end
 
 function M:ApplyPosition()
@@ -141,8 +153,7 @@ function M:Build()
 	button:SetScript("OnEnter", function() self:ShowTooltip() end)
 	button:SetScript("OnLeave", GameTooltip_Hide)
 
-	self:ApplySettings()
-	self:ApplyPosition()
+	self:ApplySettings() -- scale, then position
 end
 
 function M:OnInitialize()

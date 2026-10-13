@@ -72,6 +72,7 @@ local function OptionEntry(module, option)
 			func = function() Grimoire:SetModuleSetting(module, option.key, not module.db[option.key]) end,
 		}
 	end
+	if option.type ~= "choice" then return nil end -- unknown types are skipped
 	local children = {}
 	for _, choice in ipairs(option.values) do
 		local value, label = choice[1], choice[2]
@@ -125,7 +126,7 @@ function Grimoire:GetModuleMenu(module)
 	end
 
 	for _, option in ipairs(module.options) do
-		entries[#entries + 1] = OptionEntry(module, option)
+		entries[#entries + 1] = OptionEntry(module, option) -- nil appends nothing
 	end
 
 	local keys = {}

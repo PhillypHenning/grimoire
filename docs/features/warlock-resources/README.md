@@ -58,11 +58,11 @@ Bag counts probably aren't secret, but if one is, the icon stays lit and the upd
 
 ## Settings
 
-Stored in `GrimoireDB.profiles[<profile>].modules.WarlockResources`. Position, group and dimming are mover settings (see [Core](../core/README.md)).
+Stored in `GrimoireDB.profiles[<profile>].modules.WarlockResources`. In the menu: **Components ▸ Warlock**. Position, group and dimming are mover settings (see [Core](../core/README.md)).
 
-| Key | Default | Description |
-| --- | --- | --- |
-| `iconSize` | 26 | Shard icon size |
+| Key | Default | Menu choices | Description |
+| --- | --- | --- | --- |
+| `iconSize` | 26 | Small 20 / Medium 26 / Large 32 | Shard icon size (applies live) |
 
 ## Screenshots
 

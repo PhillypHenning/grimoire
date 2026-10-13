@@ -3,7 +3,7 @@
 - **Add-on:** `Grimoire_Notes`
 - **Module:** `Notes`
 - **Status:** Scaffolded, untested in game
-- **Opened with:** `/grimoire notes` (or `/grim notes`)
+- **Opened from:** the *Notes* button in [Bags](../bags/README.md), the [Grimoire menu](../menu/README.md) (*Open ▸ Notes*), or `/grim notes`
 
 ## Summary
 

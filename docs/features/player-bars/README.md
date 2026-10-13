@@ -31,7 +31,7 @@ flowchart LR
 
 **One bar, two modules** ([`Bars.lua`](../../../Grimoire_Player/Bars.lua)). `Health` and `Power` share the bar code but are separate modules, so each can be toggled with `/grimoire disable Health` and moved on its own.
 
-**Activity only on real changes.** A bar that's regenerating reports activity every tick and stays bright; a full bar stops reporting and dims after 1.5s:
+**Activity only on real changes.** A bar that's regenerating reports activity every tick and stays bright; a full bar stops reporting and dims after the idle time (1.5s by default):
 
 ```lua
 elseif current ~= self.lastCurrent or max ~= self.lastMax then
@@ -40,11 +40,24 @@ elseif current ~= self.lastCurrent or max ~= self.lastMax then
 end
 ```
 
+**Never dim in combat or while not full.** The bars pass an `isBusy` check to their mover. While it returns true, core treats the bar (and its whole group) as active:
+
+```lua
+function Bar:IsBusy()
+    if Grimoire:InCombat() or not self.lastCurrent then
+        return true -- in combat, or the value is secret
+    end
+    return self.lastCurrent < self.lastMax
+end
+```
+
+**Live settings.** Changing width, height or *Show %* in the menu calls `ApplySettings`, which resizes the frame and redraws the text straight away.
+
 ## Design decisions
 
 - **Classic colors** ([ADR 0001](../../adr/0001-prefer-classic-style-ui.md)): pure green health, `{0, 0, 1}` mana blue (kept as a setting, `manaColor`). Other power types use Blizzard's `PowerBarColor`.
 - **Health 16px, power 12px**, in the classic player frame's order.
-- **Dim when idle is on by default** for both. It replaces the earlier "fade when full" rule, which it covers: a full bar stops changing.
+- **Dim when idle is on by default** for both, but a bar only dims when it's full, out of combat and unchanged for the idle time. You want them bright whenever they matter.
 - **The Blizzard player frame stays.** It also has your portrait, level, and right-click menu, which these bars don't replace.
 
 ## Combat & secret-value constraints
@@ -53,14 +66,14 @@ If combat makes values opaque, the bar still fills, the raw value shows instead 
 
 ## Settings
 
-Stored in `GrimoireDB.profiles[<profile>].modules.Health` / `.Power`. Position, group and dimming are mover settings (see [Core](../core/README.md)).
+Stored in `GrimoireDB.profiles[<profile>].modules.Health` / `.Power`. In the menu: **Components ▸ Player ▸ Health / Power (mana)**. Position, group and dimming are mover settings (see [Core](../core/README.md)).
 
-| Key | Default | Description |
-| --- | --- | --- |
-| `width` | 220 | Bar width |
-| `height` | 16 (Health), 12 (Power) | Bar height |
-| `showText` | true | Show % on the bar |
-| `manaColor` | `{0, 0, 1}` | Power only: mana color |
+| Key | Default | Menu choices | Description |
+| --- | --- | --- | --- |
+| `showText` | true | toggle | Show % on the bar |
+| `width` | 220 | 180 / 220 / 260 / 300 | Bar width |
+| `height` | 16 (Health), 12 (Power) | Health 12 / 16 / 20 / 24; Power 8 / 10 / 12 / 16 | Bar height |
+| `manaColor` | `{0, 0, 1}` | — | Power only: mana color |
 
 ## Screenshots
 

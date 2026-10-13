@@ -43,7 +43,7 @@ sequenceDiagram
     WoW->>Core: PLAYER_LOGIN
     Core->>Core: LoadClassAddOns() — scan for X-Grimoire-Class
     Core->>Class: C_AddOns.LoadAddOn (only if class matches)
-    Class->>Core: Grimoire:NewModule("WarlockResourceBar")
+    Class->>Core: Grimoire:NewModule("WarlockResources")
     Core->>Class: OnInitialize() then OnEnable()
     Core->>Core: Fire("Ready")
 ```
@@ -65,12 +65,30 @@ stateDiagram-v2
 **Declaring a module** gives you defaults merged into per-profile settings, a class gate, and conflict detection ([`Core/Modules.lua`](../../../Grimoire/Core/Modules.lua)):
 
 ```lua
-local M = Grimoire:NewModule("WarlockResourceBar", {
+local M = Grimoire:NewModule("WarlockResources", {
     class = "WARLOCK",
     conflicts = { "SomeOtherShardAddon" }, -- skip ourselves if the user still runs it
     defaults = { width = 220 },
 })
 ```
+
+**Settings the menu shows** ([ADR 0005](../../adr/0005-modules-describe-their-settings.md)). A module names its add-on and describes its settings; core builds the [manager menu](../menu/README.md) from that and calls `ApplySettings(key)` when one changes:
+
+```lua
+local ADDON_NAME = ...
+local M = Grimoire:NewModule("Bags", {
+    addon = ADDON_NAME,
+    label = "Bags",
+    defaults = { columns = 10 },
+    options = {
+        { type = "choice", key = "columns", label = "Columns", values = { { 8, "8" }, { 10, "10" } } },
+        -- { type = "toggle", key = "showText", label = "Show %" }; either may add reload = true
+    },
+})
+function M:ApplySettings(key) --[[ re-layout ]] end
+```
+
+`Module:RegisterMover(frame, label, default, { dim, isBusy, suffix })` registers a mover keyed `module.name .. (suffix or "")`. `isBusy` returning true keeps the frame and its group from dimming.
 
 The `conflicts` list is what makes gradual migration safe. You can keep an old add-on installed while Grimoire's replacement matures, and the two won't fight.
 
@@ -117,14 +135,14 @@ flowchart LR
     Sel --> G["Right-click → Group with selected"] --> DB[(profile.moverGroups key → 'Group N')]
     Drag[Drag any member] --> Begin[BeginMoverDrag] --> Follow[Other members follow<br/>by the same offset] --> Save[Every member saved]
     Act[Module: NotifyMoverActivity key] --> Last[lastActivity]
-    Tick[Ticker, 0.2s] --> Idle{"Dim on, not in move mode,<br/>whole group idle > 1.5s<br/>and not hovered?"}
+    Tick[Ticker, 0.2s] --> Idle{"Dim on, not in move mode,<br/>whole group idle > idleSeconds,<br/>not hovered, no member busy?"}
     Last --> Idle
     Idle -- yes --> A1[alpha = profile.dimAlpha]
     Idle -- no --> A2[alpha = 1]
 ```
 
 - **Groups** merge: grouping a frame that's already in a group pulls the whole group in. A group left with one member dissolves.
-- **Dimming is per group.** "Dim when idle" applies to every member, and a group stays bright while any member is changing or hovered.
+- **Dimming is per group.** "Dim when idle" applies to every member, and a group stays bright while any member is changing, hovered or busy (`isBusy`, e.g. a bar that isn't full).
 - **Core owns mover alpha.** Modules report changes with `Grimoire:NotifyMoverActivity(key)` and never call `SetAlpha` on their mover frame.
 
 ## Design decisions
@@ -150,6 +168,7 @@ flowchart LR
 | `MoversUnlocked` / `MoversLocked` | — | `/grimoire unlock` / `lock` (or combat auto-lock) |
 | `ModuleEnabled` / `ModuleDisabled` | `name` | Module state changes |
 | `MoverGroupsChanged` | — | Movers were grouped, ungrouped or selection cleared |
+| `PositionsReset` | — | Layout ▸ Reset all positions (frames that aren't movers, like the launcher, reset themselves) |
 | `BankScanned` | — | `Grimoire_Bank` saved a new snapshot |
 | `AuctionsScanned` | — | `Grimoire_Auctions` saved a new snapshot |
 
@@ -159,9 +178,11 @@ Code that more than one component needs lives in core, so components never depen
 
 | Helper | File | Purpose |
 | --- | --- | --- |
-| `Grimoire:CreateWindow(key, title)` | `Core/Widgets.lua` | Classic dialog window: header, close button, Escape to close; registered as mover `<key>Window` |
-| `Grimoire.OpenMenu(anchor, entries)` | `Core/Widgets.lua` | Context menu via Blizzard's Menu API, or `UIDropDownMenu` on older clients |
-| `Grimoire:RegisterMover` / `NotifyMoverActivity` | `Core/Movers.lua` | Move mode, groups, idle dimming (see above) |
+| `Grimoire:CreateWindow(key, title, owner?)` | `Core/Widgets.lua` | Classic dialog window: header, close button, Escape to close; registered as mover `<key>Window` (listed in `owner`'s menu) |
+| `Grimoire.OpenMenu(anchor, entries)` | `Core/Widgets.lua` | Context menu (nested via `children`) using Blizzard's Menu API, or `UIDropDownMenu` on older clients; `anchor` nil opens at the cursor |
+| `Grimoire:GetMainMenu()` | `Core/Menu.lua` | The [manager menu](../menu/README.md); also `/grim menu` |
+| `Grimoire:SetModuleSetting(module, key, value)` | `Core/Modules.lua` | Change a declared setting and apply it live (`ApplySettings`) |
+| `Grimoire:RegisterMover` / `Module:RegisterMover` / `NotifyMoverActivity` | `Core/Movers.lua`, `Core/Modules.lua` | Move mode, groups, idle dimming (see above); the module version records the key for the menu |
 | `Grimoire:HideBlizzardFrame(frame)` | `Core/Util.lua` | Hide a default frame a component replaces (reparented, events off; `/reload` after disabling restores it) |
 | `Grimoire.CreateScrollArea(parent, name, child?)` | `Core/Widgets.lua` | Scroll frame with scrollbar |
 | `Grimoire.CreateDisplaySlot` / `SetDisplaySlotItem` | `Core/Widgets.lua` | Read-only item slot (tooltip, shift-click link) for cached items |
@@ -179,6 +200,6 @@ _Not applicable beyond `/grimoire unlock` mover overlays. Add one once tested in
 
 ## Open questions / roadmap
 
-- In-game options panel (Settings API) generated from module defaults.
+- More setting types (sliders, colours) for the [manager menu](../menu/README.md) ([ADR 0005](../../adr/0005-modules-describe-their-settings.md)).
 - Profile copy/delete commands.
 - DB migrations keyed on `GrimoireDB.version`.
