@@ -1,6 +1,6 @@
 # Prophecy plan format, version 1
 
-Prophecy plans are plain text: written outside the game (by hand or by an agent), pasted into the Prophecy window in game, checked, and saved in Prophecy's saved variables. In game, Prophecy shows the current step, puts its quests on the native quest tracker, pins its coordinates on the map and points the arrow at them, and ticks steps off by itself when their conditions are met. See [ADR 0006](../adr/0006-prophecy-plans-are-pasted-text.md) for why it's text.
+Prophecy plans are plain text: written outside the game (by hand or by an agent), pasted into the Prophecy window in game, checked, and saved in Prophecy's saved variables. In game, Prophecy shows the current step, puts its quests on the native quest tracker, pins its coordinates on the map and sends them to TomTom's arrow, and ticks steps off by itself when their conditions are met. See [ADR 0006](../adr/0006-prophecy-plans-are-pasted-text.md) for why it's text.
 
 This document is the contract between plan writers and the add-on. A plan that follows it loads; anything it doesn't cover is reported with a line number, not guessed at.
 
@@ -84,7 +84,7 @@ Optional lines directly after the chapter line:
 - `zone <map name>` sets the zone for coordinates in the steps that follow, until the next `zone` line. It carries across chapters. Use the zone name as the game shows it on the world map (`Durotar`, `The Barrens`, `Orgrimmar`, `Thunder Bluff`, `Tirisfal Glades`, `Undercity`, `Stonetalon Mountains`).
 - In step text, `@x,y` is a coordinate in the current zone: `@52.6,29.8`. Both numbers are map percentages, 0–100, one decimal place.
 - `@Zone Name:x,y` names the zone inline for one coordinate: `@Thunder Bluff:70.6,29.6`.
-- The first coordinate in a step is where the map pin and arrow point. Further coordinates get smaller pins.
+- The first coordinate in a step gets the main map pin and becomes the TomTom waypoint. Further coordinates get smaller pins and become the next waypoints once you reach the first.
 
 ## Steps
 
@@ -154,14 +154,14 @@ Requirements, one per indented line:
 
 | Requirement | Meaning |
 | --- | --- |
-| `skill <Profession> <n>` | A hard target. |
-| `skill <Profession> <n> soft` | A soft target: shown as a goal, never blocks. |
-| `skill <Profession> <n> soft min <m>` | Soft, but blocks below `m`. |
-| `level <n>`, `item …`, `learn …`, `accept …`, `turnin …` | As in completion conditions; hard. |
+| `skill <Profession> <n>` | A target: shown with a progress bar. |
+| `skill <Profession> <n> soft` | A soft target: shown as a goal, labelled "soft target". |
+| `skill <Profession> <n> soft min <m>` | Soft, with a minimum `m` that is highlighted while you're below it. |
+| `level <n>`, `item …`, `learn …`, `accept …`, `turnin …` | As in completion conditions. |
 | `check <text>` | A manual checklist item you tick. |
 | `note <text>` | Text shown in the gate box. |
 
-A gate is **open** when every hard requirement is met and every `check` is ticked. Prophecy shows each target's progress (`Tailoring 32 / 40`), and the route doesn't advance past a closed gate's chapter until you open it or skip it.
+Gates are **advice; they never block** (decided 2026-10-13). Prophecy shows each target's progress (`Tailoring 32 / 40`) in the plan viewer and, when you reach the gate, in the tracker; a gate is **open** when every non-soft target is met and every `check` is ticked, and the tracker moves on to the next chapter either way.
 
 ## Progress and identity
 
