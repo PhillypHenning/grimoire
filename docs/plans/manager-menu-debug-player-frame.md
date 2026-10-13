@@ -9,7 +9,8 @@
 > - **Milestone 3:** code and docs done (2026-10-13), done before Milestone 2 at Phil's request. Changes from the plan below: left-click opens a micro-menu (Character Info … Game Menu + Grimoire) instead of targeting; the portrait is an animated 3D model by default (Classic 2D as a setting) and plays emotes (cheer on level-up, laugh or cry on death, wave when someone joins the party or the pet appears); the pet frame is kept when Blizzard's player frame is hidden; the default "Player" group was dropped after Phil tried it. ADR 0004 written. Waiting on in-game testing.
 > - **Milestone 2:** not started.
 > - **Milestone 4** (pet, party, target frames): pet frame done (`Grimoire_Pet`, with the shared bar and portrait code moved to core in `Core/UnitFrames.lua`); party and target frames not started; target debuffs need Phil's decision.
-> - **Backlog:** raid frames.
+> - **Order agreed 2026-10-13:** Milestone 4 (party, target), then 4b (add-on buttons in the portrait menu), then 5 (Prophecy). Prophecy format v1 is on `main`.
+> - **Backlog:** action bars, map and quests, raid frames.
 
 ## Context
 You're testing Grimoire on the PC and have hit these:
@@ -240,8 +241,44 @@ Today `NewUnitBar` / `NewUnitPortrait` make whole modules, one mover each. Party
 
 ---
 
+## Milestone 4b: add-on buttons in the portrait menu
+After Milestone 4, before Prophecy (Phil, 2026-10-13).
+- The player portrait's left-click menu gets **Add-ons ▸**: one entry per add-on with a minimap button.
+- Each entry has a submenu:
+  - **Open:** the add-on's left-click action.
+  - **Options:** its right-click action, if it has one.
+  - **✓ Show on minimap:** turn that minimap button off.
+- **Found at runtime, no dependency:**
+  - LibDBIcon-1.0 / LibDataBroker launchers via `LibStub(name, true)`; most add-ons register this way (Questie, AtlasLoot, Leatrix, DBM, Details, Spy).
+  - Other buttons: scan the minimap's child buttons and call their click handlers.
+- **Settings:** which buttons are hidden from the minimap (saved per profile); "Hide all minimap buttons" toggle.
+
+## Milestone 5: Prophecy
+A plan written outside the game, pasted into WoW, drives the native quest tracker, map and pointer.
+- **Format:** [`docs/prophecy/FORMAT.md`](../prophecy/FORMAT.md) (version 1, on `main`). Decision: [ADR 0006](../adr/0006-prophecy-plans-are-pasted-text.md).
+- **First plan:** the Troll Warlock 1–30 guide (claude.ai artifact), converted by sub-agents against the format spec.
+- **Phases:**
+  - **5a: import and view.**
+    - `Grimoire_Prophecy` add-on with an import window: paste, validate (errors and warnings with line numbers), save to `GrimoireProphecyDB`.
+    - Plan list and plan viewer; current-step panel with manual ticking.
+    - Fallback: plan files in `Grimoire_Prophecy/Plans/`.
+  - **5b: completion.**
+    - `done` conditions and gates evaluate from game events: quest log changes and turn-ins, level, skills, bags, spells, position, zone.
+    - Soft and hard profession targets read live.
+  - **5c: tracker, map, pointer.**
+    - The current step's quests go on the native watch list, with a "Next:" line attached to the tracker.
+    - Map and minimap pins.
+    - Pointer: the native waypoint if Forever has one, else TomTom (late-bound), else our own arrow.
+    - Phil's `/dump` checks decide the map and pointer routes.
+  - **5d: feedback loop.**
+    - Progress and recorded spots (`/prophecy here`) saved where Claude can read them on this PC, to plan the next session.
+
+---
+
 ## Backlog
 Not scheduled. Pull an item into a milestone when it's wanted.
+- **Action bars** (Phil, 2026-10-13: little value over Blizzard's for now). Feasible: secure action buttons on Blizzard's templates, state-driver paging, hover-to-bind; replacing the main bar also means XP/rep bar, bag buttons and pet bar.
+- **Map and quests** (Phil, 2026-10-13: left to Questie, Leatrix Maps and TomTom). Only their minimap buttons get Grimoire control (Milestone 4b).
 - **Raid frames** (Phil, 2026-10-13): a compact grid for up to 40, built on the same unit-frame building blocks as party frames.
   - Locked together like the party frame.
   - Hides Blizzard's raid frames (`CompactRaidFrameManager` / `CompactRaidFrameContainer`).
