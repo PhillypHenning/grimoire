@@ -258,19 +258,40 @@ After Milestone 4, before Prophecy (Phil, 2026-10-13).
 A plan written outside the game, pasted into WoW, drives the native quest tracker, map and pointer.
 - **Format:** [`docs/prophecy/FORMAT.md`](../prophecy/FORMAT.md) (version 1, on `main`). Decision: [ADR 0006](../adr/0006-prophecy-plans-are-pasted-text.md).
 - **First plan:** the Troll Warlock 1–30 guide (claude.ai artifact), converted by sub-agents against the format spec.
+- **Features agreed with Phil (2026-10-13):**
+  - **Map markers:**
+    - A gold world-map pin for the current step.
+    - Smaller, faded pins for the next 3–5 steps in the chapter; none for done steps; pins only on their own zone's map.
+    - A minimap pin for the current step, kept at the minimap edge when it's out of range, and pulsing briefly when a new step becomes current.
+    - Hover a pin for the step's text, detail and reward; click it to set the TomTom waypoint or open the plan viewer at that step.
+  - **Pointer: TomTom only.** The current step's first coordinate becomes a TomTom waypoint; when you arrive, its next coordinate does.
+    - Grimoire draws no arrow.
+    - Late-bound: without TomTom, pins still work and Prophecy says TomTom isn't installed.
+  - **Tracker:** Prophecy's own movable panel plus the native quest tracker.
+    - The panel shows the current step and the next 2–3, each with a checkbox: tick = done (it leaves the panel), right-click = skip.
+    - Steps with `done` conditions tick themselves.
+    - The current step's quests are added to Blizzard's watch list for objective counts.
+    - At a gate, the panel shows its targets until it opens.
+  - **Gates never block:** they're advice. The tracker always moves on to the next chapter.
+  - **Plan viewer:** a window with chapters on the left and steps on the right, laid out like the web guide.
+    - Checkboxes, kind tags, detail, reward and verify notes; gate boxes with live skill bars; a skill strip read from the game.
+    - Per step: Show on map, Set TomTom waypoint, Make this the current step.
+    - Plan management: Import (paste box with line-numbered errors), plan list, active plan, delete, reset progress.
+    - Opened from **Open ▸ Prophecy** in the Grimoire menu, the portrait menu, and `/prophecy`.
+  - Progress per character, kept when an edited plan is re-imported. Optional steps never hold the tracker.
 - **Phases:**
   - **5a: import and view.**
     - `Grimoire_Prophecy` add-on with an import window: paste, validate (errors and warnings with line numbers), save to `GrimoireProphecyDB`.
     - Plan list and plan viewer; current-step panel with manual ticking.
     - Fallback: plan files in `Grimoire_Prophecy/Plans/`.
   - **5b: completion.**
-    - `done` conditions and gates evaluate from game events: quest log changes and turn-ins, level, skills, bags, spells, position, zone.
+    - `done` conditions and (advisory) gates evaluate from game events: quest log changes and turn-ins, level, skills, bags, spells, position, zone.
     - Soft and hard profession targets read live.
   - **5c: tracker, map, pointer.**
-    - The current step's quests go on the native watch list, with a "Next:" line attached to the tracker.
+    - Prophecy tracker panel with checkboxes; the current step's quests on the native watch list.
     - Map and minimap pins.
-    - Pointer: the native waypoint if Forever has one, else TomTom (late-bound), else our own arrow.
-    - Phil's `/dump` checks decide the map and pointer routes.
+    - Pointer: TomTom waypoints (late-bound).
+    - Phil's `/dump` checks decide how pins are drawn (map data providers vs. a pin library approach).
   - **5d: feedback loop.**
     - Progress and recorded spots (`/prophecy here`) saved where Claude can read them on this PC, to plan the next session.
 
