@@ -87,7 +87,7 @@ Milestone 1 also answers this inside the game: the menu shows every component's 
 - The old move/reset/group items move out of this file into the core menu.
 
 ### Notes discoverability
-- **Notes** button in the Bags toolbar, next to Bank and Auctions. Same rule as those two: it's looked up at runtime (`ToggleComponent("Notes")`) and only shows when Notes is enabled.
+- ~~Notes button in the Bags toolbar~~ (changed 2026-10-13, your call): Notes is separate from Bags. It has its own **floating round button** (shared `Grimoire.CreateRoundButton`, a normal mover), shown by default and turned off with *Components ▸ Notes ▸ Show Notes button*.
 - **Open ▸ Notes** in the main menu.
 
 ### Settings and live updates per component
@@ -100,7 +100,8 @@ Each component gets an `options` list and `ApplySettings`:
 | Buffs / Debuffs | Per row 8/12/16/20; rows 1/2/3 | Change the header attributes and holder size, deferred with `RunOutOfCombat` |
 | Bags | Columns 8/10/12/14 | Clear `layoutSignature`, then `Layout()` |
 | Launcher | Scale | `SetScale` |
-| Notes, Bank, Auctions | Only Enabled for now | — |
+| Notes | Show Notes button | Build or hide the button |
+| Bank, Auctions | Only Enabled for now | — |
 
 ---
 
@@ -175,7 +176,7 @@ Each component gets an `options` list and `ApplySettings`:
 - **ADR 0004**: components replace the Blizzard UI they duplicate. Hidden by default, a per-component toggle, and `/reload` to restore.
 - **ADR 0005**: modules describe their settings; core turns those descriptions into the menu.
 - **New feature docs**: `docs/features/menu/`, `debug/`, `player-frame/`. Each follows TEMPLATE.md, with diagrams and a screenshots folder.
-- **Updated**: core (Menu.lua, Log.lua, `SetModuleSetting`, submenus, default groups), launcher (click changes, scale), player-bars, auras, bags (Notes button), README layout and commands, `docs/README.md` index, ADR 0002 diagram, `.pkgmeta` (`Grimoire_Debug`), `.luarc.json` globals.
+- **Updated**: core (Menu.lua, Log.lua, `SetModuleSetting`, submenus, default groups), launcher (click changes, scale), player-bars, auras, notes (floating button), README layout and commands, `docs/README.md` index, ADR 0002 diagram, `.pkgmeta` (`Grimoire_Debug`), `.luarc.json` globals.
 
 ## Files
 - **Core:**
@@ -200,7 +201,7 @@ Each component gets an `options` list and `ApplySettings`:
   - Components ▸ lists all 9 add-ons, with the right status for any that aren't loaded.
   - Toggling Show % or Width changes the bar right away.
   - Disabling and re-enabling Health hides and shows it.
-  - The Notes button appears in Bags.
+  - The floating Notes button appears, opens Notes, can be dragged in move mode, and hides with *Show Notes button* off.
   - Reload UI works.
 - **In game, Milestone 2:**
   - Debug ▸ Show log lists module start-up entries.

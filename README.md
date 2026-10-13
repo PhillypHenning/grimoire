@@ -12,7 +12,7 @@ Grimoire_Auras/        Buffs and debuffs as separate frames (replaces the defaul
 Grimoire_Bags/         Combined bag window with search and sort
 Grimoire_Bank/         Bank snapshot + viewer
 Grimoire_Auctions/     Auction snapshot + viewer
-Grimoire_Notes/        Account-wide notes
+Grimoire_Notes/        Account-wide notes, with an optional floating button
 Grimoire_Launcher/     Movable Grimoire button: left-click menu, right-click move mode
 scripts/               Dev tooling: link-addons.ps1 (junctions), check-lua.ps1 (syntax + .toc check)
 docs/                  Component docs (summary, diagrams, screenshots) and ADRs

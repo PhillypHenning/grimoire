@@ -1,7 +1,6 @@
 local ADDON_NAME = ...
 local Grimoire = Grimoire
 
-local SIZE = 31
 local CLICK_AFTER_DRAG_SECONDS = 0.2
 
 -- A free-floating round button (not attached to the minimap).
@@ -106,32 +105,13 @@ function M:UpdateState()
 end
 
 function M:Build()
-	local media = Grimoire.media
-	local button = CreateFrame("Button", "GrimoireLauncherButton", UIParent)
-	button:SetSize(SIZE, SIZE)
-	button:SetFrameStrata("MEDIUM")
+	local button = Grimoire.CreateRoundButton("GrimoireLauncherButton")
 	button:SetMovable(true)
 	button:SetClampedToScreen(true)
-	button:RegisterForClicks("LeftButtonUp", "RightButtonUp")
 	button:RegisterForDrag("LeftButton")
-	button:SetHighlightTexture(media.roundButtonHighlight, "ADD")
 	self.button = button
-
-	local background = button:CreateTexture(nil, "BACKGROUND")
-	background:SetTexture(media.roundButtonBackground)
-	background:SetSize(20, 20)
-	background:SetPoint("TOPLEFT", 7, -5)
-
-	local icon = button:CreateTexture(nil, "ARTWORK")
-	icon:SetSize(17, 17)
-	icon:SetPoint("TOPLEFT", 7, -6)
-	self.icon = icon
+	self.icon = button.icon
 	self:ApplyIcon()
-
-	local border = button:CreateTexture(nil, "OVERLAY")
-	border:SetTexture(media.roundButtonBorder)
-	border:SetSize(53, 53)
-	border:SetPoint("TOPLEFT")
 
 	button:SetScript("OnDragStart", function(b)
 		b:StartMoving()

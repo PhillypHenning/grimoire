@@ -184,6 +184,7 @@ Code that more than one component needs lives in core, so components never depen
 | `Grimoire:SetModuleSetting(module, key, value)` | `Core/Modules.lua` | Change a declared setting and apply it live (`ApplySettings`) |
 | `Grimoire:RegisterMover` / `Module:RegisterMover` / `NotifyMoverActivity` | `Core/Movers.lua`, `Core/Modules.lua` | Move mode, groups, idle dimming (see above); the module version records the key for the menu |
 | `Grimoire:HideBlizzardFrame(frame)` | `Core/Util.lua` | Hide a default frame a component replaces (reparented, events off; `/reload` after disabling restores it) |
+| `Grimoire.CreateRoundButton(name, parent?)` | `Core/Widgets.lua` | Minimap-style round button (Grimoire button, Notes button); set `button.icon` |
 | `Grimoire.CreateScrollArea(parent, name, child?)` | `Core/Widgets.lua` | Scroll frame with scrollbar |
 | `Grimoire.CreateDisplaySlot` / `SetDisplaySlotItem` | `Core/Widgets.lua` | Read-only item slot (tooltip, shift-click link) for cached items |
 | `Grimoire.GetBagIDs` / `GetBankIDs` / `ReadContainer` | `Core/Containers.lua` | Inventory reading, including both bank-bag and bank-tab layouts |

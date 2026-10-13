@@ -93,7 +93,7 @@ end
 
 local function CreateToolbarButton(parent, text, onClick)
 	local button = CreateFrame("Button", nil, parent, "UIPanelButtonTemplate")
-	button:SetSize(62, 22)
+	button:SetSize(70, 22)
 	button:SetText(text)
 	button:SetScript("OnClick", onClick)
 	return button
@@ -132,11 +132,8 @@ function M:Build()
 	if not (C_Container and C_Container.SortBags) then
 		self.sortButton:Disable()
 	end
-	-- Bank, Auctions and Notes are separate add-ons (ADR 0002); their buttons only
-	-- show when those components are loaded and enabled.
-	self.notesButton = CreateToolbarButton(content, "Notes", function()
-		ToggleComponent("Notes")
-	end)
+	-- Bank and Auctions are separate add-ons (ADR 0002); their buttons only show
+	-- when those components are loaded and enabled.
 	self.bankButton = CreateToolbarButton(content, "Bank", function()
 		ToggleComponent("Bank")
 	end)
@@ -157,7 +154,6 @@ end
 function M:UpdateToolbar()
 	local anchor
 	for _, entry in ipairs({
-		{ self.notesButton, "Notes" },
 		{ self.auctionsButton, "Auctions" },
 		{ self.bankButton, "Bank" },
 		{ self.sortButton },

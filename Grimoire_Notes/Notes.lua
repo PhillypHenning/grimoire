@@ -9,7 +9,18 @@ local BUTTON_ROW_HEIGHT = 30
 local SCROLLBAR_WIDTH = 24
 local DELETE_CONFIRM_SECONDS = 3
 
-local M = Grimoire:NewModule("Notes", { addon = ADDON_NAME, label = "Notes" })
+local NOTE_ICON = "Interface\\Icons\\INV_Misc_Note_01"
+
+local M = Grimoire:NewModule("Notes", {
+	addon = ADDON_NAME,
+	label = "Notes",
+	defaults = {
+		showButton = true,
+	},
+	options = {
+		{ type = "toggle", key = "showButton", label = "Show Notes button" },
+	},
+})
 
 -- Notes are account-wide: GrimoireDB.global.notes = { nextID, list = { {id, title, body, created, updated, author, class} } }
 -- author/class record which character wrote the note, so it can be class-colored (ADR 0003).
@@ -239,7 +250,39 @@ function M:Toggle()
 	self.frame:SetShown(not self.frame:IsShown())
 end
 
+-- Floating button ----------------------------------------------------------------
+-- An optional round button that opens Notes. It's a normal mover: drag it in move
+-- mode, and the menu offers its reset and dimming options.
+
+function M:BuildButton()
+	local button = Grimoire.CreateRoundButton("GrimoireNotesButton")
+	button.icon:SetTexture(NOTE_ICON)
+	button:SetScript("OnClick", function() self:Toggle() end)
+	button:SetScript("OnEnter", function(b)
+		GameTooltip:SetOwner(b, "ANCHOR_LEFT")
+		GameTooltip:AddLine("Notes")
+		GameTooltip:AddLine("Click: open your notes", 1, 1, 1)
+		GameTooltip:Show()
+	end)
+	button:SetScript("OnLeave", GameTooltip_Hide)
+	self.button = button
+	self:RegisterMover(button, "Notes button", { "BOTTOMRIGHT", "UIParent", "BOTTOMRIGHT", -95, 120 }, { suffix = "Button" })
+end
+
+function M:ApplySettings()
+	if self.db.showButton and not self.button then
+		self:BuildButton()
+	end
+	if self.button then
+		self.button:SetShown(self.db.showButton)
+	end
+end
+
 -- Lifecycle --------------------------------------------------------------------
+
+function M:OnEnable()
+	self:ApplySettings()
+end
 
 function M:OnInitialize()
 	local global = Grimoire.db.global
@@ -253,5 +296,8 @@ end
 function M:OnDisable()
 	if self.frame then
 		self.frame:Hide()
+	end
+	if self.button then
+		self.button:Hide()
 	end
 end

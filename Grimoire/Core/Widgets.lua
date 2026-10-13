@@ -66,6 +66,33 @@ function Grimoire.CreateScrollArea(parent, name, child)
 	return scroll, child
 end
 
+-- A round button in the minimap-button style (ADR 0001): border, background and
+-- highlight from the game's own art. Set the picture with button.icon:SetTexture.
+function Grimoire.CreateRoundButton(name, parent)
+	local media = Grimoire.media
+	local button = CreateFrame("Button", name, parent or UIParent)
+	button:SetSize(31, 31)
+	button:SetFrameStrata("MEDIUM")
+	button:RegisterForClicks("LeftButtonUp", "RightButtonUp")
+	button:SetHighlightTexture(media.roundButtonHighlight, "ADD")
+
+	local background = button:CreateTexture(nil, "BACKGROUND")
+	background:SetTexture(media.roundButtonBackground)
+	background:SetSize(20, 20)
+	background:SetPoint("TOPLEFT", 7, -5)
+
+	local icon = button:CreateTexture(nil, "ARTWORK")
+	icon:SetSize(17, 17)
+	icon:SetPoint("TOPLEFT", 7, -6)
+	button.icon = icon
+
+	local border = button:CreateTexture(nil, "OVERLAY")
+	border:SetTexture(media.roundButtonBorder)
+	border:SetSize(53, 53)
+	border:SetPoint("TOPLEFT")
+	return button
+end
+
 local function DisplaySlot_OnEnter(slot)
 	if slot.link then
 		GameTooltip:SetOwner(slot, "ANCHOR_RIGHT")

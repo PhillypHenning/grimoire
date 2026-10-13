@@ -3,11 +3,11 @@
 - **Add-on:** `Grimoire_Notes`
 - **Module:** `Notes`
 - **Status:** Scaffolded, untested in game
-- **Opened from:** the *Notes* button in [Bags](../bags/README.md), the [Grimoire menu](../menu/README.md) (*Open ▸ Notes*), or `/grim notes`
+- **Opened from:** the floating Notes button, the [Grimoire menu](../menu/README.md) (*Open ▸ Notes*), or `/grim notes`
 
 ## Summary
 
-A simple in-game notebook: a list of notes on the left, title and text on the right. Notes are account-wide, so every character sees them, and they save as you type. Each note remembers which character wrote it and shows in that character's class color: a Warlock's notes are purple ([ADR 0003](../../adr/0003-show-character-and-class-color.md)).
+A simple in-game notebook: a list of notes on the left, title and text on the right. Notes are account-wide, so every character sees them, and they save as you type. Open it from its own floating button (optional, on by default), the Grimoire menu, or `/grim notes`. Each note remembers which character wrote it and shows in that character's class color: a Warlock's notes are purple ([ADR 0003](../../adr/0003-show-character-and-class-color.md)).
 
 ## What it solves
 
@@ -53,6 +53,7 @@ self.deleteButton:SetText("Confirm?")
 - **Account-wide**, not per character, but each note stores its `author` and `class`. The list and title use the author's class color, and the footer reads "Edited 5m ago by <name>".
 - **Newest first** by creation order. Editing doesn't reorder the list, so notes don't jump around while you type.
 - **Classic look**: dialog window, tooltip-style panels, quest-log highlight on rows.
+- **Its own floating button, not a Bags button** (your call). Notes has nothing to do with bags, and it should be reachable with Bags turned off (or replaced by Baganator). The button uses the shared `Grimoire.CreateRoundButton`, the same minimap-style art as the Grimoire button, with the game's note icon. Turn it off in the menu if you'd rather use *Open ▸ Notes*.
 
 ## Combat & secret-value constraints
 
@@ -60,7 +61,13 @@ None. Works in combat.
 
 ## Settings
 
-None yet.
+Stored in `GrimoireDB.profiles[<profile>].modules.Notes`. In the menu: **Components ▸ Notes**.
+
+| Key | Default | Menu choices | Description |
+| --- | --- | --- | --- |
+| `showButton` | true | toggle | Show the floating Notes button |
+
+The button is a normal mover (`NotesButton`): drag it in move mode, and the menu offers *Notes button: Reset position* and *Dim when idle*.
 
 ## Screenshots
 
