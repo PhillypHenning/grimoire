@@ -8,7 +8,7 @@
 > - **Extra, done:** Health/Power never dim in combat or while not full (`isBusy` option on `RegisterMover`).
 > - **Milestone 3:** code and docs done (2026-10-13), done before Milestone 2 at Phil's request. Changes from the plan below: left-click opens a micro-menu (Character Info … Game Menu + Grimoire) instead of targeting; the portrait is an animated 3D model by default (Classic 2D as a setting) and plays emotes (cheer on level-up, laugh or cry on death, wave when someone joins the party or the pet appears); the pet frame is kept when Blizzard's player frame is hidden; the default "Player" group was dropped after Phil tried it. ADR 0004 written. Waiting on in-game testing.
 > - **Milestone 2:** not started.
-> - **Milestone 4** (pet, party, target frames): pet frame done (`Grimoire_Pet`, with the shared bar and portrait code moved to core in `Core/UnitFrames.lua`); party and target frames not started; target debuffs need Phil's decision.
+> - **Milestone 4** (pet, party, target frames): code and docs done (2026-10-13). `Grimoire_Pet`, `Grimoire_Party`, `Grimoire_Target`, shared helpers in `Core/UnitFrames.lua`. Changed from the plan: Blizzard's classic party and target art is used directly; the existing unit-frame modules were kept and small shared helpers added beside them (no widget/module split needed); the target frame got auras (Phil hadn't answered; the recommended option) and Grimoire's own target of target (Blizzard's stops updating once its target frame is hidden). Waiting on in-game testing; target layout numbers to tune from a screenshot.
 > - **Order agreed 2026-10-13:** Milestone 4 (party, target), then 4b (add-on buttons in the portrait menu), then 5 (Prophecy). Prophecy format v1 is on `main`.
 > - **Backlog:** action bars, map and quests, raid frames.
 
@@ -312,7 +312,7 @@ Not scheduled. Pull an item into a milestone when it's wanted.
   - The button is bigger.
   - Left-click shows the menu; right-click toggles move mode.
   - Open ▸ Notes works.
-  - Components ▸ lists all 11 add-ons (Tweaks and Pet are new), with the right status for any that aren't loaded.
+  - Components ▸ lists all 13 add-ons (Tweaks, Pet, Party and Target are new), with the right status for any that aren't loaded.
   - Toggling Show % or Width changes the bar right away.
   - Disabling and re-enabling Health hides and shows it.
   - The floating Notes button appears, opens Notes, can be dragged in move mode, and hides with *Show Notes button* off.

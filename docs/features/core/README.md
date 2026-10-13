@@ -184,7 +184,9 @@ Code that more than one component needs lives in core, so components never depen
 | `Grimoire:SetModuleSetting(module, key, value)` | `Core/Modules.lua` | Change a declared setting and apply it live (`ApplySettings`) |
 | `Grimoire:RegisterMover` / `Module:RegisterMover` / `NotifyMoverActivity` | `Core/Movers.lua`, `Core/Modules.lua` | Move mode, groups, idle dimming (see above); the module version records the key for the menu |
 | `Grimoire:HideBlizzardFrame(frame)` | `Core/Util.lua` | Hide a default frame a component replaces (reparented, events off; `/reload` after disabling restores it) |
-| `Grimoire:NewUnitBar(name, opts)` / `NewUnitPortrait(name, opts)` | `Core/UnitFrames.lua` | Health/power bar and portrait modules for any unit (player, pet; later target); hide without the unit, except in move mode |
+| `Grimoire.CreateStatusBar` / `UpdateUnitBar` / `SetUnitRightClickMenu` / `UnitLevelText` / `BindingLabel` | `Core/UnitFrames.lua` | Pieces for frames holding several units in one mover (party, target): bars with Dead/Ghost/Offline, the unit menu, difficulty-coloured level, short keybind labels |
+| `Grimoire:NewUnitBar(name, opts)` / `NewUnitPortrait(name, opts)` | `Core/UnitFrames.lua` | Health/power bar and portrait modules for any unit (player, pet); hide without the unit, except in move mode |
+| `Grimoire.CreateStatusBar` / `UpdateUnitBar` / `SetUnitRightClickMenu` / `UnitLevelText` / `BindingLabel` | `Core/UnitFrames.lua` | Pieces for frames holding several units in one mover (party, target): bars with Dead/Ghost/Offline, the unit menu, difficulty-coloured level, short keybind labels |
 | `Grimoire.CreateRoundButton(name, parent?)` | `Core/Widgets.lua` | Minimap-style round button (Grimoire button, Notes button); set `button.icon` |
 | `Grimoire.CreateScrollArea(parent, name, child?)` | `Core/Widgets.lua` | Scroll frame with scrollbar |
 | `Grimoire.CreateDisplaySlot` / `SetDisplaySlotItem` | `Core/Widgets.lua` | Read-only item slot (tooltip, shift-click link) for cached items |

@@ -1,0 +1,10 @@
+## Interface: 16001
+## Title: |cff8788eeGrimoire|r Target
+## Notes: Classic target frame with debuffs, buffs and target of target, in one movable frame. Replaces Blizzard's target frame.
+## Author: Phil Henning
+## Version: @project-version@
+## RequiredDeps: Grimoire
+## Group: Grimoire
+## Category: Grimoire
+
+Target.lua

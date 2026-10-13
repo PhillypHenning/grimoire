@@ -11,6 +11,8 @@ Each component is its own add-on and can be switched on or off in the in-game Ad
 | [Player frame](features/player-frame/README.md) | `Grimoire_Player` | Scaffolded, untested in game |
 | [Player bars](features/player-bars/README.md) | `Grimoire_Player` | Scaffolded, untested in game |
 | [Pet](features/pet/README.md) | `Grimoire_Pet` | Scaffolded, untested in game |
+| [Party frames](features/party/README.md) | `Grimoire_Party` | Scaffolded, untested in game |
+| [Target frame](features/target/README.md) | `Grimoire_Target` | Scaffolded, untested in game |
 | [Warlock resources](features/warlock-resources/README.md) | `Grimoire_Warlock` | Scaffolded, untested in game |
 | [Auras](features/auras/README.md) | `Grimoire_Auras` | Scaffolded, untested in game (moves Blizzard's buff frame) |
 | [Bags](features/bags/README.md) | `Grimoire_Bags` | Scaffolded, untested in game |

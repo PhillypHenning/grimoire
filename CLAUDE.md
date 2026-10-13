@@ -34,7 +34,7 @@ Phil's personal WoW Forever UI suite. It's just for him, not a public release. H
 - New architectural decisions get a new numbered ADR. Never edit an accepted ADR's decision.
 
 ## Current work
-See `docs/plans/manager-menu-debug-player-frame.md`. Milestones 1 (manager menu) and 3 (player frame) are done on branch `wip/manager-menu`, waiting for in-game testing. Milestone 4 (pet done; party and target frames to do) and Milestone 2 (Debug) are open; raid frames are in the backlog. Long-term goal: replace Blizzard's UI entirely (ADR 0004).
+See `docs/plans/manager-menu-debug-player-frame.md`. Milestones 1 (manager menu) and 3 (player frame) are done on branch `wip/manager-menu`, waiting for in-game testing. Milestone 4 (pet, party, target frames) is done and waiting for testing; next are 4b (add-on buttons in the portrait menu), then 5 (Prophecy); Milestone 2 (Debug) is open; raid frames are in the backlog. Long-term goal: replace Blizzard's UI entirely (ADR 0004).
 
 ## Working with Phil
 - He tests in game and reports back. Ask for BugSack text, `/grim modules` output, or screenshots rather than guessing.

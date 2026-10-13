@@ -27,6 +27,8 @@ flowchart TD
     Notes[Grimoire_Notes] --> Core
     Player[Grimoire_Player] --> Core
     Pet[Grimoire_Pet] --> Core
+    Party[Grimoire_Party] --> Core
+    Target[Grimoire_Target] --> Core
     Warlock[Grimoire_Warlock] --> Core
     Auras[Grimoire_Auras] --> Core
     Launcher[Grimoire_Launcher] --> Core

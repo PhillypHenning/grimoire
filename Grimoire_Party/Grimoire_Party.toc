@@ -1,0 +1,10 @@
+## Interface: 16001
+## Title: |cff8788eeGrimoire|r Party
+## Notes: Classic party frames in one movable frame, each portrait showing its target keybinding. Replaces Blizzard's party frames.
+## Author: Phil Henning
+## Version: @project-version@
+## RequiredDeps: Grimoire
+## Group: Grimoire
+## Category: Grimoire
+
+Party.lua

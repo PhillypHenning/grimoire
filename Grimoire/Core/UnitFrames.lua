@@ -220,15 +220,8 @@ end
 
 local Portrait = {}
 
--- Right-click: the unit's Blizzard menu. Older clients use a UIDropDownMenu.
 function Portrait:SetRightClickMenu(frame)
-	local dropdown = self.blizzardDropDown and _G[self.blizzardDropDown]
-	if dropdown and ToggleDropDownMenu then
-		frame:SetAttribute("type2", "menu")
-		frame.menu = function() ToggleDropDownMenu(1, nil, dropdown, "cursor", 0, 0) end
-	else
-		frame:SetAttribute("type2", "togglemenu")
-	end
+	Grimoire.SetUnitRightClickMenu(frame, self.blizzardDropDown)
 end
 
 function Portrait:Build()
@@ -435,4 +428,120 @@ function Grimoire:NewUnitPortrait(name, opts)
 	module.blizzardFrame, module.blizzardDropDown = opts.blizzardFrame, opts.blizzardDropDown
 	module.blizzardLabel = opts.blizzardLabel
 	return module
+end
+
+-- Shared helpers ----------------------------------------------------------------------------
+-- Small pieces for frames that show several units inside one mover (party, target),
+-- where each unit's portrait and bars are widgets rather than modules.
+
+-- Right-click on a secure unit button: the unit's Blizzard menu. Older clients use a
+-- UIDropDownMenu (dropdownName, e.g. "TargetFrameDropDown"); newer ones "togglemenu".
+function Grimoire.SetUnitRightClickMenu(button, dropdownName)
+	local dropdown = dropdownName and _G[dropdownName]
+	if dropdown and ToggleDropDownMenu then
+		button:SetAttribute("type2", "menu")
+		button.menu = function() ToggleDropDownMenu(1, nil, dropdown, "cursor", 0, 0) end
+	else
+		button:SetAttribute("type2", "togglemenu")
+	end
+end
+
+-- A bare status bar with centred text, for laying out inside another frame.
+function Grimoire.CreateStatusBar(parent, width, height)
+	local bar = CreateFrame("StatusBar", nil, parent)
+	bar:SetSize(width, height)
+	bar:SetStatusBarTexture(Grimoire.media.statusbar)
+	bar:SetMinMaxValues(0, 1)
+	bar:SetValue(0)
+	bar.text = bar:CreateFontString(nil, "OVERLAY", "TextStatusBarTextSmall")
+	bar.text:SetPoint("CENTER")
+	return bar
+end
+
+local GREY = { r = 0.5, g = 0.5, b = 0.5 }
+
+function Grimoire.UnitPowerColor(unit, manaColor)
+	local _, token = UnitPowerType(unit)
+	if token == "MANA" or not token then
+		return manaColor or { r = 0, g = 0, b = 1 }
+	end
+	return (PowerBarColor and PowerBarColor[token]) or manaColor
+end
+
+-- Fills a bar from a unit's health or power. Empty when the unit doesn't exist; grey
+-- with "Dead", "Ghost" or "Offline" when that applies.
+---@param kind "health"|"power"
+function Grimoire.UpdateUnitBar(bar, unit, kind, showText, manaColor)
+	if not UnitExists(unit) then
+		bar:SetMinMaxValues(0, 1)
+		bar:SetValue(0)
+		bar.text:SetText("")
+		return
+	end
+	local current, max, color
+	if kind == "health" then
+		current, max, color = UnitHealth(unit), UnitHealthMax(unit), HEALTH_COLOR
+	else
+		local powerType = UnitPowerType(unit)
+		current, max = UnitPower(unit, powerType), UnitPowerMax(unit, powerType)
+		color = Grimoire.UnitPowerColor(unit, manaColor)
+	end
+	local state
+	if not UnitIsConnected(unit) then
+		state = PLAYER_OFFLINE or "Offline"
+	elseif UnitIsGhost(unit) then
+		state = "Ghost"
+	elseif UnitIsDead(unit) then
+		state = DEAD or "Dead"
+	end
+	if state then
+		color = GREY
+	end
+	bar:SetStatusBarColor(color.r, color.g, color.b)
+	bar:SetMinMaxValues(0, max)
+	bar:SetValue(current)
+	if state and kind == "health" then
+		bar.text:SetText(state)
+	elseif not showText then
+		bar.text:SetText("")
+	elseif Grimoire.AnySecret(current, max) then
+		bar.text:SetText(current)
+	else
+		bar.text:SetFormattedText("%d%%", max > 0 and math.floor(current / max * 100) or 0)
+	end
+end
+
+-- Level text colour against the player's level, like Blizzard's target frame.
+-- Returns text and colour; a level of -1 (too high to show) is "??" in red.
+function Grimoire.UnitLevelText(unit)
+	local level = UnitLevel(unit)
+	if not level or level < 0 then
+		return "??", { r = 1, g = 0, b = 0 }
+	end
+	local getColor = GetQuestDifficultyColor or GetDifficultyColor
+	return tostring(level), getColor and getColor(level) or NORMAL_FONT_COLOR
+end
+
+local MODIFIER_ABBR = { ["SHIFT-"] = "s", ["CTRL-"] = "c", ["ALT-"] = "a", ["META-"] = "m" }
+local KEY_ABBR = {
+	MOUSEWHEELUP = "WU", MOUSEWHEELDOWN = "WD", BUTTON3 = "M3", BUTTON4 = "M4", BUTTON5 = "M5",
+	SPACE = "Sp", ESCAPE = "Esc", BACKSPACE = "BS", INSERT = "Ins", DELETE = "Del",
+	HOME = "Hm", END = "End", PAGEUP = "PU", PAGEDOWN = "PD",
+}
+
+-- The first key bound to a binding command, shortened for a badge: "F2", "s2",
+-- "cN3". nil when the command isn't bound.
+function Grimoire.BindingLabel(command)
+	local key = GetBindingKey(command)
+	if not key then return nil end
+	local label = key
+	for modifier, short in pairs(MODIFIER_ABBR) do
+		label = label:gsub(modifier, short)
+	end
+	label = label:gsub("NUMPAD", "N")
+	local base = label:match("(%u%w*)$")
+	if base and KEY_ABBR[base] then
+		label = label:sub(1, #label - #base) .. KEY_ABBR[base]
+	end
+	return label
 end

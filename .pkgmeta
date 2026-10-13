@@ -5,6 +5,8 @@ move-folders:
   Grimoire/Grimoire: Grimoire
   Grimoire/Grimoire_Player: Grimoire_Player
   Grimoire/Grimoire_Pet: Grimoire_Pet
+  Grimoire/Grimoire_Party: Grimoire_Party
+  Grimoire/Grimoire_Target: Grimoire_Target
   Grimoire/Grimoire_Warlock: Grimoire_Warlock
   Grimoire/Grimoire_Auras: Grimoire_Auras
   Grimoire/Grimoire_Bags: Grimoire_Bags

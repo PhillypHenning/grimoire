@@ -35,6 +35,17 @@ Grimoire.media = {
 	stateIconCombat = { 0.5, 1, 0, 0.484375 },
 	leaderIcon = "Interface\\GroupFrame\\UI-Group-LeaderIcon",
 	pvpIcon = "Interface\\TargetingFrame\\UI-PVP-", -- .. "Horde" / "Alliance" / "FFA"
+	-- Classic unit frame art: party member (ring portrait + bar slots), target frame
+	-- and its elite/rare dragon variants, raid target markers.
+	partyFrame = "Interface\\TargetingFrame\\UI-PartyFrame",
+	targetFrame = "Interface\\TargetingFrame\\UI-TargetingFrame",
+	targetFrameElite = "Interface\\TargetingFrame\\UI-TargetingFrame-Elite",
+	targetFrameRare = "Interface\\TargetingFrame\\UI-TargetingFrame-Rare",
+	targetFrameRareElite = "Interface\\TargetingFrame\\UI-TargetingFrame-Rare-Elite",
+	targetOfTargetFrame = "Interface\\TargetingFrame\\UI-TargetofTargetFrame",
+	raidTargetIcons = "Interface\\TargetingFrame\\UI-RaidTargetingIcons",
+	auraBorder = "Interface\\Buttons\\UI-Debuff-Overlays",
+	nameBackground = "Interface\\TargetingFrame\\UI-TargetingFrame-LevelBackground",
 }
 
 function Grimoire.FormatAgo(timestamp)
