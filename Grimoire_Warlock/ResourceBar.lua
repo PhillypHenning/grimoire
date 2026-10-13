@@ -5,9 +5,8 @@ local SOUL_SHARD_ITEM = 6265
 local SOUL_SHARD_ICON_FALLBACK = "Interface\\Icons\\INV_Misc_Gem_Amethyst_02"
 local POWER_MANA = Enum.PowerType.Mana
 
--- Classic player frame colors: health is pure green, mana pure blue.
+-- Classic player frame health green.
 local HEALTH_COLOR = { r = 0, g = 1, b = 0 }
-local MANA_COLOR = (PowerBarColor and PowerBarColor.MANA) or { r = 0, g = 0, b = 1 }
 
 local M = Grimoire:NewModule("WarlockResourceBar", {
 	class = "WARLOCK",
@@ -19,6 +18,7 @@ local M = Grimoire:NewModule("WarlockResourceBar", {
 		shardSize = 26,
 		showBarText = true,
 		alphaWhenFull = 0.4, -- a full bar fades out of combat; anything else stays bright
+		manaColor = { r = 0, g = 0, b = 1 }, -- classic mana blue
 	},
 })
 
@@ -52,7 +52,7 @@ function M:Build()
 	self.health.border:SetPoint("TOPLEFT")
 	self.health.border:SetPoint("TOPRIGHT")
 
-	self.mana = CreateBar(frame, db.manaHeight, MANA_COLOR)
+	self.mana = CreateBar(frame, db.manaHeight, db.manaColor)
 	self.mana.border:SetPoint("TOPLEFT", self.health.border, "BOTTOMLEFT", 0, -db.barSpacing)
 	self.mana.border:SetPoint("TOPRIGHT", self.health.border, "BOTTOMRIGHT", 0, -db.barSpacing)
 

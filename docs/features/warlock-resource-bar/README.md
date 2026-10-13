@@ -49,7 +49,7 @@ local SOUL_SHARD_ITEM = 6265
 local count = C_Item.GetItemCount(SOUL_SHARD_ITEM)
 ```
 
-**Classic look per [ADR 0001](../../adr/0001-prefer-classic-style-ui.md).** Tooltip-style borders, the classic status bar texture, classic green health and Blizzard's mana blue (`PowerBarColor.MANA`), the real Soul Shard icon, and Blizzard fonts.
+**Classic look per [ADR 0001](../../adr/0001-prefer-classic-style-ui.md).** Tooltip-style borders, the classic status bar texture, classic green health and classic mana blue (`{0, 0, 1}`), the real Soul Shard icon, and Blizzard fonts.
 
 **Fade only when full.** Each bar fades on its own once it's full and you're out of combat. Anything below full stays bright so it's easy to read while you regen. The shard icon fades only when both bars have:
 
@@ -96,6 +96,7 @@ Stored in `GrimoireDB.profiles[<profile>].modules.WarlockResourceBar`.
 | `shardSize` | 26 | Shard icon size |
 | `showBarText` | true | Show health/mana % on the bars |
 | `alphaWhenFull` | 0.4 | Opacity of a full bar out of combat |
+| `manaColor` | `{0, 0, 1}` | Classic mana blue |
 
 ## Screenshots
 
