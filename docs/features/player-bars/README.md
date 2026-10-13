@@ -58,7 +58,8 @@ end
 - **Classic colors** ([ADR 0001](../../adr/0001-prefer-classic-style-ui.md)): pure green health, `{0, 0, 1}` mana blue (kept as a setting, `manaColor`). Other power types use Blizzard's `PowerBarColor`.
 - **Health 16px, power 12px**, in the classic player frame's order.
 - **Dim when idle is on by default** for both, but a bar only dims when it's full, out of combat and unchanged for the idle time. You want them bright whenever they matter.
-- **The Blizzard player frame stays.** It also has your portrait, level, and right-click menu, which these bars don't replace.
+- **Blizzard's player frame is replaced** by the [player frame](../player-frame/README.md) (portrait, name, level, menus), which hides it. The bars are its health and mana.
+- **Default "Player" group.** Health and Power start grouped with the player frame and Warlock Resources (`defaultGroup = "Player"`), once per profile.
 
 ## Combat & secret-value constraints
 

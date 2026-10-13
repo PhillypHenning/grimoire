@@ -6,7 +6,8 @@
 >   - **Added (Phil's request):** `Grimoire_Tweaks` with a `Graphics` module (his `/console` graphics settings as menu choices, reapplied at login, undoable) and `/grim cvars` to dump every CVar for finding more.
 >   - Fixed while finishing: the launcher kept its on-screen spot when its size changes (offsets are converted for the new scale); settings changed while a module is off apply when it's turned back on; unknown option types are skipped.
 > - **Extra, done:** Health/Power never dim in combat or while not full (`isBusy` option on `RegisterMover`).
-> - **Milestones 2 and 3:** not started.
+> - **Milestone 3:** code and docs done (2026-10-13), done before Milestone 2 at Phil's request. Changes from the plan below: left-click opens a micro-menu (Character Info … Game Menu + Grimoire) instead of targeting; the portrait is an animated 3D model by default (Classic 2D as a setting) and plays emotes (cheer on level-up, laugh or cry on death, wave when someone joins the party or the pet appears); the pet frame is kept when Blizzard's player frame is hidden. ADR 0004 written. Waiting on in-game testing.
+> - **Milestone 2:** not started.
 
 ## Context
 You're testing Grimoire on the PC and have hit these:
@@ -148,7 +149,7 @@ Each component gets an `options` list and `ApplySettings`:
 
 ### `PlayerFrame` module (new `Grimoire_Player/Unit.lua`, added to `Grimoire_Player.toc`)
 - **A secure unit button** (`SecureUnitButtonTemplate`, unit `player`), created out of combat:
-  - **Left-click** targets you.
+  - **Left-click** ~~targets you~~ opens a menu of the micro-menu panels plus Grimoire (changed at Phil's request).
   - **Right-click** opens Blizzard's player menu. It uses `type2 = "togglemenu"` if the client supports it. Otherwise it uses the menu function to open `PlayerFrameDropDown`. Which one works is checked in game, and the choice is written to the log.
 - **What it shows:**
   - Round portrait (`SetPortraitTexture`; refreshes on `UNIT_PORTRAIT_UPDATE`).
@@ -212,7 +213,9 @@ Each component gets an `options` list and `ApplySettings`:
   - After `/reload`, `Grimoire_Debug.lua` exists in SavedVariables.
 - **In game, Milestone 3:**
   - Blizzard's player frame is gone; Grimoire's shows portrait, name and level.
-  - Left-click targets you; right-click opens the player menu.
+  - Left-click opens the panel menu (Character Info … Game Menu all open); right-click opens the player menu.
+  - The 3D portrait animates; it cheers on level-up, laughs or cries on death, waves when a party member or pet appears.
+  - The pet frame is still there after Blizzard's player frame is hidden.
   - Resting and combat icons work.
   - The Player group drags as one.
   - Dragging is blocked in combat.

@@ -51,6 +51,7 @@ end
 - **Class resources are their own frame.** Every class package follows the pattern `<Class>Resources`, separate from the shared health/power bars.
 - **One icon plus an exact count**, greyed out at 0. The real Soul Shard icon follows [ADR 0001](../../adr/0001-prefer-classic-style-ui.md).
 - **Dim when idle is on by default.** Turn it off from the frame's right-click menu in move mode.
+- **Starts in the "Player" group** with the player frame and Health/Power bars (`defaultGroup`), once per profile. A position you already saved stays where it is.
 
 ## Combat & secret-value constraints
 

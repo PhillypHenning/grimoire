@@ -1,6 +1,6 @@
 ## Interface: 16001
 ## Title: |cff8788eeGrimoire|r Player
-## Notes: Player health and power bars, each movable on its own.
+## Notes: Player frame (animated portrait, replaces Blizzard's) and health and power bars, each movable.
 ## Author: Phil Henning
 ## Version: @project-version@
 ## RequiredDeps: Grimoire
@@ -8,3 +8,4 @@
 ## Category: Grimoire
 
 Bars.lua
+Portrait.lua

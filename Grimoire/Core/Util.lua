@@ -29,6 +29,12 @@ Grimoire.media = {
 	roundButtonBorder = "Interface\\Minimap\\MiniMap-TrackingBorder",
 	roundButtonBackground = "Interface\\Minimap\\UI-Minimap-Background",
 	roundButtonHighlight = "Interface\\Minimap\\UI-Minimap-ZoomButton-Highlight",
+	-- Player frame status icons
+	stateIcon = "Interface\\CharacterFrame\\UI-StateIcon",
+	stateIconResting = { 0, 0.5, 0, 0.421875 },
+	stateIconCombat = { 0.5, 1, 0, 0.484375 },
+	leaderIcon = "Interface\\GroupFrame\\UI-Group-LeaderIcon",
+	pvpIcon = "Interface\\TargetingFrame\\UI-PVP-", -- .. "Horde" / "Alliance" / "FFA"
 }
 
 function Grimoire.FormatAgo(timestamp)
