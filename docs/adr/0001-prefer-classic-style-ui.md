@@ -5,7 +5,7 @@
 
 ## Context
 
-WoW Forever runs classic-era game rules on the modern (Mainline) client. Most popular UI replacements, such as ElvUI-style suites, swap Blizzard's look for a flat, modern aesthetic. Grimoire aims to replace many add-ons at once, so without a guiding style each new feature would drift towards whatever its author felt like that day. The suite would end up looking like a patchwork.
+WoW Forever runs classic-era game rules on a Classic-family client (build 1.60.1, interface 16001). Most popular UI replacements, such as ElvUI-style suites, swap Blizzard's look for a flat, modern aesthetic. Grimoire aims to replace many add-ons at once, so without a guiding style each new feature would drift towards whatever its author felt like that day. The suite would end up looking like a patchwork.
 
 Playing Forever is partly about the classic feel. A UI that matches the rest of the game's art (tooltips, character sheet, spellbook, default frames) keeps that feel intact. It also means Grimoire frames sit naturally next to Blizzard frames we haven't replaced yet.
 

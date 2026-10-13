@@ -1,4 +1,4 @@
-## Interface: 120105
+## Interface: 16001
 ## Title: |cff8788eeGrimoire|r Warlock
 ## Notes: Warlock resource bar (mana + soul shards) for Grimoire.
 ## Author: Phil Henning

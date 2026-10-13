@@ -1,4 +1,4 @@
-## Interface: 120105
+## Interface: 16001
 ## Title: |cff8788eeGrimoire|r Notes
 ## Notes: Account-wide notes.
 ## Author: Phil Henning

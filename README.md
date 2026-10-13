@@ -62,7 +62,7 @@ function M:OnDisable() end         -- events + callbacks are released automatica
    .\scripts\link-addons.ps1 -GameDir "C:\Program Files (x86)\World of Warcraft\_forever_"
    ```
    Adjust `-GameDir` to the actual Forever client folder.
-3. In game, confirm the interface number with `/dump select(4, GetBuildInfo())` and update `## Interface:` in every `.toc` if it differs from `120105`.
+3. In game, confirm the interface number with `/dump select(4, GetBuildInfo())` and update `## Interface:` in every `.toc` if it differs from `16001` (Forever 1.60.1). The client version is also in `.build.info` in the World of Warcraft folder: interface = major × 10000 + minor × 100 + patch.
 4. Edit, then `/reload` in game to see changes.
 5. Recommended: VS Code with the **WoW API** (Ketho) and **Lua** (LuaLS) extensions (prompted via `.vscode/extensions.json`). In game, install **BugGrabber + BugSack** to catch Lua errors.
 

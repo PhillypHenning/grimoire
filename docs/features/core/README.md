@@ -111,7 +111,7 @@ end
 
 - **Own framework instead of Ace3.** The needs are small, and the code stays readable and dependency-free. AceDB/AceConfig can be pulled in via `.pkgmeta` externals if an options panel grows complex.
 - **Global `Grimoire` table.** Required for cross-add-on modules, and it doubles as a public API for third-party integration.
-- **Unknown events are skipped.** Forever mixes classic rules with the Mainline client, so modules can register legacy *and* modern events and only the real ones are used.
+- **Unknown events are skipped.** Forever is a Classic-family client whose API may differ from both Classic Era and retail, so modules can register legacy *and* modern events and only the real ones are used.
 - **Own `inCombat` flag.** `InCombatLockdown()` still reports false inside the `PLAYER_REGEN_DISABLED` handler.
 
 ## Combat & secret-value constraints

@@ -1,4 +1,4 @@
-## Interface: 120105
+## Interface: 16001
 ## Title: |cff8788eeGrimoire|r Bags
 ## Notes: One combined bag window with search and sort.
 ## Author: Phil Henning

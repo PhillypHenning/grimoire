@@ -155,7 +155,7 @@ function Module:GetEventFrame()
 	return self.eventFrame
 end
 
--- Forever mixes classic rules with the Mainline client, so some events may not
+-- Forever is a Classic-family client with its own API mix, so some events may not
 -- exist. Registering an unknown event is a hard error; skip it instead.
 local function IsEventValid(event)
 	return not (C_EventUtils and C_EventUtils.IsEventValid) or C_EventUtils.IsEventValid(event)
