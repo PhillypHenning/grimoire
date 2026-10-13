@@ -5,7 +5,7 @@ local CLICK_AFTER_DRAG_SECONDS = 0.2
 
 -- A free-floating round button (not attached to the minimap).
 --   Left-click   toggle move mode for every Grimoire frame
---   Right-click  menu: move mode, reset positions, open windows
+--   Right-click  menu: move mode, reset positions, group selected frames, open windows
 --   Drag         move the button itself (works any time, it isn't protected)
 
 -- Tome icons that ship with the game, for /grimoire icon to cycle through.
@@ -37,6 +37,13 @@ function M:BuildMenu()
 		{ text = "Move frames", checked = function() return Grimoire.moversUnlocked end, func = ToggleMoveMode },
 		{ text = "Reset frame positions", func = function() self:ResetPositions() end },
 	}
+	local selected = Grimoire:GetSelectedMovers()
+	if #selected >= 2 then
+		entries[#entries + 1] = { text = "Group selected frames", func = function() Grimoire:GroupMovers(selected) end }
+	end
+	if #selected >= 1 then
+		entries[#entries + 1] = { text = "Clear selection", func = function() Grimoire:ClearMoverSelection() end }
+	end
 	local windows = {}
 	for _, name in ipairs(Grimoire.moduleOrder) do
 		local module = Grimoire.modules[name]

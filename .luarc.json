@@ -1,5 +1,5 @@
 {
   "$schema": "https://raw.githubusercontent.com/LuaLS/vscode-lua/master/setting/schema.json",
   "runtime.version": "Lua 5.1",
-  "diagnostics.globals": ["Grimoire", "GrimoireDB", "SLASH_GRIMOIRE1", "SLASH_GRIMOIRE2", "issecretvalue"]
+  "diagnostics.globals": ["Grimoire", "GrimoireDB", "SLASH_GRIMOIRE1", "SLASH_GRIMOIRE2", "issecretvalue", "GrimoireAuraButton_OnLoad"]
 }

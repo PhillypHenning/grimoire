@@ -7,7 +7,7 @@
 
 ## Summary
 
-One round Grimoire button that floats wherever you put it (it isn't attached to the minimap). Left-click it to turn move mode on, drag any Grimoire frame or window, then left-click again to lock. Right-click for a menu with move mode, reset, and every Grimoire window.
+One round Grimoire button that floats wherever you put it (it isn't attached to the minimap). Left-click it to turn move mode on, drag any Grimoire frame or window, then left-click again to lock. Right-click for a menu with move mode, reset, grouping the frames you've shift-clicked, and every Grimoire window. Right-clicking a frame's overlay in move mode has its own options: select, group, *Dim when idle*, reset.
 
 ## What it solves
 
@@ -29,6 +29,7 @@ flowchart LR
     R[Right-click] --> Menu[Grimoire.OpenMenu]
     Menu --> M1[Move frames ✓]
     Menu --> M2[Reset frame positions]
+    Menu --> M4[Group selected frames<br/>Clear selection]
     Menu --> M3[Bags / Bank / Auctions / Notes<br/>enabled modules with Toggle]
     D[Drag button] --> S[db.position]
     U & K --> CB[MoversUnlocked / Locked] --> H[Button highlight on while unlocked]

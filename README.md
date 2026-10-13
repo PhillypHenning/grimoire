@@ -6,7 +6,9 @@ My personal, modular UI suite for WoW Forever. The goal is to replace as many th
 
 ```
 Grimoire/              Core: modules, saved variables, windows, movers, combat queue, slash commands
-Grimoire_Warlock/      Warlock health, mana and shard bar (LoadOnDemand, Warlocks only)
+Grimoire_Player/       Health and power bars, each movable
+Grimoire_Warlock/      Warlock resources: soul shard count (LoadOnDemand, Warlocks only)
+Grimoire_Auras/        Buffs and debuffs as separate frames (replaces the default buff frame)
 Grimoire_Bags/         Combined bag window with search and sort
 Grimoire_Bank/         Bank snapshot + viewer
 Grimoire_Auctions/     Auction snapshot + viewer
@@ -43,7 +45,7 @@ function M:OnDisable() end         -- events + callbacks are released automatica
 
 **Callback bus.** `Grimoire:Fire(name, ...)` / `Grimoire:RegisterCallback(name, owner, fn)`. Built-in events: `Ready`, `CombatStart`, `CombatEnd`, `MoversUnlocked`, `MoversLocked`, `ModuleEnabled`, `ModuleDisabled`. External add-ons can listen to these through the global `Grimoire`.
 
-**Movers.** `Grimoire:RegisterMover(frame, key, label, defaultPoint)` makes any frame draggable in move mode (the Launcher button, or `/grimoire unlock`). Windows from `Grimoire:CreateWindow` are movers automatically. Positions are saved per profile.
+**Movers.** `Grimoire:RegisterMover(frame, key, label, defaultPoint)` makes any frame draggable in move mode (the Launcher button, or `/grimoire unlock`). Windows from `Grimoire:CreateWindow` are movers automatically. In move mode, shift-click frames and right-click → *Group with selected* to move them together; *Dim when idle* fades a frame or group after 1.5s without changes. Positions, groups and dimming are saved per profile.
 
 **Combat safety.** `Grimoire:RunOutOfCombat(fn)` defers protected-frame changes until combat ends.
 

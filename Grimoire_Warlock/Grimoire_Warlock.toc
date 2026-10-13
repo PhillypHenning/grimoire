@@ -1,6 +1,6 @@
 ## Interface: 16001
 ## Title: |cff8788eeGrimoire|r Warlock
-## Notes: Warlock resource bar (mana + soul shards) for Grimoire.
+## Notes: Warlock resources (soul shard count) for Grimoire.
 ## Author: Phil Henning
 ## Version: @project-version@
 ## RequiredDeps: Grimoire
@@ -9,4 +9,4 @@
 ## LoadOnDemand: 1
 ## X-Grimoire-Class: WARLOCK
 
-ResourceBar.lua
+Resources.lua

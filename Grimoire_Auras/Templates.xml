@@ -1,0 +1,13 @@
+<Ui xmlns="http://www.blizzard.com/wow/ui/">
+	<!-- Created by the secure aura header. Right-click cancels a buff (cancelaura),
+	     which keeps working in combat because the click is handled securely. -->
+	<Button name="GrimoireAuraButtonTemplate" inherits="SecureActionButtonTemplate" virtual="true">
+		<Size x="30" y="30"/>
+		<Attributes>
+			<Attribute name="type2" value="cancelaura"/>
+		</Attributes>
+		<Scripts>
+			<OnLoad>GrimoireAuraButton_OnLoad(self)</OnLoad>
+		</Scripts>
+	</Button>
+</Ui>

@@ -1,0 +1,71 @@
+# Player bars
+
+- **Add-on:** `Grimoire_Player`
+- **Modules:** `Health`, `Power`
+- **Status:** Scaffolded, untested in game
+- **Replaces:** Player health/mana bar add-ons
+
+## Summary
+
+A health bar and a power bar (mana, or rage/energy for other classes), each its own movable frame. Put them under your character, group them so they move together, and let them dim when nothing's changing.
+
+## What it solves
+
+```mermaid
+flowchart LR
+    D[Health + mana: player frame,<br/>top-left corner] ==> G[Two bars wherever you look,<br/>bright while changing, dim at rest]
+```
+
+## How it works
+
+```mermaid
+flowchart LR
+    H[UNIT_HEALTH / UNIT_MAXHEALTH] --> HU[Health:Update]
+    P[UNIT_POWER_FREQUENT / UNIT_MAXPOWER] --> PU[Power:Update]
+    DP[UNIT_DISPLAYPOWER<br/>druid forms] --> PC[recolor] --> PU
+    HU & PU --> SV[SetValues: StatusBar + %]
+    SV -- value changed --> N[Grimoire:NotifyMoverActivity] --> Dim[core idle dimming]
+```
+
+## Code highlights
+
+**One bar, two modules** ([`Bars.lua`](../../../Grimoire_Player/Bars.lua)). `Health` and `Power` share the bar code but are separate modules, so each can be toggled with `/grimoire disable Health` and moved on its own.
+
+**Activity only on real changes.** A bar that's regenerating reports activity every tick and stays bright; a full bar stops reporting and dims after 1.5s:
+
+```lua
+elseif current ~= self.lastCurrent or max ~= self.lastMax then
+    self.lastCurrent, self.lastMax = current, max
+    Grimoire:NotifyMoverActivity(self.name)
+end
+```
+
+## Design decisions
+
+- **Classic colors** ([ADR 0001](../../adr/0001-prefer-classic-style-ui.md)): pure green health, `{0, 0, 1}` mana blue (kept as a setting, `manaColor`). Other power types use Blizzard's `PowerBarColor`.
+- **Health 16px, power 12px**, in the classic player frame's order.
+- **Dim when idle is on by default** for both. It replaces the earlier "fade when full" rule, which it covers: a full bar stops changing.
+- **The Blizzard player frame stays.** It also has your portrait, level, and right-click menu, which these bars don't replace.
+
+## Combat & secret-value constraints
+
+If combat makes values opaque, the bar still fills, the raw value shows instead of a percentage, and every update counts as activity. Neither frame is protected.
+
+## Settings
+
+Stored in `GrimoireDB.profiles[<profile>].modules.Health` / `.Power`. Position, group and dimming are mover settings (see [Core](../core/README.md)).
+
+| Key | Default | Description |
+| --- | --- | --- |
+| `width` | 220 | Bar width |
+| `height` | 16 (Health), 12 (Power) | Bar height |
+| `showText` | true | Show % on the bar |
+| `manaColor` | `{0, 0, 1}` | Power only: mana color |
+
+## Screenshots
+
+_TODO: add to `screenshots/`. Suggested: changing (bright), idle (dim), grouped in move mode._
+
+## Open questions / roadmap
+
+- Target and pet bars on the same code.

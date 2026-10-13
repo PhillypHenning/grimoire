@@ -7,7 +7,9 @@ Each component is its own add-on and can be switched on or off in the in-game Ad
 | Component | Add-on | Status |
 | --- | --- | --- |
 | [Core framework](features/core/README.md) | `Grimoire` | Scaffolded |
-| [Warlock resource bar](features/warlock-resource-bar/README.md) | `Grimoire_Warlock` | In game testing |
+| [Player bars](features/player-bars/README.md) | `Grimoire_Player` | Scaffolded, untested in game |
+| [Warlock resources](features/warlock-resources/README.md) | `Grimoire_Warlock` | Scaffolded, untested in game |
+| [Auras](features/auras/README.md) | `Grimoire_Auras` | Scaffolded, untested in game |
 | [Bags](features/bags/README.md) | `Grimoire_Bags` | Scaffolded, untested in game |
 | [Bank](features/bank/README.md) | `Grimoire_Bank` | Scaffolded, untested in game |
 | [Auctions](features/auctions/README.md) | `Grimoire_Auctions` | Scaffolded, untested in game |

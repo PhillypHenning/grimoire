@@ -107,6 +107,26 @@ else
 end
 ```
 
+### Movers, groups and idle dimming
+
+Any frame registered with `Grimoire:RegisterMover(frame, key, label, default, { dim = true })` gets a move-mode overlay (from the Launcher or `/grimoire unlock`). Windows from `CreateWindow` are movers automatically.
+
+```mermaid
+flowchart LR
+    Shift[Shift-click overlays] --> Sel[moverSelection]
+    Sel --> G["Right-click → Group with selected"] --> DB[(profile.moverGroups key → 'Group N')]
+    Drag[Drag any member] --> Begin[BeginMoverDrag] --> Follow[Other members follow<br/>by the same offset] --> Save[Every member saved]
+    Act[Module: NotifyMoverActivity key] --> Last[lastActivity]
+    Tick[Ticker, 0.2s] --> Idle{"Dim on, not in move mode,<br/>whole group idle > 1.5s<br/>and not hovered?"}
+    Last --> Idle
+    Idle -- yes --> A1[alpha = profile.dimAlpha]
+    Idle -- no --> A2[alpha = 1]
+```
+
+- **Groups** merge: grouping a frame that's already in a group pulls the whole group in. A group left with one member dissolves.
+- **Dimming is per group.** "Dim when idle" applies to every member, and a group stays bright while any member is changing or hovered.
+- **Core owns mover alpha.** Modules report changes with `Grimoire:NotifyMoverActivity(key)` and never call `SetAlpha` on their mover frame.
+
 ## Design decisions
 
 - **Own framework instead of Ace3.** The needs are small, and the code stays readable and dependency-free. AceDB/AceConfig can be pulled in via `.pkgmeta` externals if an options panel grows complex.
@@ -117,6 +137,7 @@ end
 ## Combat & secret-value constraints
 
 - Movers lock automatically when combat starts.
+- Dragging a window in combat is allowed, unless its group contains a protected frame (e.g. the secure aura headers).
 - Profile switches apply on `/reload`.
 - Callbacks are wrapped with `pcall`, so one broken listener can't break the others.
 
@@ -128,6 +149,7 @@ end
 | `CombatStart` / `CombatEnd` | — | Entering / leaving combat |
 | `MoversUnlocked` / `MoversLocked` | — | `/grimoire unlock` / `lock` (or combat auto-lock) |
 | `ModuleEnabled` / `ModuleDisabled` | `name` | Module state changes |
+| `MoverGroupsChanged` | — | Movers were grouped, ungrouped or selection cleared |
 | `BankScanned` | — | `Grimoire_Bank` saved a new snapshot |
 | `AuctionsScanned` | — | `Grimoire_Auctions` saved a new snapshot |
 
@@ -139,6 +161,8 @@ Code that more than one component needs lives in core, so components never depen
 | --- | --- | --- |
 | `Grimoire:CreateWindow(key, title)` | `Core/Widgets.lua` | Classic dialog window: header, close button, Escape to close; registered as mover `<key>Window` |
 | `Grimoire.OpenMenu(anchor, entries)` | `Core/Widgets.lua` | Context menu via Blizzard's Menu API, or `UIDropDownMenu` on older clients |
+| `Grimoire:RegisterMover` / `NotifyMoverActivity` | `Core/Movers.lua` | Move mode, groups, idle dimming (see above) |
+| `Grimoire:HideBlizzardFrame(frame)` | `Core/Util.lua` | Hide a default frame a component replaces (reparented, events off; `/reload` after disabling restores it) |
 | `Grimoire.CreateScrollArea(parent, name, child?)` | `Core/Widgets.lua` | Scroll frame with scrollbar |
 | `Grimoire.CreateDisplaySlot` / `SetDisplaySlotItem` | `Core/Widgets.lua` | Read-only item slot (tooltip, shift-click link) for cached items |
 | `Grimoire.GetBagIDs` / `GetBankIDs` / `ReadContainer` | `Core/Containers.lua` | Inventory reading, including both bank-bag and bank-tab layouts |

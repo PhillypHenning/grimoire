@@ -3,7 +3,9 @@ package-as: Grimoire
 
 move-folders:
   Grimoire/Grimoire: Grimoire
+  Grimoire/Grimoire_Player: Grimoire_Player
   Grimoire/Grimoire_Warlock: Grimoire_Warlock
+  Grimoire/Grimoire_Auras: Grimoire_Auras
   Grimoire/Grimoire_Bags: Grimoire_Bags
   Grimoire/Grimoire_Bank: Grimoire_Bank
   Grimoire/Grimoire_Auctions: Grimoire_Auctions

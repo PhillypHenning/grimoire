@@ -6,8 +6,8 @@ local CONTENT_TOP, CONTENT_SIDE, CONTENT_BOTTOM = 32, 16, 16
 
 -- A movable dialog-style window with a header title and close button.
 -- Closes on Escape. It's a mover (key "<key>Window"), so it can be dragged by its
--- body any time, shows an overlay in move mode, and its position is reset with
--- the other frames.
+-- body any time (taking its group along), shows an overlay in move mode, and its
+-- position is reset with the other frames.
 -- Lay out children inside frame.content; size with frame:SetContentSize(w, h).
 function Grimoire:CreateWindow(key, title)
 	local frame = CreateFrame("Frame", "Grimoire" .. key .. "Window", UIParent, "BackdropTemplate")
@@ -17,11 +17,8 @@ function Grimoire:CreateWindow(key, title)
 	frame:SetBackdrop(self.media.dialogBackdrop)
 	frame:EnableMouse(true)
 	frame:RegisterForDrag("LeftButton")
-	frame:SetScript("OnDragStart", frame.StartMoving)
-	frame:SetScript("OnDragStop", function(f)
-		f:StopMovingOrSizing()
-		Grimoire:SaveMoverPosition(moverKey)
-	end)
+	frame:SetScript("OnDragStart", function() Grimoire:BeginMoverDrag(moverKey) end)
+	frame:SetScript("OnDragStop", function() Grimoire:EndMoverDrag() end)
 
 	local header = frame:CreateTexture(nil, "ARTWORK")
 	header:SetTexture(self.media.dialogHeader)

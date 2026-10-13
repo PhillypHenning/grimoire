@@ -25,7 +25,9 @@ flowchart TD
     Bank[Grimoire_Bank] --> Core
     Auctions[Grimoire_Auctions] --> Core
     Notes[Grimoire_Notes] --> Core
+    Player[Grimoire_Player] --> Core
     Warlock[Grimoire_Warlock] --> Core
+    Auras[Grimoire_Auras] --> Core
     Launcher[Grimoire_Launcher] --> Core
     Bags -. "optional: GetModule('Bank')" .-> Bank
     Bags -. "optional: GetModule('Auctions')" .-> Auctions

@@ -85,3 +85,19 @@ function Grimoire.CreateBackground(frame, r, g, b, a)
 	bg:SetColorTexture(r or 0, g or 0, b or 0, a or 0.6)
 	return bg
 end
+
+-- Replacing Blizzard UI --------------------------------------------------------------
+-- Components that replace a default frame hide it here. The frame is parented to a
+-- hidden frame and its events are unregistered, so Blizzard code can't show it again.
+-- It isn't destroyed: disabling the component and /reload brings it back.
+
+local hiddenParent = CreateFrame("Frame")
+hiddenParent:Hide()
+
+function Grimoire:HideBlizzardFrame(frame)
+	if not frame then return end
+	self:RunOutOfCombat(function()
+		frame:UnregisterAllEvents()
+		frame:SetParent(hiddenParent)
+	end)
+end
