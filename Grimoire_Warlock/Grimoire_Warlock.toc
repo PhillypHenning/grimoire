@@ -1,0 +1,12 @@
+## Interface: 120105
+## Title: |cff8788eeGrimoire|r Warlock
+## Notes: Warlock resource bar (mana + soul shards) for Grimoire.
+## Author: Phil Henning
+## Version: @project-version@
+## RequiredDeps: Grimoire
+## Group: Grimoire
+## Category: Grimoire
+## LoadOnDemand: 1
+## X-Grimoire-Class: WARLOCK
+
+ResourceBar.lua

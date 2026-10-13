@@ -1,0 +1,17 @@
+# BigWigs packager config: builds one zip containing every add-on folder.
+package-as: Grimoire
+
+move-folders:
+  Grimoire/Grimoire: Grimoire
+  Grimoire/Grimoire_Warlock: Grimoire_Warlock
+  Grimoire/Grimoire_Bags: Grimoire_Bags
+  Grimoire/Grimoire_Bank: Grimoire_Bank
+  Grimoire/Grimoire_Auctions: Grimoire_Auctions
+  Grimoire/Grimoire_Notes: Grimoire_Notes
+
+ignore:
+  - scripts
+  - docs
+  - README.md
+  - .vscode
+  - .luarc.json

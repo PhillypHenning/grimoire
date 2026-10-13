@@ -1,0 +1,10 @@
+## Interface: 120105
+## Title: |cff8788eeGrimoire|r Bank
+## Notes: Saves your bank when you visit a banker and lets you view it anywhere.
+## Author: Phil Henning
+## Version: @project-version@
+## RequiredDeps: Grimoire
+## Group: Grimoire
+## Category: Grimoire
+
+Bank.lua

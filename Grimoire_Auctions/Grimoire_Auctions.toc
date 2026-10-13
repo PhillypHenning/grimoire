@@ -1,0 +1,10 @@
+## Interface: 120105
+## Title: |cff8788eeGrimoire|r Auctions
+## Notes: Saves your auctions when you visit the auction house and lets you view them anywhere.
+## Author: Phil Henning
+## Version: @project-version@
+## RequiredDeps: Grimoire
+## Group: Grimoire
+## Category: Grimoire
+
+Auctions.lua

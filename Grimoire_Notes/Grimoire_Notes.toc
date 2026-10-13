@@ -1,0 +1,10 @@
+## Interface: 120105
+## Title: |cff8788eeGrimoire|r Notes
+## Notes: Account-wide notes.
+## Author: Phil Henning
+## Version: @project-version@
+## RequiredDeps: Grimoire
+## Group: Grimoire
+## Category: Grimoire
+
+Notes.lua
