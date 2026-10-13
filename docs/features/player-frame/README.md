@@ -61,7 +61,7 @@ entries[#entries + 1] = { text = ADDONS or "Add-ons", children = Grimoire:GetAdd
 
 **Emotes are model animations.** `PlayerModel:SetAnimation` with the emote animation IDs: wave 67, cheer 68, laugh 70, cry 77. The model returns to standing on `OnAnimFinished`, or after 3 seconds on clients without it.
 
-**The pet frame survives.** On Classic, `PetFrame` is a child of `PlayerFrame`, so hiding one would hide both. It's moved to `UIParent` at the same spot first (unless [Grimoire Pet](../pet/README.md) has already hidden it).
+**Blizzard's player frame is hidden in place** ([ADR 0007](../../adr/0007-hide-blizzard-frames-in-place.md)): its events and its bars' events are switched off and a secure state driver keeps it hidden, but it's never reparented. Forever runs the retail UI, and reparenting an Edit Mode frame tainted Edit Mode (`TargetUnit()` blocked) and broke Blizzard's secret-value code. Frames inside it go with it: Blizzard's pet frame is replaced by [Grimoire Pet](../pet/README.md), so keep that on while this frame hides Blizzard's.
 
 ## Design decisions
 

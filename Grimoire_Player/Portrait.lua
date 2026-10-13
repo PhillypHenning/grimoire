@@ -129,19 +129,6 @@ function Player:FormatName(name)
 	return Grimoire.ClassColorText(name, class)
 end
 
--- On Classic the pet frame is a child of the player frame, so hiding one would hide
--- both. Unless Grimoire_Pet has already hidden it, move it out first.
-function Player:BeforeHideBlizzard()
-	if PetFrame and PetFrame:GetParent() == PlayerFrame then
-		local left, top = PetFrame:GetLeft(), PetFrame:GetTop()
-		PetFrame:SetParent(UIParent)
-		if left and top then
-			PetFrame:ClearAllPoints()
-			PetFrame:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", left, top)
-		end
-	end
-end
-
 function Player:UpdateStatus()
 	local coords
 	if Grimoire:InCombat() then

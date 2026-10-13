@@ -116,17 +116,29 @@ function Grimoire.CreateBackground(frame, r, g, b, a)
 end
 
 -- Replacing Blizzard UI --------------------------------------------------------------
--- Components that replace a default frame hide it here. The frame is parented to a
--- hidden frame and its events are unregistered, so Blizzard code can't show it again.
--- It isn't destroyed: disabling the component and /reload brings it back.
+-- Components that replace a default frame hide it here. It isn't destroyed: disabling
+-- the component and /reload brings it back.
+--
+-- Forever runs Blizzard's retail UI, where Edit Mode manages many of these frames and
+-- reads their parents and anchors. Reparenting them under an add-on frame taints Edit
+-- Mode (seen: ADDON_ACTION_FORBIDDEN on TargetUnit) and makes Blizzard code fail on
+-- secret values. So the frame stays where it is: its events and those of every frame
+-- inside it are switched off (its bars update themselves), Blizzard's unit watch is
+-- stopped, and a secure state driver keeps it hidden, in combat too.
 
-local hiddenParent = CreateFrame("Frame")
-hiddenParent:Hide()
+local function UnregisterDeep(frame)
+	frame:UnregisterAllEvents()
+	for _, child in ipairs({ frame:GetChildren() }) do
+		UnregisterDeep(child)
+	end
+end
 
 function Grimoire:HideBlizzardFrame(frame)
 	if not frame then return end
 	self:RunOutOfCombat(function()
-		frame:UnregisterAllEvents()
-		frame:SetParent(hiddenParent)
+		UnregisterDeep(frame)
+		pcall(UnregisterUnitWatch, frame)
+		RegisterStateDriver(frame, "visibility", "hide")
+		frame:Hide()
 	end)
 end
