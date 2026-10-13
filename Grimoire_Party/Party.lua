@@ -93,7 +93,7 @@ local function CreateMember(self, index)
 	button.leader:SetPoint("TOPLEFT", 0, 0)
 
 	-- Keybinding badge (Phil's request): the key that targets this member.
-	button.binding = art:CreateFontString(nil, "OVERLAY", "NumberFontNormalSmall")
+	button.binding = art:CreateFontString(nil, "OVERLAY", Grimoire.Font("NumberFontNormalSmall", "NumberFontNormal"))
 	button.binding:SetPoint("BOTTOM", button.portrait, "BOTTOM", 0, 1)
 	button.binding:SetTextColor(1, 1, 1)
 

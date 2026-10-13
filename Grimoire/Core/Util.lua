@@ -68,6 +68,18 @@ function Grimoire.FormatMoney(copper)
 	return GetCoinTextureString(copper)
 end
 
+-- The first of these Blizzard font objects that exists on this client. Forever lacks
+-- some (no TextStatusBarTextSmall), and inheriting a missing one is a hard error.
+function Grimoire.Font(...)
+	for i = 1, select("#", ...) do
+		local name = select(i, ...)
+		if _G[name] then
+			return name
+		end
+	end
+	return "GameFontHighlightSmall"
+end
+
 -- frame must inherit "BackdropTemplate".
 function Grimoire.ApplyClassicBackdrop(frame)
 	frame:SetBackdrop(Grimoire.media.classicBackdrop)

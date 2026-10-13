@@ -453,7 +453,7 @@ function Grimoire.CreateStatusBar(parent, width, height)
 	bar:SetStatusBarTexture(Grimoire.media.statusbar)
 	bar:SetMinMaxValues(0, 1)
 	bar:SetValue(0)
-	bar.text = bar:CreateFontString(nil, "OVERLAY", "TextStatusBarTextSmall")
+	bar.text = bar:CreateFontString(nil, "OVERLAY", Grimoire.Font("TextStatusBarTextSmall", "TextStatusBarText"))
 	bar.text:SetPoint("CENTER")
 	return bar
 end
