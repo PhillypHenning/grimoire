@@ -1,6 +1,6 @@
 ## Interface: 16001
 ## Title: |cff8788eeGrimoire|r Auras
-## Notes: Buffs and debuffs as two separate, movable frames. Replaces the default buff frame.
+## Notes: Moves and sizes the default buff and debuff frames like any other Grimoire frame.
 ## Author: Phil Henning
 ## Version: @project-version@
 ## RequiredDeps: Grimoire
@@ -8,4 +8,3 @@
 ## Category: Grimoire
 
 Auras.lua
-Templates.xml

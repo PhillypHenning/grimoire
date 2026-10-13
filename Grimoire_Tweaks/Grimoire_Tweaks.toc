@@ -1,0 +1,11 @@
+## Interface: 16001
+## Title: |cff8788eeGrimoire|r Tweaks
+## Notes: Game settings Blizzard's options don't offer: sharper image, denser grass, longer camera zoom. /grim cvars lists every setting.
+## Author: Phil Henning
+## Version: @project-version@
+## RequiredDeps: Grimoire
+## SavedVariables: GrimoireTweaksDB
+## Group: Grimoire
+## Category: Grimoire
+
+Graphics.lua

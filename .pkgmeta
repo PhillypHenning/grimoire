@@ -11,6 +11,7 @@ move-folders:
   Grimoire/Grimoire_Auctions: Grimoire_Auctions
   Grimoire/Grimoire_Notes: Grimoire_Notes
   Grimoire/Grimoire_Launcher: Grimoire_Launcher
+  Grimoire/Grimoire_Tweaks: Grimoire_Tweaks
 
 ignore:
   - scripts

@@ -2,7 +2,8 @@
 
 > **Progress (2026-10-13, on the PC):**
 > - **Milestone 1:** code and docs done on branch `wip/manager-menu`; every `.lua` passes `scripts/check-lua.ps1`. Waiting on the in-game checks below, then merge.
->   - **Found in game:** Forever has no `SecureAuraHeaderTemplate`, so Grimoire Auras failed on login. Buffs and Debuffs now report themselves unavailable and Blizzard's buff frame stays. Open decision for Phil: move and restyle Blizzard's own buff frame, or draw our own (non-secure) aura buttons.
+>   - **Found in game:** Forever has no `SecureAuraHeaderTemplate`, so Grimoire Auras failed on login. Buffs and Debuffs now report themselves unavailable and Blizzard's buff frame stays. Phil chose to move Blizzard's own buff frame: Grimoire Auras now reparents `BuffFrame` / `TemporaryEnchantFrame` (and `DebuffFrame` where it exists) to Grimoire movers, with a Size setting.
+>   - **Added (Phil's request):** `Grimoire_Tweaks` with a `Graphics` module (his `/console` graphics settings as menu choices, reapplied at login, undoable) and `/grim cvars` to dump every CVar for finding more.
 >   - Fixed while finishing: the launcher kept its on-screen spot when its size changes (offsets are converted for the new scale); settings changed while a module is off apply when it's turned back on; unknown option types are skipped.
 > - **Extra, done:** Health/Power never dim in combat or while not full (`isBusy` option on `RegisterMover`).
 > - **Milestones 2 and 3:** not started.
@@ -199,7 +200,7 @@ Each component gets an `options` list and `ApplySettings`:
   - The button is bigger.
   - Left-click shows the menu; right-click toggles move mode.
   - Open ▸ Notes works.
-  - Components ▸ lists all 9 add-ons, with the right status for any that aren't loaded.
+  - Components ▸ lists all 10 add-ons (Tweaks is new), with the right status for any that aren't loaded.
   - Toggling Show % or Width changes the bar right away.
   - Disabling and re-enabling Health hides and shows it.
   - The floating Notes button appears, opens Notes, can be dragged in move mode, and hides with *Show Notes button* off.

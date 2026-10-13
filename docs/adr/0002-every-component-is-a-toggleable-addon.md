@@ -29,6 +29,7 @@ flowchart TD
     Warlock[Grimoire_Warlock] --> Core
     Auras[Grimoire_Auras] --> Core
     Launcher[Grimoire_Launcher] --> Core
+    Tweaks[Grimoire_Tweaks] --> Core
     Bags -. "optional: GetModule('Bank')" .-> Bank
     Bags -. "optional: GetModule('Auctions')" .-> Auctions
 ```

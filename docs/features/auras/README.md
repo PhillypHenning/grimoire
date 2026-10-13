@@ -1,73 +1,82 @@
 # Auras
 
 - **Add-on:** `Grimoire_Auras`
-- **Modules:** `Buffs`, `Debuffs`
-- **Status:** Blocked on Forever: the client has no `SecureAuraHeaderTemplate` (2026-10-13), so both modules stay off
-- **Replaces:** The default buff frame; buff-mover add-ons
+- **Modules:** `Buffs` (and `Debuffs` on clients with a separate debuff frame)
+- **Status:** Scaffolded, untested in game
+- **Replaces:** Buff-mover add-ons
 
 ## Summary
 
-Your buffs and your debuffs as two separate frames, each movable, groupable and dimmable on its own. Weapon enchants (Firestone, Spellstone, poisons) show with the buffs. Right-click a buff to cancel it, in or out of combat.
+Blizzard's own buff frame, made into a Grimoire frame: drag it, group it with other frames, dim it when idle, and pick its size from the menu. Because the buttons are still Blizzard's, everything about them works as before: right-click to cancel, weapon enchants (Firestone, Spellstone, poisons), tooltips and timers.
 
 ## What it solves
 
 ```mermaid
 flowchart LR
-    D[Default: buffs and debuffs<br/>stuck together by the minimap] ==> G[Buffs and debuffs<br/>placed independently]
+    D[Buffs fixed next to the minimap] ==> G[Buffs wherever you want them,<br/>grouped, dimmed and sized with the rest of Grimoire]
 ```
 
 ## How it works
 
 ```mermaid
 flowchart LR
-    UA[UNIT_AURA player] --> SH[SecureAuraHeaderTemplate<br/>sorts and lays out buttons]
-    SH -- "SetAttribute('index')" --> UB[UpdateAura: icon, stacks,<br/>debuff border color]
-    SH -- "SetAttribute('target-slot')" --> UT[UpdateTempEnchant]
-    UA --> R[next frame: Refresh all visible buttons] --> N[NotifyMoverActivity]
-    T[OnUpdate 0.2s] --> TM[timer text under the icon]
+    B[BuffFrame + TemporaryEnchantFrame] -- SetParent + pin TOPRIGHT --> H[GrimoireBuffsHolder<br/>a normal Grimoire mover]
+    H --> M[Move mode, groups, dimming, reset]
+    Blz[Blizzard re-anchors BuffFrame] --> Hook[SetPoint hook] -- pin again --> H
+    UA[UNIT_AURA player] --> N[NotifyMoverActivity] --> Dim[core idle dimming]
 ```
+
+On Classic, debuffs are laid out inside `BuffFrame` under the buffs, so they move with **Buffs** (labelled "Buffs and debuffs"). On clients with a separate `DebuffFrame`, **Debuffs** is its own mover; otherwise the menu shows it as unavailable ("debuffs move with Buffs on this client").
 
 ## Code highlights
 
-**Blizzard's secure aura header** ([`Auras.lua`](../../../Grimoire_Auras/Auras.lua)). It creates and arranges the buttons in secure code, which is what lets right-click-to-cancel work in combat. Grimoire only draws the visuals:
+**Reparent and pin** ([`Auras.lua`](../../../Grimoire_Auras/Auras.lua)). Making the holder the parent means the Blizzard frame follows the holder's position and the alpha core sets for dimming:
 
 ```lua
-local header = CreateFrame("Frame", ..., holder, "SecureAuraHeaderTemplate")
-header:SetAttribute("filter", self.filter)            -- HELPFUL or HARMFUL
-header:SetAttribute("template", "GrimoireAuraButtonTemplate")
+frame:SetParent(self.holder)
+frame:ClearAllPoints()
+frame:SetPoint("TOPRIGHT", self.holder, "TOPRIGHT")
 ```
 
-**Right-click cancel** comes from the button template ([`Templates.xml`](../../../Grimoire_Auras/Templates.xml)): `type2 = cancelaura`.
+**Stay pinned.** Blizzard re-anchors its frames now and then. A `hooksecurefunc` on `SetPoint` puts the frame back unless it's already anchored to the holder:
 
-**The mover is a plain holder frame** with the secure header anchored to it, so the overlay has a fixed size even when you have no buffs.
+```lua
+hooksecurefunc(frame, "SetPoint", function(f, _, relativeTo)
+    if self:IsEnabled() and relativeTo ~= self.holder then
+        self:Pin(f)
+    end
+end)
+```
+
+**Size goes on Blizzard's frames, not the holder.** Mover positions are saved in the holder's own units, so scaling the holder would move it.
 
 ## Design decisions
 
-- **Classic look** ([ADR 0001](../../adr/0001-prefer-classic-style-ui.md)): 30px icons, duration text under the icon (`SecondsToTimeAbbrev`), the classic debuff border colored by type.
-- **The default buff frame is hidden** as soon as either module is on. On Classic it holds buffs *and* debuffs, so it can't be hidden by halves: with only `Buffs` enabled you'll see no debuffs. Disabling both and `/reload` brings it back.
-- **Dim when idle is off by default** here; turn it on per frame in move mode.
+- **Reuse Blizzard's buttons instead of drawing our own** (your call, 2026-10-13). The first version used `SecureAuraHeaderTemplate`, but Forever doesn't have it ("Couldn't find inherited node"). Without it, our own buttons would lose right-click-to-cancel in combat. Moving Blizzard's frame keeps that.
+- **What we gave up:** separate buff and debuff frames on Classic, and icons per row / rows settings. Blizzard decides the layout.
+- **Dim when idle is off by default**; turn it on in the menu or in move mode.
+- **Classic look** ([ADR 0001](../../adr/0001-prefer-classic-style-ui.md)) comes for free: they're Blizzard's frames.
 
 ## Combat & secret-value constraints
 
-- The headers are protected: they're created, shown and moved only out of combat. Enabling in combat waits until combat ends.
-- A group that contains Buffs or Debuffs can't be dragged in combat.
-- Secret durations show no timer.
+`BuffFrame` isn't protected, so it can be moved and grouped in combat. Blizzard's buttons handle secret values themselves.
 
 ## Settings
 
-Stored in `GrimoireDB.profiles[<profile>].modules.Buffs` / `.Debuffs`. In the menu: **Components ▸ Auras ▸ Buffs / Debuffs**. Changes apply live: `ApplySettings` updates the header's `wrapAfter` / `maxWraps` attributes and the holder size, deferred with `RunOutOfCombat` because the header is protected.
+Stored in `GrimoireDB.profiles[<profile>].modules.Buffs` / `.Debuffs`. In the menu: **Components ▸ Auras**.
 
 | Key | Default | Menu choices | Description |
 | --- | --- | --- | --- |
-| `perRow` | 16 | 8 / 12 / 16 / 20 | Icons per row |
-| `rows` | 2 (Buffs), 1 (Debuffs) | 1 / 2 / 3 | Maximum rows |
+| `scale` | 1 | Small 0.8 / Normal 1 / Large 1.2 / Huge 1.4 | Size of the Blizzard frames (applies live) |
+
+Turning a module off hides its holder (and the buffs with it); `/reload` puts the default buff frame back in its place.
 
 ## Screenshots
 
-_TODO: add to `screenshots/`. Suggested: buffs and debuffs apart, weapon enchant, debuff borders, move mode._
+_TODO: add to `screenshots/`. Suggested: buffs moved under the player bars, grouped in move mode, a weapon enchant._
 
 ## Open questions / roadmap
 
-- **Forever has no `SecureAuraHeaderTemplate`** (tested 2026-10-13: "Couldn't find inherited node"). `IsAvailable` now checks for it, so Buffs and Debuffs report "no secure aura header on this client" in the menu and Blizzard's buff frame stays. Needs a different approach (see the plan).
-- Verify in game if a header-based version returns: `cancelaura` on Forever, weapon enchants (`weaponTemplate` / `target-slot`), debuff border texture.
-- Optional cooldown spiral instead of the text timer.
+- Verify in game: the holder's size matches the real buff area (it's estimated from `BUFFS_PER_ROW`), and the frames stay pinned after zoning and after weapon enchants come and go.
+- Does Forever have a separate `DebuffFrame`?
+- If Blizzard's anchoring fights the pin (flicker), switch to hooking `BuffFrame_UpdateAllBuffAnchors` instead.

@@ -10,12 +10,13 @@ Each component is its own add-on and can be switched on or off in the in-game Ad
 | [Manager menu](features/menu/README.md) | `Grimoire` (core) | Scaffolded, untested in game |
 | [Player bars](features/player-bars/README.md) | `Grimoire_Player` | Scaffolded, untested in game |
 | [Warlock resources](features/warlock-resources/README.md) | `Grimoire_Warlock` | Scaffolded, untested in game |
-| [Auras](features/auras/README.md) | `Grimoire_Auras` | Blocked: no secure aura header on Forever |
+| [Auras](features/auras/README.md) | `Grimoire_Auras` | Scaffolded, untested in game (moves Blizzard's buff frame) |
 | [Bags](features/bags/README.md) | `Grimoire_Bags` | Scaffolded, untested in game |
 | [Bank](features/bank/README.md) | `Grimoire_Bank` | Scaffolded, untested in game |
 | [Auctions](features/auctions/README.md) | `Grimoire_Auctions` | Scaffolded, untested in game |
 | [Notes](features/notes/README.md) | `Grimoire_Notes` | Scaffolded, untested in game |
 | [Launcher](features/launcher/README.md) | `Grimoire_Launcher` | Scaffolded, untested in game |
+| [Tweaks](features/tweaks/README.md) | `Grimoire_Tweaks` | Scaffolded, untested in game |
 
 New component? Copy [`features/TEMPLATE.md`](features/TEMPLATE.md) to `features/<component>/README.md` and put screenshots in `features/<component>/screenshots/`.
 
