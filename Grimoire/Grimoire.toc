@@ -21,4 +21,5 @@ Core\Widgets.lua
 Core\Modules.lua
 Core\Movers.lua
 Core\Commands.lua
+Core\Menu.lua
 Core\Bootstrap.lua

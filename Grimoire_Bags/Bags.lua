@@ -1,3 +1,4 @@
+local ADDON_NAME = ...
 local Grimoire = Grimoire
 
 local SLOT_SIZE = 37
@@ -7,9 +8,16 @@ local FOOTER_HEIGHT = 22
 local DIMMED_ALPHA = 0.25
 
 local M = Grimoire:NewModule("Bags", {
+	addon = ADDON_NAME,
+	label = "Bags",
 	conflicts = { "Bagnon", "Baganator", "AdiBags", "ArkInventory" },
 	defaults = {
 		columns = 10,
+	},
+	options = {
+		{ type = "choice", key = "columns", label = "Columns", values = {
+			{ 8, "8" }, { 10, "10" }, { 12, "12" }, { 14, "14" },
+		} },
 	},
 })
 
@@ -85,7 +93,7 @@ end
 
 local function CreateToolbarButton(parent, text, onClick)
 	local button = CreateFrame("Button", nil, parent, "UIPanelButtonTemplate")
-	button:SetSize(70, 22)
+	button:SetSize(62, 22)
 	button:SetText(text)
 	button:SetScript("OnClick", onClick)
 	return button
@@ -99,7 +107,7 @@ local function ToggleComponent(moduleName)
 end
 
 function M:Build()
-	local frame = Grimoire:CreateWindow("Bags", INVENTORY_TOOLTIP or "Inventory")
+	local frame = Grimoire:CreateWindow("Bags", INVENTORY_TOOLTIP or "Inventory", self)
 	frame:SetScript("OnShow", function()
 		if SOUNDKIT then PlaySound(SOUNDKIT.IG_BACKPACK_OPEN) end
 		self:Refresh()
@@ -111,8 +119,8 @@ function M:Build()
 	local content = frame.content
 
 	local search = CreateFrame("EditBox", "GrimoireBagsSearch", content, "SearchBoxTemplate")
-	search:SetSize(150, 20)
-	search:SetPoint("TOPLEFT", 6, -1)
+	search:SetHeight(20)
+	search:SetPoint("TOPLEFT", 6, -1) -- right edge follows the buttons (UpdateToolbar)
 	search:HookScript("OnTextChanged", function(box)
 		self:SetSearch(box:GetText())
 	end)
@@ -124,8 +132,11 @@ function M:Build()
 	if not (C_Container and C_Container.SortBags) then
 		self.sortButton:Disable()
 	end
-	-- Bank and Auctions are separate add-ons (ADR 0002); their buttons only show
-	-- when those components are loaded and enabled.
+	-- Bank, Auctions and Notes are separate add-ons (ADR 0002); their buttons only
+	-- show when those components are loaded and enabled.
+	self.notesButton = CreateToolbarButton(content, "Notes", function()
+		ToggleComponent("Notes")
+	end)
 	self.bankButton = CreateToolbarButton(content, "Bank", function()
 		ToggleComponent("Bank")
 	end)
@@ -146,6 +157,7 @@ end
 function M:UpdateToolbar()
 	local anchor
 	for _, entry in ipairs({
+		{ self.notesButton, "Notes" },
 		{ self.auctionsButton, "Auctions" },
 		{ self.bankButton, "Bank" },
 		{ self.sortButton },
@@ -164,6 +176,8 @@ function M:UpdateToolbar()
 			anchor = button
 		end
 	end
+	-- The search box takes whatever width the buttons leave.
+	self.search:SetPoint("RIGHT", anchor, "LEFT", -8, 0)
 end
 
 -- Slots ------------------------------------------------------------------------
@@ -314,6 +328,13 @@ function M:Refresh()
 	self:UpdateToolbar()
 	self:UpdateItems()
 	self:UpdateMoney()
+end
+
+function M:ApplySettings()
+	self.layoutSignature = nil
+	if self.frame:IsShown() then
+		self:Refresh()
+	end
 end
 
 function M:OnItemLockChanged(_, bag, slot)

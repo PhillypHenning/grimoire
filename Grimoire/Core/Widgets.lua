@@ -9,7 +9,9 @@ local CONTENT_TOP, CONTENT_SIDE, CONTENT_BOTTOM = 32, 16, 16
 -- body any time (taking its group along), shows an overlay in move mode, and its
 -- position is reset with the other frames.
 -- Lay out children inside frame.content; size with frame:SetContentSize(w, h).
-function Grimoire:CreateWindow(key, title)
+-- owner (optional): the module the window belongs to; its menu then offers the
+-- window's position options.
+function Grimoire:CreateWindow(key, title, owner)
 	local frame = CreateFrame("Frame", "Grimoire" .. key .. "Window", UIParent, "BackdropTemplate")
 	local moverKey = key .. "Window"
 	frame:SetFrameStrata("HIGH")
@@ -40,6 +42,9 @@ function Grimoire:CreateWindow(key, title)
 	end
 
 	self:RegisterMover(frame, moverKey, title, { "CENTER", "UIParent", "CENTER", 0, 0 })
+	if owner then
+		owner.moverKeys[#owner.moverKeys + 1] = moverKey
+	end
 
 	tinsert(UISpecialFrames, frame:GetName())
 	frame:Hide()
@@ -102,27 +107,72 @@ end
 --   { isDivider = true }
 --   { text = "Do it", func = fn }
 --   { text = "Option", func = fn, checked = fn() -> bool, radio = true? }
--- Uses Blizzard's Menu API when the client has it, otherwise UIDropDownMenu.
--- Returns false if neither exists.
+--   { text = "More", children = { ...entries } }       -- submenu
+-- Any entry may set disabled = true.
+-- anchor nil opens at the cursor. Uses Blizzard's Menu API when the client has it,
+-- otherwise UIDropDownMenu. Returns false if neither exists.
+
+local function AddMenuEntries(root, entries)
+	for _, e in ipairs(entries) do
+		local element
+		if e.isTitle then
+			root:CreateTitle(e.text)
+		elseif e.isDivider then
+			root:CreateDivider()
+		elseif e.children then
+			element = root:CreateButton(e.text)
+			AddMenuEntries(element, e.children)
+		elseif e.checked and e.radio then
+			element = root:CreateRadio(e.text, e.checked, e.func)
+		elseif e.checked then
+			element = root:CreateCheckbox(e.text, e.checked, e.func)
+		else
+			element = root:CreateButton(e.text, e.func)
+		end
+		if element and e.disabled and element.SetEnabled then
+			element:SetEnabled(false)
+		end
+	end
+end
 
 local dropdown
 
-function Grimoire.OpenMenu(anchor, entries)
-	if MenuUtil and MenuUtil.CreateContextMenu then
-		MenuUtil.CreateContextMenu(anchor, function(_, root)
-			for _, e in ipairs(entries) do
-				if e.isTitle then
-					root:CreateTitle(e.text)
-				elseif e.isDivider then
-					root:CreateDivider()
-				elseif e.checked and e.radio then
-					root:CreateRadio(e.text, e.checked, e.func)
-				elseif e.checked then
-					root:CreateCheckbox(e.text, e.checked, e.func)
+local function AddDropDownEntries(entries, level)
+	for _, e in ipairs(entries) do
+		if e.isDivider then
+			if UIDropDownMenu_AddSeparator then
+				UIDropDownMenu_AddSeparator(level)
+			end
+		else
+			local info = UIDropDownMenu_CreateInfo()
+			info.text = e.text
+			info.disabled = e.disabled
+			if e.isTitle then
+				info.isTitle = true
+				info.notCheckable = true
+			elseif e.children then
+				info.hasArrow = true
+				info.menuList = e.children
+				info.notCheckable = true
+				info.keepShownOnClick = true
+			else
+				info.func = function() e.func() end
+				if e.checked then
+					info.checked = e.checked()
+					info.isNotRadio = not e.radio
 				else
-					root:CreateButton(e.text, e.func)
+					info.notCheckable = true
 				end
 			end
+			UIDropDownMenu_AddButton(info, level)
+		end
+	end
+end
+
+function Grimoire.OpenMenu(anchor, entries)
+	if MenuUtil and MenuUtil.CreateContextMenu then
+		MenuUtil.CreateContextMenu(anchor or UIParent, function(_, root)
+			AddMenuEntries(root, entries)
 		end)
 		return true
 	end
@@ -131,32 +181,10 @@ function Grimoire.OpenMenu(anchor, entries)
 		return false
 	end
 	dropdown = dropdown or CreateFrame("Frame", "GrimoireDropDownMenu", UIParent, "UIDropDownMenuTemplate")
-	UIDropDownMenu_Initialize(dropdown, function(_, level)
-		for _, e in ipairs(entries) do
-			if e.isDivider then
-				if UIDropDownMenu_AddSeparator then
-					UIDropDownMenu_AddSeparator(level)
-				end
-			else
-				local info = UIDropDownMenu_CreateInfo()
-				info.text = e.text
-				if e.isTitle then
-					info.isTitle = true
-					info.notCheckable = true
-				else
-					info.func = function() e.func() end
-					if e.checked then
-						info.checked = e.checked()
-						info.isNotRadio = not e.radio
-					else
-						info.notCheckable = true
-					end
-				end
-				UIDropDownMenu_AddButton(info, level)
-			end
-		end
+	UIDropDownMenu_Initialize(dropdown, function(_, level, menuList)
+		AddDropDownEntries((level or 1) > 1 and menuList or entries, level)
 	end, "MENU")
-	ToggleDropDownMenu(1, nil, dropdown, anchor, 0, 0)
+	ToggleDropDownMenu(1, nil, dropdown, anchor or "cursor", 0, 0)
 	return true
 end
 

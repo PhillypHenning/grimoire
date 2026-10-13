@@ -9,7 +9,7 @@ local Grimoire = Grimoire
 -- right-click one and pick "Group with selected" (or use the Launcher menu).
 --
 -- Idle dimming: a mover (or a whole group) with "Dim when idle" fades once nothing
--- has changed for IDLE_SECONDS. Modules call Grimoire:NotifyMoverActivity(key)
+-- has changed for profile.idleSeconds. Modules call Grimoire:NotifyMoverActivity(key)
 -- whenever their display changes; hovering also counts. Core owns the alpha of
 -- every mover frame, so modules must not set it themselves.
 
@@ -18,7 +18,6 @@ Grimoire.moversUnlocked = false
 Grimoire.moverSelection = {}
 
 local CLICK_AFTER_DRAG_SECONDS = 0.2
-local IDLE_SECONDS = 1.5
 local DIM_CHECK_SECONDS = 0.2
 local COLOR_NORMAL = { 0.2, 0.6, 1 }
 local COLOR_GROUPED = { 0.2, 0.85, 0.3 }
@@ -107,7 +106,8 @@ end
 ---@param key string unique, stable id used as the saved-variable key
 ---@param label string shown on the drag handle
 ---@param default table { point, relativeTo, relativePoint, x, y }
----@param opts? { dim?: boolean } dim: "Dim when idle" starts on
+---@param opts? { dim?: boolean, isBusy?: fun(): boolean } dim: "Dim when idle" starts on;
+---  isBusy: while it returns true the frame (and its group) never dims
 function Grimoire:RegisterMover(frame, key, label, default, opts)
 	frame:SetMovable(true)
 	frame:SetClampedToScreen(true)
@@ -128,7 +128,10 @@ function Grimoire:RegisterMover(frame, key, label, default, opts)
 	handle:SetScript("OnLeave", GameTooltip_Hide)
 	handle:SetShown(self.moversUnlocked)
 
-	self.movers[key] = { frame = frame, handle = handle, label = label, default = default, lastActivity = GetTime() }
+	self.movers[key] = {
+		frame = frame, handle = handle, label = label, default = default,
+		isBusy = opts and opts.isBusy, lastActivity = GetTime(),
+	}
 	local dim = self.db.profile.moverDim
 	if dim[key] == nil then
 		dim[key] = opts and opts.dim or false
@@ -232,6 +235,10 @@ function Grimoire:GetSelectedMovers()
 		keys[#keys + 1] = key
 	end
 	return keys
+end
+
+function Grimoire:GetMoverGroup(key)
+	return Groups()[key]
 end
 
 -- Registered movers in the same group as key (just key when it isn't grouped).
@@ -365,12 +372,13 @@ function Grimoire:SetMoverDim(key, enabled)
 	self:NotifyAllMoverActivity()
 end
 
--- A group is idle only when every member is: newest activity or any hover counts.
+-- A group is idle only when every member is: newest activity, any hover, or any
+-- member reporting itself busy counts.
 local function GroupLastActivity(members)
 	local last = 0
 	for _, k in ipairs(members) do
 		local mover = Grimoire.movers[k]
-		if mover.frame:IsVisible() and mover.frame:IsMouseOver() then
+		if mover.frame:IsVisible() and (mover.frame:IsMouseOver() or (mover.isBusy and mover.isBusy())) then
 			return GetTime()
 		end
 		last = math.max(last, mover.lastActivity)
@@ -384,7 +392,7 @@ function Grimoire:UpdateMoverDimming()
 	for key, mover in pairs(self.movers) do
 		local dimmed = false
 		if self.db.profile.moverDim[key] and not self.moversUnlocked then
-			dimmed = now - GroupLastActivity(self:GetMoverGroupMembers(key)) > IDLE_SECONDS
+			dimmed = now - GroupLastActivity(self:GetMoverGroupMembers(key)) > self.db.profile.idleSeconds
 		end
 		mover.frame:SetAlpha(dimmed and dimAlpha or 1)
 	end

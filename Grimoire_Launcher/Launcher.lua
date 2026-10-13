@@ -1,11 +1,12 @@
+local ADDON_NAME = ...
 local Grimoire = Grimoire
 
 local SIZE = 31
 local CLICK_AFTER_DRAG_SECONDS = 0.2
 
 -- A free-floating round button (not attached to the minimap).
---   Left-click   toggle move mode for every Grimoire frame
---   Right-click  menu: move mode, reset positions, group selected frames, open windows
+--   Left-click   the Grimoire menu (Grimoire:GetMainMenu, built in core)
+--   Right-click  toggle move mode for every Grimoire frame
 --   Drag         move the button itself (works any time, it isn't protected)
 
 -- Tome icons that ship with the game, for /grimoire icon to cycle through.
@@ -16,56 +17,28 @@ local ICON_CHOICES = {
 }
 
 local M = Grimoire:NewModule("Launcher", {
+	addon = ADDON_NAME,
+	label = "Grimoire button",
 	defaults = {
 		position = { "BOTTOMRIGHT", "BOTTOMRIGHT", -40, 120 },
 		icon = ICON_CHOICES[1],
+		scale = 1.4,
+	},
+	options = {
+		{ type = "choice", key = "scale", label = "Button size", values = {
+			{ 1, "Small" }, { 1.25, "Medium" }, { 1.4, "Large" }, { 1.75, "Huge" },
+		} },
 	},
 })
 
-local function ToggleMoveMode()
-	if Grimoire.moversUnlocked then
-		Grimoire:LockMovers()
-	else
-		Grimoire:UnlockMovers()
-	end
+function M:ApplySettings()
+	self.button:SetScale(self.db.scale)
 end
 
--- Every enabled module with a window (anything that has a Toggle method).
-function M:BuildMenu()
-	local entries = {
-		{ text = "Grimoire", isTitle = true },
-		{ text = "Move frames", checked = function() return Grimoire.moversUnlocked end, func = ToggleMoveMode },
-		{ text = "Reset frame positions", func = function() self:ResetPositions() end },
-	}
-	local selected = Grimoire:GetSelectedMovers()
-	if #selected >= 2 then
-		entries[#entries + 1] = { text = "Group selected frames", func = function() Grimoire:GroupMovers(selected) end }
-	end
-	if #selected >= 1 then
-		entries[#entries + 1] = { text = "Clear selection", func = function() Grimoire:ClearMoverSelection() end }
-	end
-	local windows = {}
-	for _, name in ipairs(Grimoire.moduleOrder) do
-		local module = Grimoire.modules[name]
-		if module ~= self and module.Toggle and module:IsEnabled() then
-			windows[#windows + 1] = { text = name, func = function() module:Toggle() end }
-		end
-	end
-	if #windows > 0 then
-		entries[#entries + 1] = { isDivider = true }
-		for _, entry in ipairs(windows) do
-			entries[#entries + 1] = entry
-		end
-	end
-	return entries
-end
-
-function M:ResetPositions()
-	Grimoire:ResetMover()
+function M:ResetPosition()
 	self.db.position = nil
 	Grimoire.CopyDefaults(self.defaults, self.db)
 	self:ApplyPosition()
-	Grimoire:Print("Frame positions reset.")
 end
 
 function M:SavePosition()
@@ -103,8 +76,8 @@ function M:ShowTooltip()
 	local tooltip = GameTooltip
 	tooltip:SetOwner(self.button, "ANCHOR_LEFT")
 	tooltip:AddLine("Grimoire")
-	tooltip:AddLine(Grimoire.moversUnlocked and "Left-click: lock frames" or "Left-click: move frames", 1, 1, 1)
-	tooltip:AddLine("Right-click: menu", 1, 1, 1)
+	tooltip:AddLine("Left-click: menu", 1, 1, 1)
+	tooltip:AddLine(Grimoire.moversUnlocked and "Right-click: lock frames" or "Right-click: move frames", 1, 1, 1)
 	tooltip:AddLine("Drag: move this button", 1, 1, 1)
 	tooltip:Show()
 end
@@ -160,14 +133,15 @@ function M:Build()
 		-- Some clients still send a click when a drag ends; ignore it.
 		if self.lastDrag and GetTime() - self.lastDrag < CLICK_AFTER_DRAG_SECONDS then return end
 		if mouseButton == "RightButton" then
-			Grimoire.OpenMenu(b, self:BuildMenu())
+			Grimoire:ToggleMoveMode()
 		else
-			ToggleMoveMode()
+			Grimoire.OpenMenu(b, Grimoire:GetMainMenu())
 		end
 	end)
 	button:SetScript("OnEnter", function() self:ShowTooltip() end)
 	button:SetScript("OnLeave", GameTooltip_Hide)
 
+	self:ApplySettings()
 	self:ApplyPosition()
 end
 
@@ -184,6 +158,7 @@ function M:OnEnable()
 	self.button:Show()
 	self:RegisterCallback("MoversUnlocked", "UpdateState")
 	self:RegisterCallback("MoversLocked", "UpdateState")
+	self:RegisterCallback("PositionsReset", "ResetPosition")
 	self:UpdateState()
 end
 

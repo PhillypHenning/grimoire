@@ -1,3 +1,4 @@
+local ADDON_NAME = ...
 local Grimoire = Grimoire
 
 local SLOT_SIZE = 37
@@ -7,7 +8,7 @@ local VIEW_HEIGHT = 340
 local SCROLLBAR_WIDTH = 24
 local STATUS_HEIGHT = 30
 
-local M = Grimoire:NewModule("Bank")
+local M = Grimoire:NewModule("Bank", { addon = ADDON_NAME, label = "Bank" })
 
 -- Recording ------------------------------------------------------------------
 -- Bank contents can only be read while talking to a banker. Snapshot them on
@@ -51,7 +52,7 @@ end
 
 function M:Build()
 	local width = COLUMNS * (SLOT_SIZE + SLOT_SPACING) - SLOT_SPACING
-	local frame = Grimoire:CreateWindow("Bank", BANK or "Bank")
+	local frame = Grimoire:CreateWindow("Bank", BANK or "Bank", self)
 	frame:SetContentSize(width + SCROLLBAR_WIDTH, STATUS_HEIGHT + VIEW_HEIGHT)
 	frame:SetScript("OnShow", function() self:Refresh() end)
 	self.frame = frame

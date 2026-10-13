@@ -10,14 +10,25 @@ local Grimoire = Grimoire
 local Module = {}
 Module.__index = Module
 
+-- opts.addon:   the add-on folder the module ships in (pass `...`'s first value);
+--               the in-game menu groups modules under their add-on.
+-- opts.label:   display name in menus (defaults to the module name).
+-- opts.options: settings the menu offers (see docs/adr/0005):
+--   { type = "toggle", key = "showText", label = "Show %" }
+--   { type = "choice", key = "width", label = "Width", values = { { 180, "180" }, ... } }
+--   either may set reload = true when the change needs a /reload.
 ---@param name string
----@param opts? { defaults?: table, class?: string, conflicts?: string[], enabledByDefault?: boolean }
+---@param opts? { addon?: string, label?: string, options?: table[], defaults?: table, class?: string, conflicts?: string[], enabledByDefault?: boolean }
 ---@return GrimoireModule
 function Grimoire:NewModule(name, opts)
 	assert(not self.modules[name], "Grimoire: duplicate module " .. tostring(name))
 	opts = opts or {}
 	local module = setmetatable({
 		name = name,
+		addon = opts.addon,
+		label = opts.label or name,
+		options = opts.options or {},
+		moverKeys = {},
 		defaults = opts.defaults or {},
 		class = opts.class,
 		conflicts = opts.conflicts,
@@ -56,6 +67,19 @@ function Grimoire:SetupModule(module)
 	module:Call("OnInitialize")
 	if module.db.enabled then
 		self:EnableModule(module.name)
+	end
+end
+
+-- Changes one setting from the menu and lets the module apply it live.
+function Grimoire:SetModuleSetting(module, key, value)
+	module.db[key] = value
+	if module.ApplySettings and module:IsEnabled() then
+		module:Call("ApplySettings", key)
+	end
+	for _, option in ipairs(module.options) do
+		if option.key == key and option.reload then
+			self:Print(("%s: type /reload to apply."):format(module.label))
+		end
 	end
 end
 
@@ -191,6 +215,15 @@ function Module:UnregisterAllEvents()
 		self.eventFrame:UnregisterAllEvents()
 		wipe(self.eventFrame.handlers)
 	end
+end
+
+-- Registers a mover owned by this module, so the menu can offer its position
+-- options. The key is the module name, plus opts.suffix for a module's extra frames.
+function Module:RegisterMover(frame, label, default, opts)
+	local key = self.name .. (opts and opts.suffix or "")
+	Grimoire:RegisterMover(frame, key, label, default, opts)
+	self.moverKeys[#self.moverKeys + 1] = key
+	return key
 end
 
 function Module:RegisterCallback(name, fn)

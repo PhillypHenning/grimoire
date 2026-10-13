@@ -1,3 +1,4 @@
+local ADDON_NAME = ...
 local Grimoire = Grimoire
 
 -- Player health and power bars. Each is its own module and its own mover, so they
@@ -8,10 +9,8 @@ local HEALTH_COLOR = { r = 0, g = 1, b = 0 } -- classic player frame green
 local Bar = {}
 
 function Bar:Build()
-	local db = self.db
 	local inset = Grimoire.media.classicInset
 	local frame = CreateFrame("Frame", "Grimoire" .. self.name .. "Bar", UIParent, "BackdropTemplate")
-	frame:SetSize(db.width + inset * 2, db.height + inset * 2)
 	Grimoire.ApplyClassicBackdrop(frame)
 
 	local bar = CreateFrame("StatusBar", nil, frame)
@@ -22,8 +21,31 @@ function Bar:Build()
 	bar.text:SetPoint("CENTER")
 
 	self.frame, self.bar = frame, bar
+	self:ApplySize()
 	self:UpdateColor()
-	Grimoire:RegisterMover(frame, self.name, self:GetLabel(), self.defaultPosition, { dim = true })
+	self:RegisterMover(frame, self:GetLabel(), self.defaultPosition, {
+		dim = true,
+		isBusy = function() return self:IsBusy() end,
+	})
+end
+
+-- A bar never dims in combat or while it isn't full (secret values count as busy).
+function Bar:IsBusy()
+	if Grimoire:InCombat() or not self.lastCurrent then
+		return true
+	end
+	return self.lastCurrent < self.lastMax
+end
+
+function Bar:ApplySize()
+	local inset = Grimoire.media.classicInset
+	self.frame:SetSize(self.db.width + inset * 2, self.db.height + inset * 2)
+end
+
+function Bar:ApplySettings()
+	self:ApplySize()
+	self.lastCurrent = nil -- redraw the text even if the value hasn't changed
+	self:Update()
 end
 
 function Bar:UpdateColor()
@@ -71,8 +93,26 @@ function Bar:OnDisable()
 	self.frame:Hide()
 end
 
-local function NewBar(name, defaults, defaultPosition)
-	local module = Grimoire:NewModule(name, { defaults = defaults })
+local function Choices(...)
+	local values = {}
+	for i = 1, select("#", ...) do
+		local value = select(i, ...)
+		values[i] = { value, tostring(value) }
+	end
+	return values
+end
+
+local function NewBar(name, label, defaults, defaultPosition, heights)
+	local module = Grimoire:NewModule(name, {
+		addon = ADDON_NAME,
+		label = label,
+		defaults = defaults,
+		options = {
+			{ type = "toggle", key = "showText", label = "Show %" },
+			{ type = "choice", key = "width", label = "Width", values = Choices(180, 220, 260, 300) },
+			{ type = "choice", key = "height", label = "Height", values = Choices(unpack(heights)) },
+		},
+	})
 	for key, fn in pairs(Bar) do
 		module[key] = fn
 	end
@@ -82,11 +122,11 @@ end
 
 -- Health -----------------------------------------------------------------------------
 
-local Health = NewBar("Health", {
+local Health = NewBar("Health", HEALTH or "Health", {
 	width = 220,
 	height = 16,
 	showText = true,
-}, { "CENTER", "UIParent", "CENTER", 0, -180 })
+}, { "CENTER", "UIParent", "CENTER", 0, -180 }, { 12, 16, 20, 24 })
 
 function Health:GetLabel()
 	return HEALTH or "Health"
@@ -108,12 +148,12 @@ end
 
 -- Power (mana, rage, energy) ------------------------------------------------------------
 
-local Power = NewBar("Power", {
+local Power = NewBar("Power", "Power (mana)", {
 	width = 220,
 	height = 12,
 	showText = true,
 	manaColor = { r = 0, g = 0, b = 1 }, -- classic mana blue
-}, { "CENTER", "UIParent", "CENTER", 0, -204 })
+}, { "CENTER", "UIParent", "CENTER", 0, -204 }, { 8, 10, 12, 16 })
 
 function Power:GetLabel()
 	local _, token = UnitPowerType("player")

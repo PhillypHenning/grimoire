@@ -1,3 +1,4 @@
+local ADDON_NAME = ...
 local Grimoire = Grimoire
 
 local LIST_WIDTH = 170
@@ -8,7 +9,7 @@ local BUTTON_ROW_HEIGHT = 30
 local SCROLLBAR_WIDTH = 24
 local DELETE_CONFIRM_SECONDS = 3
 
-local M = Grimoire:NewModule("Notes")
+local M = Grimoire:NewModule("Notes", { addon = ADDON_NAME, label = "Notes" })
 
 -- Notes are account-wide: GrimoireDB.global.notes = { nextID, list = { {id, title, body, created, updated, author, class} } }
 -- author/class record which character wrote the note, so it can be class-colored (ADR 0003).
@@ -103,7 +104,7 @@ function M:CreateRow(index)
 end
 
 function M:Build()
-	local frame = Grimoire:CreateWindow("Notes", "Notes")
+	local frame = Grimoire:CreateWindow("Notes", "Notes", self)
 	frame:SetContentSize(VIEW_WIDTH, VIEW_HEIGHT)
 	self.frame = frame
 	local content = frame.content

@@ -1,3 +1,4 @@
+local ADDON_NAME = ...
 local Grimoire = Grimoire
 
 local ROW_HEIGHT = 36
@@ -8,7 +9,7 @@ local SCROLLBAR_WIDTH = 24
 local STATUS_HEIGHT = 30
 local FOOTER_HEIGHT = 20
 
-local M = Grimoire:NewModule("Auctions")
+local M = Grimoire:NewModule("Auctions", { addon = ADDON_NAME, label = "Auctions" })
 
 -- The Mainline client exposes C_AuctionHouse; classic-era rules might use the
 -- legacy owner-list API instead. Support whichever this client has.
@@ -213,7 +214,7 @@ local function TimeLeftText(auction)
 end
 
 function M:Build()
-	local frame = Grimoire:CreateWindow("Auctions", AUCTIONS or "Auctions")
+	local frame = Grimoire:CreateWindow("Auctions", AUCTIONS or "Auctions", self)
 	frame:SetContentSize(VIEW_WIDTH + SCROLLBAR_WIDTH, STATUS_HEIGHT + VIEW_HEIGHT + FOOTER_HEIGHT)
 	frame:SetScript("OnShow", function() self:Refresh() end)
 	self.frame = frame

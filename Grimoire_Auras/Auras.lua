@@ -1,3 +1,4 @@
+local ADDON_NAME = ...
 local Grimoire = Grimoire
 
 -- Buffs and Debuffs are separate modules with separate movers. Each uses Blizzard's
@@ -146,14 +147,12 @@ end
 
 local Aura = {}
 
-function Aura:Build()
-	local db = self.db
-	local step = BUTTON_SIZE + SPACING
-	local rowHeight = BUTTON_SIZE + TIMER_HEIGHT
+local STEP = BUTTON_SIZE + SPACING
+local ROW_HEIGHT = BUTTON_SIZE + TIMER_HEIGHT
 
+function Aura:Build()
 	-- The mover is a plain holder; the secure header hangs off its top-right corner.
 	local holder = CreateFrame("Frame", "Grimoire" .. self.name .. "Holder", UIParent)
-	holder:SetSize(db.perRow * step - SPACING, db.rows * rowHeight)
 	self.holder = holder
 
 	local header = CreateFrame("Frame", "Grimoire" .. self.name .. "Header", holder, "SecureAuraHeaderTemplate")
@@ -165,18 +164,34 @@ function Aura:Build()
 		header:SetAttribute("weaponTemplate", "GrimoireAuraButtonTemplate")
 	end
 	header:SetAttribute("point", "TOPRIGHT")
-	header:SetAttribute("xOffset", -step)
+	header:SetAttribute("xOffset", -STEP)
 	header:SetAttribute("yOffset", 0)
-	header:SetAttribute("wrapAfter", db.perRow)
 	header:SetAttribute("wrapXOffset", 0)
-	header:SetAttribute("wrapYOffset", -rowHeight)
-	header:SetAttribute("maxWraps", db.rows)
+	header:SetAttribute("wrapYOffset", -ROW_HEIGHT)
 	header:SetAttribute("sortMethod", "TIME")
 	header:SetAttribute("sortDirection", "-")
 	header:SetPoint("TOPRIGHT", holder, "TOPRIGHT")
 	self.header = header
+	self:ApplyLayout()
 
-	Grimoire:RegisterMover(holder, self.name, self.label, self.defaultPosition)
+	self:RegisterMover(holder, self.label, self.defaultPosition)
+end
+
+-- Rows and icons per row. The header is protected, so this waits for combat to end;
+-- the header re-lays itself out when its attributes change.
+function Aura:ApplyLayout()
+	local db = self.db
+	self.holder:SetSize(db.perRow * STEP - SPACING, db.rows * ROW_HEIGHT)
+	self.header:SetAttribute("wrapAfter", db.perRow)
+	self.header:SetAttribute("maxWraps", db.rows)
+end
+
+function Aura:ApplySettings()
+	Grimoire:RunOutOfCombat(function()
+		if self.header then
+			self:ApplyLayout()
+		end
+	end)
 end
 
 -- Picks up stack and timer changes on auras that kept their index.
@@ -219,7 +234,17 @@ function Aura:OnDisable()
 end
 
 local function NewAuraModule(name, label, filter, defaults, defaultPosition)
-	local module = Grimoire:NewModule(name, { defaults = defaults })
+	local module = Grimoire:NewModule(name, {
+		addon = ADDON_NAME,
+		label = label,
+		defaults = defaults,
+		options = {
+			{ type = "choice", key = "perRow", label = "Icons per row", values = {
+				{ 8, "8" }, { 12, "12" }, { 16, "16" }, { 20, "20" },
+			} },
+			{ type = "choice", key = "rows", label = "Rows", values = { { 1, "1" }, { 2, "2" }, { 3, "3" } } },
+		},
+	})
 	for key, fn in pairs(Aura) do
 		module[key] = fn
 	end
