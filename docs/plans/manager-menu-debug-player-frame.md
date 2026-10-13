@@ -257,7 +257,7 @@ After Milestone 4, before Prophecy (Phil, 2026-10-13).
 ## Milestone 5: Prophecy
 A plan written outside the game, pasted into WoW, drives the native quest tracker, map and pointer.
 - **Format:** [`docs/prophecy/FORMAT.md`](../prophecy/FORMAT.md) (version 1, on `main`). Decision: [ADR 0006](../adr/0006-prophecy-plans-are-pasted-text.md).
-- **First plan:** the Troll Warlock 1–30 guide (claude.ai artifact), converted by sub-agents against the format spec.
+- **First plan:** the Troll Warlock 1–30 guide, converted by four sub-agents against the spec and checked with `scripts/prophecy/check.lua`: [`docs/prophecy/plans/troll-warlock-1-30.prophecy`](../prophecy/plans/troll-warlock-1-30.prophecy) (21 chapters, 228 steps, 102 self-completing, 20 gates; 2026-10-13).
 - **Features agreed with Phil (2026-10-13):**
   - **Map markers:**
     - A gold world-map pin for the current step.

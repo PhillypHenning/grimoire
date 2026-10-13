@@ -28,6 +28,8 @@ New component? Copy [`features/TEMPLATE.md`](features/TEMPLATE.md) to `features/
 
 [Plan format, version 1](prophecy/FORMAT.md): the text format Prophecy plans are written in, for people and agents writing plans outside the game.
 
+Plans: [Troll Warlock, 1 to 30](prophecy/plans/troll-warlock-1-30.prophecy) (converted from the claude.ai guide; check it with `lua scripts/prophecy/check.lua <file>`).
+
 ## Architecture decision records
 
 | ADR | Title | Status |
