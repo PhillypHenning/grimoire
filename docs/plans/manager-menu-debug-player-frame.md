@@ -7,6 +7,7 @@
 >   - Fixed while finishing: the launcher kept its on-screen spot when its size changes (offsets are converted for the new scale); settings changed while a module is off apply when it's turned back on; unknown option types are skipped.
 > - **Extra, done:** Health/Power never dim in combat or while not full (`isBusy` option on `RegisterMover`).
 > - **Milestone 3:** code and docs done (2026-10-13), done before Milestone 2 at Phil's request. Changes from the plan below: left-click opens a micro-menu (Character Info … Game Menu + Grimoire) instead of targeting; the portrait is an animated 3D model by default (Classic 2D as a setting) and plays emotes (cheer on level-up, laugh or cry on death, wave when someone joins the party or the pet appears); the pet frame is kept when Blizzard's player frame is hidden; the default "Player" group was dropped after Phil tried it. ADR 0004 written. Waiting on in-game testing.
+>   - **Added (Phil's request):** a pet frame and pet bars, a size smaller than the player's: `PetFrame` (shared `Portrait` base, unit watch, left-click target, right-click pet menu, hides Blizzard's `PetFrame`) and `PetHealth` / `PetPower` (shared bar code, hidden without a pet except in move mode).
 > - **Milestone 2:** not started.
 
 ## Context
