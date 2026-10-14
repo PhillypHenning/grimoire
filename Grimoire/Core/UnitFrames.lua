@@ -263,6 +263,7 @@ function Portrait:Build()
 	self.nameText:SetPoint("BOTTOM", frame, "TOP", 0, 2)
 
 	self.levelText = overlay:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+	Grimoire.MakeBold(self.levelText)
 	self.levelText:SetPoint("BOTTOMRIGHT", -inset - 1, inset + 1)
 
 	if self.BuildExtras then

@@ -198,6 +198,7 @@ Code that more than one component needs lives in core, so components never depen
 | `Grimoire.CreateCharacterPicker(parent, field, onChange)` | `Core/Widgets.lua` | Class-colored character selector (uses `OpenMenu`, or cycles if no menu API) |
 | `Grimoire.FormatAgo` / `FormatMoney` | `Core/Util.lua` | "3h ago", coin strings |
 | `Grimoire.Font(name, fallback, …)` | `Core/Util.lua` | The first Blizzard font object that exists on this client (Forever lacks some) |
+| `Grimoire.MakeBold(fontString, extraSize?)` | `Core/Util.lua` | Bold look (thick outline, slightly larger), e.g. the level on portraits |
 | `Module:RegisterEvent` | `Core/Modules.lua` | Silently skips events this client doesn't have |
 
 ## Screenshots

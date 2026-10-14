@@ -73,6 +73,15 @@ function Grimoire.Font(...)
 	return "GameFontHighlightSmall"
 end
 
+-- Bold look for a font string: WoW fonts have no bold weight, so a thick outline and
+-- a slightly larger size stand in for it.
+function Grimoire.MakeBold(fontString, extraSize)
+	local font, size = fontString:GetFont()
+	if font then
+		fontString:SetFont(font, size + (extraSize or 2), "THICKOUTLINE")
+	end
+end
+
 -- frame must inherit "BackdropTemplate".
 function Grimoire.ApplyClassicBackdrop(frame)
 	frame:SetBackdrop(Grimoire.media.classicBackdrop)
