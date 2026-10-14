@@ -49,7 +49,7 @@ frame:HookScript("OnClick", function(b, mouseButton)
 end)
 ```
 
-**The click menu follows the micro menu.** Each entry appears only if that micro button exists and is shown (so Talents appears at level 10, Guild only on clients that have it). It calls the panel's toggle function, falling back to clicking the micro button. It checks `IsShown`, not `IsVisible`, so the menu keeps working after the micro menu itself is hidden.
+**The click menu follows the micro menu.** The entries are the micro buttons the client actually has, found at runtime in their on-screen order (`MICRO_BUTTONS`, else the `MicroMenu` container), so Forever's own buttons (Legacy, Shop, its Group Finder) appear without being listed in Grimoire. Labels come from each button's tooltip ("Character Info (C)" → "Character Info"). Known panels open through their toggle function; anything else, or a toggle the client lacks, clicks the button itself. An entry only shows while its button is shown (so Talents appears at level 10), and it checks `IsShown`, not `IsVisible`, so the menu keeps working after the micro menu itself is hidden.
 
 **Add-ons ▸: other add-ons' minimap buttons** ([`Core/AddOnButtons.lua`](../../../Grimoire/Core/AddOnButtons.lua), Phil's request). Every add-on with a minimap button gets an entry with **Open** (its left-click), **Options** (its right-click) and **✓ Show on minimap**, plus **Hide all minimap buttons** at the end. Buttons are found at runtime: LibDBIcon / LibDataBroker launchers through `LibStub` (no dependency), and any other named button on the minimap. Hidden buttons are saved per profile in `profile.addonButtons` and re-hidden after login and whenever LibDBIcon creates a button.
 

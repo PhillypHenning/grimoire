@@ -33,9 +33,10 @@ local Player = Grimoire:NewUnitPortrait("PlayerFrame", {
 	},
 })
 
--- Left-click menu: one entry per micro-menu button this client has. IsShown, not
--- IsVisible: entries stay after Grimoire hides the micro menu itself (the button keeps
--- its shown flag inside a hidden parent). Talents only shows from level 10.
+-- Left-click menu: one entry per micro-menu button this client actually has, in its
+-- on-screen order. Found at runtime, so Forever's own buttons (Legacy, Shop, its Group
+-- Finder) appear without being listed here. IsShown, not IsVisible: entries stay after
+-- Grimoire hides the micro menu itself. Talents only shows from level 10.
 
 local function ShowGameMenu()
 	if GameMenuFrame:IsShown() then
@@ -45,40 +46,80 @@ local function ShowGameMenu()
 	end
 end
 
--- { micro button, label, toggle function or its global name, argument }. Names are looked
--- up when clicked: Forever doesn't have all of them (no ToggleSpellBook), and a
--- missing one falls back to clicking the micro button itself.
-local MICRO_MENU = {
-	{ "CharacterMicroButton", CHARACTER_BUTTON or "Character Info", "ToggleCharacter", "PaperDollFrame" },
-	{ "SpellbookMicroButton", SPELLBOOK_ABILITIES_BUTTON or "Spellbook & Abilities", "ToggleSpellBook", BOOKTYPE_SPELL },
-	{ "TalentMicroButton", TALENTS_BUTTON or "Talents", "ToggleTalentFrame" },
-	{ "QuestLogMicroButton", QUESTLOG_BUTTON or "Quest Log", "ToggleQuestLog" },
-	{ "SocialsMicroButton", SOCIAL_BUTTON or "Social", "ToggleFriendsFrame" },
-	{ "GuildMicroButton", GUILD or "Guild" },
-	{ "LFGMicroButton", DUNGEONS_BUTTON or "Group Finder" },
-	{ "WorldMapMicroButton", WORLDMAP_BUTTON or "World Map", "ToggleWorldMap" },
-	{ "MainMenuMicroButton", MAINMENU_BUTTON or "Game Menu", ShowGameMenu },
-	{ "HelpMicroButton", HELP_BUTTON or "Help Request", "ToggleHelpFrame" },
+-- Known buttons: a nicer label and a direct toggle (function or global name, argument).
+-- Toggles are looked up when clicked; Forever lacks some (no ToggleSpellBook), and a
+-- missing or failing one falls back to clicking the button, as does every unknown one.
+local KNOWN = {
+	CharacterMicroButton = { CHARACTER_BUTTON, "ToggleCharacter", "PaperDollFrame" },
+	SpellbookMicroButton = { SPELLBOOK_ABILITIES_BUTTON, "ToggleSpellBook", BOOKTYPE_SPELL },
+	TalentMicroButton = { TALENTS_BUTTON, "ToggleTalentFrame" },
+	QuestLogMicroButton = { QUESTLOG_BUTTON, "ToggleQuestLog" },
+	SocialsMicroButton = { SOCIAL_BUTTON, "ToggleFriendsFrame" },
+	WorldMapMicroButton = { WORLDMAP_BUTTON, "ToggleWorldMap" },
+	MainMenuMicroButton = { MAINMENU_BUTTON, ShowGameMenu },
+	HelpMicroButton = { HELP_BUTTON, "ToggleHelpFrame" },
 }
 
-local function OpenPanel(item, button)
-	local toggle = item[3]
+-- Older clients' fixed list, used only if the client has no list or container.
+local FALLBACK_NAMES = {
+	"CharacterMicroButton", "SpellbookMicroButton", "TalentMicroButton", "QuestLogMicroButton",
+	"SocialsMicroButton", "GuildMicroButton", "LFGMicroButton", "WorldMapMicroButton",
+	"MainMenuMicroButton", "HelpMicroButton",
+}
+
+local function MicroButtons()
+	local buttons = {}
+	if type(MICRO_BUTTONS) == "table" then
+		for _, name in ipairs(MICRO_BUTTONS) do
+			if _G[name] then buttons[#buttons + 1] = _G[name] end
+		end
+	end
+	local container = MicroMenu or MicroMenuContainer
+	if #buttons == 0 and container then
+		for _, child in ipairs({ container:GetChildren() }) do
+			if child:IsObjectType("Button") then buttons[#buttons + 1] = child end
+		end
+		table.sort(buttons, function(a, b) return (a:GetLeft() or 0) < (b:GetLeft() or 0) end)
+	end
+	if #buttons == 0 then
+		for _, name in ipairs(FALLBACK_NAMES) do
+			if _G[name] then buttons[#buttons + 1] = _G[name] end
+		end
+	end
+	return buttons
+end
+
+-- "Character Info |cffffd200(C)|r" -> "Character Info"; else the frame name, spaced.
+local function MicroLabel(button)
+	local name = button:GetName() or ""
+	local known = KNOWN[name]
+	if known and known[1] then return known[1] end
+	local text = button.tooltipText
+	if type(text) == "string" and text ~= "" then
+		text = text:gsub("|c%x%x%x%x%x%x%x%x", ""):gsub("|r", ""):gsub("%s*%(.-%)%s*$", "")
+		if text ~= "" then return text end
+	end
+	return (name:gsub("MicroButton$", ""):gsub("(%l)(%u)", "%1 %2"))
+end
+
+local function OpenMicro(button)
+	local known = KNOWN[button:GetName() or ""]
+	local toggle = known and known[2]
 	if type(toggle) == "string" then
 		toggle = _G[toggle]
 	end
-	if not (toggle and pcall(toggle, item[4])) then
+	if not (toggle and pcall(toggle, known[3])) then
 		button:Click()
 	end
 end
 
 function Player:GetClickMenu()
 	local entries = { { text = UnitName("player"), isTitle = true } }
-	for _, item in ipairs(MICRO_MENU) do
-		local button = _G[item[1]]
-		if button and button:IsShown() then
+	for _, button in ipairs(MicroButtons()) do
+		if button:IsShown() then
 			entries[#entries + 1] = {
-				text = item[2],
-				func = function() OpenPanel(item, button) end,
+				text = MicroLabel(button),
+				func = function() OpenMicro(button) end,
 				disabled = not button:IsEnabled(),
 			}
 		end
