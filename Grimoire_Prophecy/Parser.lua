@@ -1,13 +1,15 @@
 -- Prophecy plan parser, format version 1 (docs/prophecy/FORMAT.md).
 --
--- Plain Lua 5.1 with no WoW API, so the same code runs in the game (Prophecy's
--- import window) and on the command line (scripts/prophecy/check.lua). It turns plan
--- text into a table and lists errors and warnings with line numbers; it never runs
+-- Plain Lua 5.1 with no WoW API, so the same file runs in the game (loaded by
+-- Grimoire_Prophecy.toc) and on the command line (scripts/prophecy/check.lua). It turns
+-- plan text into a table and lists errors and warnings with line numbers; it never runs
 -- anything from the plan (ADR 0006).
 --
 --   local plan, errors, warnings = Parser.Parse(text)
 --   -- errors / warnings: { { line = n, message = "..." }, ... }; plan is nil on errors
+--   -- every step has an `id` and every gate `check` a `key`, for saved progress
 
+local _, ns = ...
 local Parser = {}
 
 local KNOWN_ZONES = {}
@@ -32,6 +34,16 @@ local QUEST_CONDITIONS = { accept = true, complete = true, turnin = true }
 
 local function Trim(s)
 	return (s:gsub("^%s+", ""):gsub("%s+$", ""))
+end
+
+-- Short, stable hash of a step's main line (FORMAT.md, "Progress and identity").
+-- Plain arithmetic: WoW's Lua has no 5.3 bit operators.
+function Parser.Hash(s)
+	local h = 5381
+	for i = 1, #s do
+		h = (h * 33 + s:byte(i)) % 4294967291 -- largest prime below 2^32
+	end
+	return ("%08x"):format(h)
 end
 
 -- Inline markup -------------------------------------------------------------------------------
@@ -315,6 +327,12 @@ function Parser.Parse(text)
 				Warn(step.line, "same main line as line " .. seen[step.text] .. " in this chapter; their progress would be shared")
 			end
 			seen[step.text] = step.line
+			step.id = ch.id .. ":" .. Parser.Hash(step.text)
+		end
+		for _, req in ipairs(ch.gate and ch.gate.requirements or {}) do
+			if req.type == "check" then
+				req.key = ch.id .. ":check:" .. Parser.Hash(req.text)
+			end
 		end
 	end
 
@@ -322,4 +340,57 @@ function Parser.Parse(text)
 	return plan, errors, warnings
 end
 
+-- Display -----------------------------------------------------------------------------------------
+
+-- Rewrites a validated piece of text for display: style.quest(name), style.name(name)
+-- and style.coord(x, y, zone) replace the markup; escapes become the literal character.
+function Parser.FormatText(text, style)
+	local out, i, n = {}, 1, #text
+	while i <= n do
+		local c = text:sub(i, i)
+		local close
+		if c == "\\" then
+			out[#out + 1] = text:sub(i + 1, i + 1)
+			i = i + 2
+		elseif c == "[" then
+			close = text:find("]", i + 1, true)
+		elseif c == "{" then
+			close = text:find("}", i + 1, true)
+		elseif c == "@" then
+			local whole, x, y = text:match("^(@(%d+%.?%d*),(%d+%.?%d*))", i)
+			local zone
+			if not whole then
+				whole, zone, x, y = text:match("^(@([^:@%[%]{}]+):(%d+%.?%d*),(%d+%.?%d*))", i)
+			end
+			if whole then
+				out[#out + 1] = style.coord(x, y, zone and Trim(zone))
+				i = i + #whole
+			else
+				out[#out + 1] = c
+				i = i + 1
+			end
+		else
+			local plain = text:find("[\\%[{@]", i) or n + 1
+			out[#out + 1] = text:sub(i, plain - 1)
+			i = plain
+		end
+		if close then
+			local body = Trim(text:sub(i + 1, close - 1))
+			if c == "[" then
+				out[#out + 1] = style.quest(Trim(body:match("^(.-)#%d+$") or body))
+			else
+				out[#out + 1] = style.name(body)
+			end
+			i = close + 1
+		elseif c == "[" or c == "{" then
+			out[#out + 1] = c -- unclosed; can't happen after validation
+			i = i + 1
+		end
+	end
+	return table.concat(out)
+end
+
+if type(ns) == "table" then
+	ns.Parser = Parser -- in game: shared with the rest of Grimoire_Prophecy
+end
 return Parser

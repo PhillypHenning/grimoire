@@ -21,6 +21,7 @@ Each component is its own add-on and can be switched on or off in the in-game Ad
 | [Notes](features/notes/README.md) | `Grimoire_Notes` | Scaffolded, untested in game |
 | [Launcher](features/launcher/README.md) | `Grimoire_Launcher` | Scaffolded, untested in game |
 | [Tweaks](features/tweaks/README.md) | `Grimoire_Tweaks` | Scaffolded, untested in game |
+| [Prophecy](features/prophecy/README.md) | `Grimoire_Prophecy` | Scaffolded, untested in game (phase 5a: import, viewer, step panel) |
 
 New component? Copy [`features/TEMPLATE.md`](features/TEMPLATE.md) to `features/<component>/README.md` and put screenshots in `features/<component>/screenshots/`.
 
@@ -28,7 +29,7 @@ New component? Copy [`features/TEMPLATE.md`](features/TEMPLATE.md) to `features/
 
 [Plan format, version 1](prophecy/FORMAT.md): the text format Prophecy plans are written in, for people and agents writing plans outside the game.
 
-Plans: [Troll Warlock, 1 to 30](prophecy/plans/troll-warlock-1-30.prophecy) (converted from the claude.ai guide; check it with `lua scripts/prophecy/check.lua <file>`).
+Plans: [Troll Warlock, 1 to 30](prophecy/plans/troll-warlock-1-30.prophecy) (converted from the claude.ai guide; ships with the add-on). Check a plan with `lua scripts/prophecy/check.lua <file>`; bundle one into the add-on with `lua scripts/prophecy/bundle.lua <file> Grimoire_Prophecy/Plans/<name>.lua`.
 
 ## Architecture decision records
 

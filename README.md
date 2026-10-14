@@ -18,7 +18,8 @@ Grimoire_Auctions/     Auction snapshot + viewer
 Grimoire_Notes/        Account-wide notes, with an optional floating button
 Grimoire_Launcher/     Movable Grimoire button: left-click menu, right-click move mode
 Grimoire_Tweaks/       Game settings Blizzard's menu lacks (graphics CVars); /grim cvars dump
-scripts/               Dev tooling: link-addons.ps1 (junctions), check-lua.ps1 (syntax + .toc check), prophecy/ (plan parser + checker)
+Grimoire_Prophecy/     Levelling plans pasted in from outside the game: plan viewer, step panel; /prophecy
+scripts/               Dev tooling: link-addons.ps1 (junctions), check-lua.ps1 (syntax + .toc check), prophecy/ (plan checker and bundler; the parser is Grimoire_Prophecy/Parser.lua)
 docs/                  Component docs (summary, diagrams, screenshots) and ADRs
 ```
 
@@ -68,7 +69,7 @@ function M:OnDisable() end         -- events + callbacks are released automatica
 
 ## Slash commands
 
-`/grimoire` (or `/grim`) lists all commands. Core: `menu`, `unlock`, `lock`, `reset [frame]`, `modules`, `enable <module>`, `disable <module>`, `profile [name]`. Components add their own: `bags`, `bank`, `auctions`, `notes`, `icon`, `cvars`.
+`/grimoire` (or `/grim`) lists all commands. Core: `menu`, `unlock`, `lock`, `reset [frame]`, `modules`, `enable <module>`, `disable <module>`, `profile [name]`. Components add their own: `bags`, `bank`, `auctions`, `notes`, `icon`, `cvars`, `prophecy [import]` (also `/prophecy`).
 
 ## Dev setup (Windows)
 

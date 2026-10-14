@@ -1,0 +1,16 @@
+## Interface: 16001
+## Title: |cff8788eeGrimoire|r Prophecy
+## Notes: Levelling plans written outside the game: paste one in, follow it step by step. /prophecy
+## Author: Phil Henning
+## Version: @project-version@
+## RequiredDeps: Grimoire
+## SavedVariables: GrimoireProphecyDB
+## Group: Grimoire
+## Category: Grimoire
+
+Parser.lua
+Prophecy.lua
+Import.lua
+Viewer.lua
+Tracker.lua
+Plans\troll-warlock-1-30.lua
