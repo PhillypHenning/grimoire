@@ -1,48 +1,41 @@
 local ADDON_NAME = ...
 local Grimoire = Grimoire
 
--- Target frame: Blizzard's classic target frame look (portrait in a ring, name on a
--- reaction-coloured band, level, health and mana, elite/rare dragon border) with the
--- target's auras and a target-of-target frame, all in one mover, "Target". The parts
--- are children of that mover, so they move as one and can't be split up.
+-- Target frame in Grimoire's own style, matching the player frame (Phil, 2026-10-13):
+-- bordered health and power bars, the name above them in the target's reaction colour,
+-- and a square portrait box (animated 3D model or classic 2D) with the level in its
+-- corner, mirrored so it faces the player frame. Below: the target's auras. Beside it:
+-- a compact target of target. All of it is one mover, "Target", so the parts move as
+-- one and can't be split up.
 --   Left-click   target (the usual unit-frame click)
 --   Right-click  the target's Blizzard menu
--- Blizzard's target frame is hidden (ADR 0004); its combo points are moved over first.
---
--- Layout numbers mirror Blizzard's player frame on the 232x100 target art. They're
--- all in LAYOUT so they can be tuned from a screenshot.
+-- Blizzard's target frame is hidden in place (ADR 0004, ADR 0007).
 
-local LAYOUT = {
-	width = 232, height = 100,
-	portrait = { 64, 126, -12 },       -- size, x, y from the top-left
-	health = { 119, 12, 7, -41 },      -- width, height, x, y
-	power = { 119, 12, 7, -52 },
-	nameBand = { 119, 19, 7, -22 },
-	level = { 179, -66 },               -- centre of the level circle
-	raidIcon = 26,
-	combo = { -44, -9 },                -- ComboFrame, from the top-right
-	auras = { 5, -66 },                 -- first aura's top-left
-	targetOfTarget = { -35, -10 },      -- its bottom-right, from the frame's bottom-right
-}
-local AURA_SIZE, OWN_AURA_SIZE, AURA_GAP, AURAS_PER_ROW = 17, 21, 3, 5
+local INSET = 4                 -- Grimoire.media.classicInset
+local BAR_WIDTH = 180
+local HEALTH_HEIGHT, POWER_HEIGHT = 16, 12
+local NAME_HEIGHT = 14
+local GAP = 2
+local AURA_SIZE, OWN_AURA_SIZE, AURA_GAP, AURAS_PER_ROW = 17, 21, 3, 8
 local MAX_BUFFS, MAX_DEBUFFS = 16, 16
+local TOT_WIDTH, TOT_BAR_HEIGHT = 90, 8
 local TOT_UPDATE_SECONDS = 0.2
 
 local M = Grimoire:NewModule("Target", {
 	addon = ADDON_NAME,
 	label = "Target frame",
 	defaults = {
-		scale = 1,
+		style = "animated",
+		size = 64,
 		showText = true,
 		showAuras = true,
 		showTargetOfTarget = true,
 		hideBlizzard = true,
 	},
 	options = {
-		{ type = "choice", key = "scale", label = "Size", values = {
-			{ 0.9, "Small" }, { 1, "Normal" }, { 1.2, "Large" }, { 1.4, "Huge" },
-		} },
-		{ type = "toggle", key = "showText", label = "Show % on bars" },
+		Grimoire.UnitPortraitStyleOption(),
+		{ type = "choice", key = "size", label = "Size", values = { { 48, "Small" }, { 64, "Medium" }, { 80, "Large" } } },
+		{ type = "toggle", key = "showText", label = "Show values on bars" },
 		{ type = "toggle", key = "showAuras", label = "Show buffs and debuffs" },
 		{ type = "toggle", key = "showTargetOfTarget", label = "Show target of target" },
 		{ type = "toggle", key = "hideBlizzard", label = "Hide Blizzard target frame", reload = true },
@@ -58,6 +51,17 @@ local function Tooltip(unit)
 	end
 end
 
+-- A status bar inside a classic bordered box, like the player's Health/Power bars.
+local function CreateBoxedBar(parent, width, height)
+	local box = CreateFrame("Frame", nil, parent, "BackdropTemplate")
+	box:SetSize(width + INSET * 2, height + INSET * 2)
+	Grimoire.ApplyClassicBackdrop(box)
+	box.bar = Grimoire.CreateStatusBar(box, width, height)
+	box.bar:SetPoint("TOPLEFT", INSET, -INSET)
+	box.bar.text:SetFontObject(Grimoire.Font("TextStatusBarText"))
+	return box
+end
+
 -- Aura data, from whichever API this client has.
 local function GetAura(unit, index, filter)
 	if C_UnitAuras and C_UnitAuras.GetAuraDataByIndex then
@@ -71,157 +75,166 @@ local function GetAura(unit, index, filter)
 	return name, icon, count, debuffType, duration, expirationTime, source
 end
 
--- Frame ------------------------------------------------------------------------------------------
+-- Frame -----------------------------------------------------------------------------------
 
-local function BuildTargetButton(self)
-	local media, L = Grimoire.media, LAYOUT
-	local button = CreateFrame("Button", "GrimoireTargetButton", self.holder, "SecureUnitButtonTemplate")
-	button:SetSize(L.width, L.height)
+function M:Build()
+	local media = Grimoire.media
+	local holder = CreateFrame("Frame", "GrimoireTargetFrame", UIParent)
+	self.holder = holder
+
+	-- The secure button covers the bars and portrait: clicks anywhere on them work.
+	local button = CreateFrame("Button", "GrimoireTargetButton", holder, "SecureUnitButtonTemplate")
 	button:SetAttribute("unit", "target")
 	button:SetAttribute("type1", "target")
 	button:RegisterForClicks("AnyUp")
 	Grimoire.SetUnitRightClickMenu(button, "TargetFrameDropDown")
 	button:SetScript("OnEnter", Tooltip("target"))
 	button:SetScript("OnLeave", GameTooltip_Hide)
+	button:SetAllPoints(holder)
+	self.button = button
 
-	button.portrait = button:CreateTexture(nil, "BACKGROUND")
-	button.portrait:SetSize(L.portrait[1], L.portrait[1])
-	button.portrait:SetPoint("TOPLEFT", L.portrait[2], L.portrait[3])
-
-	button.nameBand = button:CreateTexture(nil, "BACKGROUND")
-	button.nameBand:SetTexture(media.nameBackground)
-	button.nameBand:SetSize(L.nameBand[1], L.nameBand[2])
-	button.nameBand:SetPoint("TOPLEFT", L.nameBand[3], L.nameBand[4])
-
-	button.health = Grimoire.CreateStatusBar(button, L.health[1], L.health[2])
-	button.health:SetPoint("TOPLEFT", L.health[3], L.health[4])
-	button.power = Grimoire.CreateStatusBar(button, L.power[1], L.power[2])
-	button.power:SetPoint("TOPLEFT", L.power[3], L.power[4])
-
-	local art = CreateFrame("Frame", nil, button)
-	art:SetAllPoints()
-	art:SetFrameLevel(button.health:GetFrameLevel() + 2)
-	button.border = art:CreateTexture(nil, "ARTWORK")
-	button.border:SetAllPoints()
-	button.border:SetTexCoord(0.09375, 1, 0, 0.78125)
-
-	button.name = art:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-	button.name:SetPoint("CENTER", button.nameBand, "CENTER", 0, 0)
-	button.name:SetWidth(L.nameBand[1] - 6)
+	button.name = button:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+	button.name:SetPoint("TOPLEFT", 2, 0)
+	button.name:SetHeight(NAME_HEIGHT)
+	button.name:SetJustifyH("LEFT")
 	button.name:SetWordWrap(false)
 
-	button.level = art:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-	button.level:SetPoint("CENTER", button, "TOPLEFT", L.level[1], L.level[2])
+	button.health = CreateBoxedBar(button, BAR_WIDTH, HEALTH_HEIGHT)
+	button.health:SetPoint("TOPLEFT", 0, -NAME_HEIGHT)
+	button.power = CreateBoxedBar(button, BAR_WIDTH, POWER_HEIGHT)
+	button.power:SetPoint("TOPLEFT", button.health, "BOTTOMLEFT", 0, -GAP)
 
-	button.raidIcon = art:CreateTexture(nil, "OVERLAY")
+	-- Portrait box, like the player frame's.
+	local box = CreateFrame("Frame", nil, button, "BackdropTemplate")
+	Grimoire.ApplyClassicBackdrop(box)
+	box:SetPoint("TOPLEFT", button.health, "TOPRIGHT", GAP, NAME_HEIGHT)
+	button.box = box
+
+	local model = CreateFrame("PlayerModel", nil, box)
+	model:SetPoint("TOPLEFT", INSET, -INSET)
+	model:SetPoint("BOTTOMRIGHT", -INSET, INSET)
+	model:SetScript("OnShow", function() self:UpdatePortrait() end)
+	button.model = model
+
+	button.portrait = box:CreateTexture(nil, "ARTWORK")
+	button.portrait:SetPoint("TOPLEFT", INSET, -INSET)
+	button.portrait:SetPoint("BOTTOMRIGHT", -INSET, INSET)
+
+	-- Text and icons above the model, which draws over its parent.
+	local overlay = CreateFrame("Frame", nil, box)
+	overlay:SetAllPoints()
+	overlay:SetFrameLevel(model:GetFrameLevel() + 2)
+	button.level = overlay:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+	button.level:SetPoint("BOTTOMRIGHT", -INSET - 1, INSET + 1)
+	button.raidIcon = overlay:CreateTexture(nil, "OVERLAY")
 	button.raidIcon:SetTexture(media.raidTargetIcons)
-	button.raidIcon:SetSize(L.raidIcon, L.raidIcon)
-	button.raidIcon:SetPoint("CENTER", button.portrait, "TOP", 0, 0)
-
-	button.pvp = art:CreateTexture(nil, "OVERLAY")
+	button.raidIcon:SetSize(22, 22)
+	button.raidIcon:SetPoint("CENTER", box, "TOP", 0, 0)
+	button.pvp = overlay:CreateTexture(nil, "OVERLAY")
 	button.pvp:SetTexCoord(0, 0.62, 0, 0.62)
-	button.pvp:SetSize(26, 26)
-	button.pvp:SetPoint("LEFT", button.portrait, "RIGHT", -6, -6)
+	button.pvp:SetSize(24, 24)
+	button.pvp:SetPoint("BOTTOMRIGHT", box, "BOTTOMLEFT", 7, -7)
 
-	-- Auras hang below the bars; children of the button so they hide with the target.
+	-- Auras under the bars; children of the button so they hide with the target.
 	button.auras = CreateFrame("Frame", nil, button)
-	button.auras:SetPoint("TOPLEFT", L.auras[1], L.auras[2])
-	button.auras:SetSize(AURAS_PER_ROW * (OWN_AURA_SIZE + AURA_GAP), 1)
+	button.auras:SetPoint("TOPLEFT", button.power, "BOTTOMLEFT", 0, -GAP - 1)
+	button.auras:SetSize(AURAS_PER_ROW * (AURA_SIZE + AURA_GAP), 1)
 	button.buffButtons, button.debuffButtons = {}, {}
-	return button
+
+	self:BuildTargetOfTarget()
+	self:ApplyLayout()
+	-- Mirrors the player frame's default spot: right of the screen centre, bars level.
+	self:RegisterMover(holder, "Target", { "TOPLEFT", "UIParent", "CENTER", 118, -168 }, { dim = false })
 end
 
-local function BuildTargetOfTarget(self)
-	local media = Grimoire.media
+function M:BuildTargetOfTarget()
 	local tot = CreateFrame("Button", "GrimoireTargetOfTarget", self.holder, "SecureUnitButtonTemplate")
-	tot:SetSize(93, 45)
+	tot:SetSize(TOT_WIDTH + INSET * 2, NAME_HEIGHT + TOT_BAR_HEIGHT + INSET * 2)
 	tot:SetAttribute("unit", "targettarget")
 	tot:SetAttribute("type1", "target")
 	tot:RegisterForClicks("AnyUp")
 	Grimoire.SetUnitRightClickMenu(tot)
 	tot:SetScript("OnEnter", Tooltip("targettarget"))
 	tot:SetScript("OnLeave", GameTooltip_Hide)
-
-	tot.portrait = tot:CreateTexture(nil, "BACKGROUND")
-	tot.portrait:SetSize(35, 35)
-	tot.portrait:SetPoint("TOPLEFT", 6, -5)
-	tot.health = Grimoire.CreateStatusBar(tot, 46, 7)
-	tot.health:SetPoint("TOPRIGHT", -2, -15)
-	tot.power = Grimoire.CreateStatusBar(tot, 46, 7)
-	tot.power:SetPoint("TOPRIGHT", -2, -23)
-
-	local art = CreateFrame("Frame", nil, tot)
-	art:SetAllPoints()
-	art:SetFrameLevel(tot.health:GetFrameLevel() + 2)
-	local border = art:CreateTexture(nil, "ARTWORK")
-	border:SetTexture(media.targetOfTargetFrame)
-	border:SetSize(128, 64)
-	border:SetPoint("TOPLEFT", 0, 0)
-	tot.name = art:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-	tot.name:SetPoint("BOTTOMLEFT", 42, 6)
-	tot.name:SetWidth(48)
+	tot.name = tot:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+	tot.name:SetPoint("TOPLEFT", 2, 0)
+	tot.name:SetPoint("TOPRIGHT", -2, 0)
+	tot.name:SetHeight(NAME_HEIGHT)
 	tot.name:SetJustifyH("LEFT")
 	tot.name:SetWordWrap(false)
-	return tot
-end
-
-function M:Build()
-	local holder = CreateFrame("Frame", "GrimoireTargetFrame", UIParent)
-	self.holder = holder
-	self.button = BuildTargetButton(self)
-	self.tot = BuildTargetOfTarget(self)
-	self:ApplyLayout()
-	-- Where Blizzard's target frame sits, right of the player frame.
-	self:RegisterMover(holder, "Target", { "TOPLEFT", "UIParent", "TOPLEFT", 250, -4 }, { dim = false })
+	tot.health = CreateBoxedBar(tot, TOT_WIDTH, TOT_BAR_HEIGHT)
+	tot.health:SetPoint("TOPLEFT", 0, -NAME_HEIGHT)
+	self.tot = tot
 end
 
 function M:ApplyLayout()
-	local L, scale = LAYOUT, self.db.scale
-	self.button:SetScale(scale)
-	self.button:ClearAllPoints()
-	self.button:SetPoint("TOPLEFT", self.holder, "TOPLEFT", 0, 0)
-	self.tot:SetScale(scale)
+	local size = self.db.size
+	local box = self.button.box
+	box:SetSize(size + INSET * 2, size + INSET * 2)
+	local width = BAR_WIDTH + INSET * 2 + GAP + size + INSET * 2
+	local height = math.max(NAME_HEIGHT + size + INSET * 2,
+		NAME_HEIGHT + HEALTH_HEIGHT + POWER_HEIGHT + INSET * 4 + GAP)
+	self.holder:SetSize(width, height)
 	self.tot:ClearAllPoints()
-	self.tot:SetPoint("BOTTOMRIGHT", self.button, "BOTTOMRIGHT", L.targetOfTarget[1], L.targetOfTarget[2] - 45)
-	self.holder:SetSize(L.width * scale, L.height * scale)
+	self.tot:SetPoint("TOPLEFT", self.holder, "TOPRIGHT", GAP * 2, -NAME_HEIGHT)
+	local animated = self.db.style == "animated"
+	self.button.model:SetShown(animated)
+	self.button.portrait:SetShown(not animated)
 end
 
--- Display ------------------------------------------------------------------------------------------
+-- Display -----------------------------------------------------------------------------------
 
-local CLASSIFICATION_ART = {
-	worldboss = "targetFrameElite",
-	elite = "targetFrameElite",
-	rareelite = "targetFrameRareElite",
-	rare = "targetFrameRare",
+local CLASSIFICATION = {
+	worldboss = "Boss", elite = "Elite", rareelite = "Rare Elite", rare = "Rare",
 }
+
+function M:UpdatePortrait()
+	local button = self.button
+	if not UnitExists("target") then
+		button.portrait:SetTexture(nil)
+		return
+	end
+	if self.db.style == "animated" then
+		button.model:SetUnit("target")
+		button.model:SetPortraitZoom(1)
+	else
+		SetPortraitTexture(button.portrait, "target")
+	end
+end
 
 function M:UpdateTarget()
 	local button, unit = self.button, "target"
 	if not UnitExists(unit) then
 		-- Move-mode placeholder.
-		button.border:SetTexture(Grimoire.media.targetFrame)
-		button.portrait:SetTexture(nil)
 		button.name:SetText(TARGET or "Target")
+		button.name:SetTextColor(0.6, 0.6, 0.6)
 		button.level:SetText("")
-		button.nameBand:SetVertexColor(0.5, 0.5, 0.5)
 		button.raidIcon:Hide()
 		button.pvp:Hide()
+		self:UpdatePortrait()
 		self:UpdateBars()
 		self:UpdateAuras()
 		return
 	end
-	local art = CLASSIFICATION_ART[UnitClassification(unit)] or "targetFrame"
-	button.border:SetTexture(Grimoire.media[art])
-	SetPortraitTexture(button.portrait, unit)
-	button.name:SetText(UnitName(unit))
 
-	local r, g, b = UnitSelectionColor(unit)
-	button.nameBand:SetVertexColor(r, g, b)
+	local name = UnitName(unit) or ""
+	local tag = CLASSIFICATION[UnitClassification(unit)]
+	button.name:SetText(tag and ("%s |cffffd100(%s)|r"):format(name, tag) or name)
+	if UnitIsPlayer(unit) then
+		local _, class = UnitClass(unit)
+		local color = Grimoire.GetClassColor(class)
+		if color then
+			button.name:SetTextColor(color.r, color.g, color.b)
+		end
+	else
+		button.name:SetTextColor(UnitSelectionColor(unit))
+	end
 
 	local levelText, color = Grimoire.UnitLevelText(unit)
 	button.level:SetText(levelText)
 	button.level:SetTextColor(color.r, color.g, color.b)
 
+	self:UpdatePortrait()
 	self:UpdateRaidIcon()
 	self:UpdatePvP()
 	self:UpdateBars()
@@ -231,11 +244,11 @@ end
 
 function M:UpdateBars()
 	local button = self.button
-	Grimoire.UpdateUnitBar(button.health, "target", "health", self.db.showText)
-	Grimoire.UpdateUnitBar(button.power, "target", "power", self.db.showText)
+	Grimoire.UpdateUnitBar(button.health.bar, "target", "health", self.db.showText)
+	Grimoire.UpdateUnitBar(button.power.bar, "target", "power", self.db.showText)
 	-- Tagged by someone else: grey, like Blizzard's.
 	if UnitExists("target") and UnitIsTapDenied and UnitIsTapDenied("target") then
-		button.health:SetStatusBarColor(0.5, 0.5, 0.5)
+		button.health.bar:SetStatusBarColor(0.5, 0.5, 0.5)
 	end
 end
 
@@ -260,9 +273,9 @@ function M:UpdatePvP()
 	self.button.pvp:SetShown(suffix ~= nil)
 end
 
--- Auras ----------------------------------------------------------------------------------------------
--- Display only: buffs first, then debuffs, rows of AURAS_PER_ROW. Your own debuffs (your
--- DoTs) are larger, as on Blizzard's classic frame.
+-- Auras -----------------------------------------------------------------------------------------
+-- Display only: buffs first, then debuffs, in rows of AURAS_PER_ROW. Your own debuffs
+-- (your DoTs) are larger.
 
 local function Aura_OnEnter(aura)
 	GameTooltip:SetOwner(aura, "ANCHOR_BOTTOMRIGHT")
@@ -294,6 +307,8 @@ local function GetAuraButton(parent, list, i)
 	return aura
 end
 
+local ROW_WIDTH = AURAS_PER_ROW * (AURA_SIZE + AURA_GAP)
+
 -- Lays out one aura list from (x, y); returns where the next one starts.
 local function LayoutAuras(parent, list, filter, max, x, y, rowHeight)
 	local shown = 0
@@ -304,7 +319,7 @@ local function LayoutAuras(parent, list, filter, max, x, y, rowHeight)
 		local aura = GetAuraButton(parent, list, i)
 		local own = filter == "HARMFUL" and (source == "player" or source == "pet")
 		local size = own and OWN_AURA_SIZE or AURA_SIZE
-		if x + size > AURAS_PER_ROW * (AURA_SIZE + AURA_GAP) + (OWN_AURA_SIZE - AURA_SIZE) then
+		if x + size > ROW_WIDTH then
 			x, y, rowHeight = 0, y - rowHeight - AURA_GAP, 0
 		end
 		aura.index, aura.filter = i, filter
@@ -349,7 +364,7 @@ function M:UpdateAuras()
 	LayoutAuras(button.auras, button.debuffButtons, "HARMFUL", MAX_DEBUFFS, x, y, rowHeight)
 end
 
--- Target of target --------------------------------------------------------------------------------
+-- Target of target ------------------------------------------------------------------------------
 -- No event fires when the target's target changes, so it's polled while shown.
 
 function M:UpdateTargetOfTarget()
@@ -357,16 +372,13 @@ function M:UpdateTargetOfTarget()
 	if UnitExists(unit) then
 		local _, class = UnitClass(unit)
 		tot.name:SetText(UnitIsPlayer(unit) and Grimoire.ClassColorText(UnitName(unit), class) or UnitName(unit))
-		SetPortraitTexture(tot.portrait, unit)
 	else
-		tot.name:SetText(Grimoire.moversUnlocked and "ToT" or "")
-		tot.portrait:SetTexture(nil)
+		tot.name:SetText(Grimoire.moversUnlocked and "Target of target" or "")
 	end
-	Grimoire.UpdateUnitBar(tot.health, unit, "health", false)
-	Grimoire.UpdateUnitBar(tot.power, unit, "power", false)
+	Grimoire.UpdateUnitBar(tot.health.bar, unit, "health", false)
 end
 
--- Visibility ------------------------------------------------------------------------------------------
+-- Visibility ------------------------------------------------------------------------------------
 -- Secure unit watches show the target and target-of-target frames while those units
 -- exist (in combat too). Move mode shows both as placeholders.
 
@@ -387,8 +399,7 @@ function M:ApplyVisibility()
 	else
 		RegisterUnitWatch(self.tot)
 	end
-	self:UpdateTarget()
-	self:UpdateTargetOfTarget()
+	self:RefreshAll()
 end
 
 function M:ApplySettings(key)
@@ -409,31 +420,31 @@ function M:ApplySettings(key)
 	end)
 end
 
--- ADR 0004: hide Blizzard's target frame. Its target-of-target frame goes with it (ours
--- replaces it); the combo points are moved over first, so other classes keep them.
+-- ADR 0004/0007: hide Blizzard's target frame in place. Its target-of-target frame goes
+-- with it (ours replaces it); on Classic the combo points are moved over first.
 function M:HideBlizzard()
 	if self.blizzardHidden or not TargetFrame then return end
 	self.blizzardHidden = true
 	if ComboFrame and ComboFrame:GetParent() == TargetFrame then
 		ComboFrame:SetParent(self.button)
 		ComboFrame:ClearAllPoints()
-		ComboFrame:SetPoint("TOPRIGHT", self.button, "TOPRIGHT", LAYOUT.combo[1], LAYOUT.combo[2])
+		ComboFrame:SetPoint("BOTTOMRIGHT", self.button.box, "TOPRIGHT", 0, 2)
 	end
 	Grimoire:HideBlizzardFrame(TargetFrame)
 end
 
--- Events -----------------------------------------------------------------------------------------------
+-- Events ----------------------------------------------------------------------------------------
+
+function M:RefreshAll()
+	self:UpdateTarget()
+	self:UpdateTargetOfTarget()
+end
 
 function M:OnTargetUnitEvent(_, unit)
 	if unit == "target" then
 		self:UpdateBars()
 		Grimoire:NotifyMoverActivity(self.name)
 	end
-end
-
-function M:RefreshAll()
-	self:UpdateTarget()
-	self:UpdateTargetOfTarget()
 end
 
 -- A unit event that changes how the target looks (name, level, faction, ...).
@@ -464,7 +475,6 @@ function M:OnEnable()
 			self:Build()
 		end
 		self.holder:Show()
-		self:ApplySettings()
 
 		self:RegisterEvent("PLAYER_TARGET_CHANGED", "RefreshAll")
 		self:RegisterEvent("PLAYER_ENTERING_WORLD", "RefreshAll")
@@ -473,7 +483,7 @@ function M:OnEnable()
 			self:RegisterEvent(event, "OnTargetUnitEvent")
 		end
 		for _, event in ipairs({ "UNIT_NAME_UPDATE", "UNIT_LEVEL", "UNIT_FACTION",
-			"UNIT_CLASSIFICATION_CHANGED", "UNIT_PORTRAIT_UPDATE" }) do
+			"UNIT_CLASSIFICATION_CHANGED", "UNIT_PORTRAIT_UPDATE", "UNIT_MODEL_CHANGED" }) do
 			self:RegisterEvent(event, "OnTargetChanged")
 		end
 		self:RegisterEvent("UNIT_AURA", "OnTargetAura")
@@ -485,6 +495,8 @@ function M:OnEnable()
 				self:UpdateTargetOfTarget()
 			end
 		end)
+		-- Last: hiding Blizzard's frame is the riskiest step, and events are already live.
+		self:ApplySettings()
 	end)
 end
 

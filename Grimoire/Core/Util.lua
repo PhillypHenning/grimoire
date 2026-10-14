@@ -35,17 +35,10 @@ Grimoire.media = {
 	stateIconCombat = { 0.5, 1, 0, 0.484375 },
 	leaderIcon = "Interface\\GroupFrame\\UI-Group-LeaderIcon",
 	pvpIcon = "Interface\\TargetingFrame\\UI-PVP-", -- .. "Horde" / "Alliance" / "FFA"
-	-- Classic unit frame art: party member (ring portrait + bar slots), target frame
-	-- and its elite/rare dragon variants, raid target markers.
+	-- Classic unit frame art: party member (ring portrait + bar slots), raid target markers.
 	partyFrame = "Interface\\TargetingFrame\\UI-PartyFrame",
-	targetFrame = "Interface\\TargetingFrame\\UI-TargetingFrame",
-	targetFrameElite = "Interface\\TargetingFrame\\UI-TargetingFrame-Elite",
-	targetFrameRare = "Interface\\TargetingFrame\\UI-TargetingFrame-Rare",
-	targetFrameRareElite = "Interface\\TargetingFrame\\UI-TargetingFrame-Rare-Elite",
-	targetOfTargetFrame = "Interface\\TargetingFrame\\UI-TargetofTargetFrame",
 	raidTargetIcons = "Interface\\TargetingFrame\\UI-RaidTargetingIcons",
 	auraBorder = "Interface\\Buttons\\UI-Debuff-Overlays",
-	nameBackground = "Interface\\TargetingFrame\\UI-TargetingFrame-LevelBackground",
 }
 
 function Grimoire.FormatAgo(timestamp)
@@ -126,8 +119,11 @@ end
 -- inside it are switched off (its bars update themselves), Blizzard's unit watch is
 -- stopped, and a secure state driver keeps it hidden, in combat too.
 
+-- Some frames' event registrations are off limits to add-ons on the retail UI
+-- ("forbidden aspect 'EventRegistrations'"); those are skipped, never fatal.
 local function UnregisterDeep(frame)
-	frame:UnregisterAllEvents()
+	if frame:IsForbidden() then return end
+	pcall(frame.UnregisterAllEvents, frame)
 	for _, child in ipairs({ frame:GetChildren() }) do
 		UnregisterDeep(child)
 	end
@@ -138,7 +134,7 @@ function Grimoire:HideBlizzardFrame(frame)
 	self:RunOutOfCombat(function()
 		UnregisterDeep(frame)
 		pcall(UnregisterUnitWatch, frame)
-		RegisterStateDriver(frame, "visibility", "hide")
-		frame:Hide()
+		pcall(RegisterStateDriver, frame, "visibility", "hide")
+		pcall(frame.Hide, frame)
 	end)
 end

@@ -515,6 +515,9 @@ end
 -- Returns text and colour; a level of -1 (too high to show) is "??" in red.
 function Grimoire.UnitLevelText(unit)
 	local level = UnitLevel(unit)
+	if Grimoire.IsSecret(level) then
+		return level, NORMAL_FONT_COLOR -- can't compare a secret; the widget can show it
+	end
 	if not level or level < 0 then
 		return "??", { r = 1, g = 0, b = 0 }
 	end

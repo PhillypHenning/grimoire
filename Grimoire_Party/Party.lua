@@ -260,8 +260,6 @@ function M:OnEnable()
 		if not self.holder then
 			self:Build()
 		end
-		self:ApplySettings()
-
 		for _, event in ipairs({ "UNIT_HEALTH", "UNIT_HEALTH_FREQUENT", "UNIT_MAXHEALTH",
 			"UNIT_POWER_FREQUENT", "UNIT_MAXPOWER", "UNIT_DISPLAYPOWER" }) do
 			self:RegisterEvent(event, "OnUnitEvent")
@@ -277,6 +275,8 @@ function M:OnEnable()
 		self:RegisterCallback("MoversUnlocked", "OnMoveMode")
 		self:RegisterCallback("MoversLocked", "OnMoveMode")
 		self.rangeTicker = C_Timer.NewTicker(RANGE_CHECK_SECONDS, function() self:UpdateRange() end)
+		-- Last: hiding Blizzard's frames is the riskiest step, and events are already live.
+		self:ApplySettings()
 	end)
 end
 

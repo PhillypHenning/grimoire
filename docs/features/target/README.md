@@ -2,18 +2,23 @@
 
 - **Add-on:** `Grimoire_Target` ([`Target.lua`](../../../Grimoire_Target/Target.lua))
 - **Module:** `Target`
-- **Status:** Scaffolded, untested in game
+- **Status:** Scaffolded, untested in game (redesigned 2026-10-13 to match the player frame)
 - **Replaces:** Blizzard's target frame and target-of-target frame; unit-frame add-ons' target frame
 
 ## Summary
 
-Your target in Blizzard's classic target frame style: portrait in a ring, name on a band coloured by reaction (red hostile, yellow neutral, green friendly), level coloured by difficulty ("??" for skull level), health and mana, the elite or rare dragon border, raid marker and PvP badge. Below it are the target's buffs and debuffs, with your own debuffs (your DoTs) shown larger and with timers, and a small target-of-target frame. It all sits in one movable "Target" frame, so the parts move together and can't be split up. Left-click targets, right-click opens the target's menu.
+Your target in Grimoire's own style, matching the player frame:
+- The name above the bars, in the target's reaction colour (class colour for players), with "(Elite)", "(Rare)" or "(Boss)" after it.
+- Bordered health and power bars.
+- A square portrait box, animated 3D by default or classic 2D, with the level in its corner coloured by difficulty ("??" for skull level), plus the raid marker and PvP badge.
+
+It's mirrored (bars left, portrait right), so it faces your player frame. Below it are the target's buffs and debuffs, your own debuffs (your DoTs) larger and with timers; beside it, a compact target of target. It all sits in one movable "Target" frame, so the parts move together and can't be split up. Left-click targets, right-click opens the target's menu.
 
 ## What it solves
 
 ```mermaid
 flowchart LR
-    B[Blizzard target frame:<br/>fixed top-left] ==> G[One movable Target frame:<br/>portrait, bars, DoTs, target of target]
+    B[Blizzard target frame:<br/>a different style from the rest of Grimoire] ==> G[One movable Target frame<br/>in the player frame's style, with DoTs and target of target]
 ```
 
 ## How it works
@@ -21,10 +26,9 @@ flowchart LR
 ```mermaid
 flowchart TD
     subgraph Mover["GrimoireTargetFrame (one mover)"]
-        T[target: SecureUnitButton<br/>portrait · name band · level · bars · border]
+        T["target: SecureUnitButton<br/>name · health/power boxes · portrait box (model or 2D) · level"]
         A[Auras: buffs, then debuffs<br/>own debuffs larger]
-        ToT[targettarget: SecureUnitButton]
-        CP[ComboFrame, moved from Blizzard's]
+        ToT[targettarget: SecureUnitButton<br/>name + health box]
     end
     PTC[PLAYER_TARGET_CHANGED] --> RA[RefreshAll]
     UE[UNIT_HEALTH / POWER … target] --> Bars[UpdateBars]
@@ -35,26 +39,27 @@ flowchart TD
 
 ## Code highlights
 
-**Classification picks the art** ([`Target.lua`](../../../Grimoire_Target/Target.lua)): `UnitClassification` maps `elite`/`worldboss` to `UI-TargetingFrame-Elite`, `rare` to `-Rare`, `rareelite` to `-Rare-Elite`.
+**Events before Blizzard** ([`Target.lua`](../../../Grimoire_Target/Target.lua)). `OnEnable` registers every event first and hides Blizzard's frame last. On Forever, hiding Blizzard's frame once hit a forbidden call, and because it ran first, the frame never registered its events and stayed on its "Target" placeholder.
 
-**Layout in one table.** Every position (portrait, bars, name band, level circle, auras, target of target, combo points) is in `LAYOUT`, mirrored from Blizzard's classic player frame on the 232×100 art, so a screenshot can be matched by changing numbers in one place.
+**Same pieces as the player frame**: bars in classic bordered boxes, the portrait in a `PlayerModel` (or `SetPortraitTexture`), and the shared helpers `UpdateUnitBar`, `UnitLevelText`, `SetUnitRightClickMenu` from [`Core/UnitFrames.lua`](../../../Grimoire/Core/UnitFrames.lua).
 
-**Auras are display only.** Plain buttons with icon, stack count, debuff-type border and a cooldown swipe; hovering shows the aura's tooltip. Debuffs you or your pet cast are 21 px instead of 17, like Blizzard's classic frame.
+**Auras are display only.** Plain buttons with icon, stack count, debuff-type border and a cooldown swipe; hovering shows the aura's tooltip. Debuffs you or your pet cast are 21 px instead of 17.
 
 **Target of target is polled.** No event fires when the target's target changes, so it refreshes every 0.2 s while it's shown.
 
 ## Design decisions
 
+- **Grimoire style, not Blizzard's classic art** (Phil, 2026-10-13): the first version used Blizzard's classic target texture, which looked too much like the stock frame. It now shares the player frame's look.
+- **Mirrored layout**: portrait on the right, facing the player frame. Default position: right of the screen centre, level with the player frame's.
 - **Target auras included** (needed for a Warlock): hiding Blizzard's target frame would otherwise lose your DoTs.
-- **Grimoire's own target of target**: Blizzard's is a child of its target frame and stops updating once that's hidden.
-- **Combo points are kept** for other classes: `ComboFrame` is moved into the Grimoire frame before Blizzard's is hidden (ADR 0004 rule 4).
-- **Tagged mobs** (tapped by someone else) get a grey health bar, as on Blizzard's.
-- **Classic look** ([ADR 0001](../../adr/0001-prefer-classic-style-ui.md)): all art is Blizzard's.
+- **Grimoire's own target of target**: Blizzard's is inside its target frame and goes with it.
+- **Tagged mobs** (tapped by someone else) get a grey health bar.
+- **Hidden in place** ([ADR 0007](../../adr/0007-hide-blizzard-frames-in-place.md)): Blizzard's frame isn't reparented, so Edit Mode stays untainted.
 
 ## Combat & secret-value constraints
 
-- The target and target-of-target buttons are protected: created and laid out out of combat; they show and hide with their units in combat through unit watches.
-- Aura durations that are secret show no swipe; secret health shows raw.
+- The target and target-of-target buttons are protected: built and laid out out of combat; they show and hide with their units in combat through unit watches.
+- Forever hides real health values (secret values), so the bars show the value the client gives instead of a percentage; secret aura durations show no swipe; a secret level is shown as given.
 
 ## Settings
 
@@ -62,18 +67,19 @@ Stored in `GrimoireDB.profiles[<profile>].modules.Target`. In the menu: **Compon
 
 | Key | Default | Menu choices | Description |
 | --- | --- | --- | --- |
-| `scale` | 1 | Small 0.9 / Normal 1 / Large 1.2 / Huge 1.4 | Frame size |
-| `showText` | true | toggle | % on the bars |
+| `style` | `animated` | Animated (3D) / Classic (2D) | Portrait type |
+| `size` | 64 | Small 48 / Medium 64 / Large 80 | Portrait size |
+| `showText` | true | toggle | Values on the bars |
 | `showAuras` | true | toggle | Buffs and debuffs under the frame |
 | `showTargetOfTarget` | true | toggle | The target-of-target frame |
 | `hideBlizzard` | true | toggle (needs `/reload` to turn off) | Hide Blizzard's target frame |
 
 ## Screenshots
 
-_TODO: add to `screenshots/`. Suggested: an elite with your DoTs, a rare, target of target, move mode._
+_TODO: add to `screenshots/`. Suggested: an elite with your DoTs, target of target, move mode._
 
 ## Open questions / roadmap
 
-- Verify in game and tune `LAYOUT` from a screenshot: portrait, bars, name band and level circle against the art.
-- Does Forever give target aura durations for other players' auras?
+- Show health as a percentage when the client hides the real value (retail's percentage API, if Forever has it).
 - Cast bar on the target frame.
+- Restyle the party frames the same way?
