@@ -181,6 +181,10 @@ local function StepExtra(step)
 	for _, verify in ipairs(step.verify) do
 		lines[#lines + 1] = "|cffff8000Verify:|r " .. M.FormatText(verify)
 	end
+	local done = M.DescribeDone(step)
+	if done then
+		lines[#lines + 1] = "|cff808080Ticks itself:|r " .. done
+	end
 	return table.concat(lines, "\n")
 end
 

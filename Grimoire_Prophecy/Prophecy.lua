@@ -5,8 +5,8 @@ local Parser = ns.Parser
 -- Prophecy: plans written outside the game (docs/prophecy/FORMAT.md), pasted in,
 -- checked and saved (ADR 0006). This file keeps the plans and each character's
 -- progress and works out what's next; Import.lua, Viewer.lua and Tracker.lua are the
--- windows. Phase 5a: steps are ticked by hand. `done` conditions and gate targets are
--- read from the game in 5b.
+-- windows. Quests.lua ticks steps whose quest conditions are met; other conditions
+-- (level, skill, items, ...) are still ticked by hand.
 --
 -- GrimoireProphecyDB = {
 --     plans = { [title] = { text, imported, source = "pasted" | "bundled" } },
@@ -15,8 +15,11 @@ local Parser = ns.Parser
 --         active = title,
 --         progress = { [title] = { steps = { [stepId] = "done" | "skipped" },
 --                                  checks = { [checkKey] = true },
---                                  gates = { [chapterId] = "dismissed" } } },
+--                                  gates = { [chapterId] = "dismissed" },
+--                                  manual = { [stepId] = true } } },  -- un-ticked by hand
+--         quests = { ... },                          -- see Quests.lua
 --     } },
+--     questIDs = { ... },                            -- see Quests.lua
 -- }
 
 ns.bundledPlans = {} -- plan texts from Plans\*.lua, loaded after this file
@@ -102,6 +105,16 @@ function ns.DescribeRequirement(req)
 	return M.FormatText(req.text or t)
 end
 
+-- "Accept [A], [B]; Turn in [C]" for a step that ticks itself, else nil.
+function M.DescribeDone(step)
+	if not M.CanAutoComplete(step) then return nil end
+	local parts = {}
+	for _, condition in ipairs(step.done) do
+		parts[#parts + 1] = ns.DescribeRequirement(condition)
+	end
+	return table.concat(parts, "; ")
+end
+
 -- Tooltip lines for a step: details, reward and verify notes.
 function M:AddStepTooltip(step)
 	GameTooltip:AddLine(M.FormatText(step.text), 1, 1, 1, true)
@@ -116,6 +129,10 @@ function M:AddStepTooltip(step)
 	end
 	if step.minlevel then
 		GameTooltip:AddLine("From level " .. step.minlevel, 0.6, 0.6, 0.6)
+	end
+	local done = M.DescribeDone(step)
+	if done then
+		GameTooltip:AddLine("Ticks itself: " .. done, 0.6, 0.6, 0.6, true)
 	end
 end
 
@@ -229,7 +246,7 @@ end
 function M:GetProgress(title)
 	local progress = self:GetCharacter().progress
 	progress[title] = progress[title] or {}
-	return Grimoire.CopyDefaults({ steps = {}, checks = {}, gates = {} }, progress[title])
+	return Grimoire.CopyDefaults({ steps = {}, checks = {}, gates = {}, manual = {} }, progress[title])
 end
 
 function M:GetActivePlan()
@@ -241,6 +258,7 @@ end
 function M:SetActivePlan(title)
 	self:GetCharacter().active = title
 	self:Refresh()
+	if self:IsEnabled() then self:QueueAutoComplete() end -- tick what's already done
 end
 
 -- With no active plan, a plan written for this class is picked.
@@ -281,7 +299,10 @@ end
 function M:SetStepState(step, state)
 	local _, title = self:GetActivePlan()
 	if not title then return end
-	self:GetProgress(title).steps[step.id] = state
+	local progress = self:GetProgress(title)
+	progress.steps[step.id] = state
+	-- Un-ticking by hand sticks: the step no longer ticks itself (Quests.lua).
+	progress.manual[step.id] = state == nil or nil
 	self:Refresh()
 end
 
@@ -324,14 +345,14 @@ function M:CountProgress(plan, chapter)
 	return handled, total
 end
 
--- Open when every check is ticked and there's nothing but checks and notes. Skill,
--- level and other targets are read from the game in 5b; until then such a gate stays
--- until you move on or dismiss it.
+-- Open when every check is ticked and every target that isn't soft is met. Targets the
+-- game can't be asked about yet (skill, level, ...: see Quests.lua) count as not met,
+-- so such a gate stays until you move on or dismiss it.
 function M:IsGateOpen(chapter)
 	for _, req in ipairs(chapter.gate.requirements) do
 		if req.type == "check" then
 			if not self:IsChecked(req) then return false end
-		elseif req.type ~= "note" then
+		elseif req.type ~= "note" and not req.soft and self:Evaluate(req) ~= true then
 			return false
 		end
 	end
@@ -399,6 +420,7 @@ function M:MakeCurrent(target)
 			for _, step in ipairs(chapter.steps) do
 				if step == target then
 					progress.steps[step.id] = nil
+					progress.manual[step.id] = true
 					self:Refresh()
 					return
 				end
@@ -434,7 +456,7 @@ end
 
 function M:OnInitialize()
 	GrimoireProphecyDB = GrimoireProphecyDB or {}
-	self.store = Grimoire.CopyDefaults({ plans = {}, dismissedBundles = {}, characters = {} }, GrimoireProphecyDB)
+	self.store = Grimoire.CopyDefaults({ plans = {}, dismissedBundles = {}, questIDs = {}, characters = {} }, GrimoireProphecyDB)
 	self.parsed = {}
 	self:LoadBundledPlans()
 	self:ChooseDefaultPlan()
@@ -459,6 +481,7 @@ function M:OnEnable()
 	self:RegisterEvent("PLAYER_LEVEL_UP", function() C_Timer.After(1, function() self:Refresh() end) end)
 	self:RegisterCallback("MoversUnlocked", "UpdateTracker")
 	self:RegisterCallback("MoversLocked", "UpdateTracker")
+	self:EnableQuests()
 	self:UpdateTracker()
 end
 

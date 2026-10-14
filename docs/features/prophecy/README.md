@@ -2,7 +2,7 @@
 
 - **Add-on:** `Grimoire_Prophecy`
 - **Module:** `Prophecy`
-- **Status:** Scaffolded, untested in game. Phase 5a (import, plan viewer, step panel with manual ticking) is done; 5b–5d are planned.
+- **Status:** Scaffolded, untested in game. Phase 5a (import, plan viewer, step panel) is done; 5b has started: quest steps tick themselves. The rest of 5b and 5c–5d are planned.
 - **Replaces:** levelling-guide add-ons (Zygor, RestedXP, Questie's guide mode) for routes you write yourself
 - **Opened from:** `/prophecy`, `/grim prophecy`, the [Grimoire menu](../menu/README.md) (*Open ▸ Prophecy*, also under the player portrait's *Grimoire ▸* menu), and the step panel's header
 
@@ -39,6 +39,32 @@ What the panel shows (`M:GetUpcoming` in [`Prophecy.lua`](../../../Grimoire_Prop
 - **Optional steps never hold the panel.** One drops out once you tick a later step in its chapter.
 - **`minlevel`:** a step above your level waits, and the panel goes on without it. In the viewer its level shows in red.
 - **Gates are advice.** A chapter's gate appears once its steps are handled. It stays until every check is ticked, you right-click it (*move on*), or you tick a step in a later chapter. The next chapter's steps show below it the whole time.
+
+### Steps that tick themselves (quests)
+
+A step whose `done` conditions are all quest conditions ticks itself ([`Quests.lua`](../../../Grimoire_Prophecy/Quests.lua)). The viewer and the step's tooltip show "Ticks itself: …".
+
+| Condition | Met when |
+| --- | --- |
+| `accept [Q]` | Q is in your quest log, or you've turned it in |
+| `complete [Q]` | Q's objectives are done (ready to turn in), or you've turned it in |
+| `turnin [Q]` | You've turned Q in |
+
+Plans name quests by title, but the game knows turned-in quests only by ID, so Prophecy bridges the two:
+
+```mermaid
+flowchart LR
+    Log["Quest log<br/>(C_QuestLog)"] -->|title + ID| IDs[("questIDs<br/>account-wide")]
+    TurnIn[QUEST_TURNED_IN] -->|title from the log snapshot| Done[("turnedIn<br/>per character")]
+    Login["Login: completed quest IDs"] -->|title cached?| Done
+    Login -->|not cached: RequestLoadQuestByID| Load[QUEST_DATA_LOAD_RESULT] --> Done
+    IDs & Done & Log --> Eval["Evaluate(condition)"] --> Auto["AutoComplete: tick met steps"]
+```
+
+- Titles match without regard to case. A plan can pin a quest with `[Name#123]`, which is checked by ID.
+- Quest events come in bursts, so the log is read once they settle (0.3 s).
+- **Un-ticking sticks.** If you un-tick a self-ticking step (or make it the current step), it's marked manual and doesn't tick itself again until you tick it. *Reset progress* clears that, so everything you've already done ticks itself again.
+- A step that also uses a condition Prophecy can't read yet (level, skill, item, learn, reach, zone) stays manual. A gate target of that kind counts as not met, so the gate stays until you move on.
 
 ## Code highlights
 
@@ -87,7 +113,7 @@ _TODO: step panel, viewer overview, a chapter with a gate box, import window wit
 
 ## Open questions / roadmap
 
-- **5b, completion:** `done` conditions and gate targets read from the game (quest log and turn-ins, level, skills, bags, spells, position, zone), plus the live skill strip and gate progress bars.
+- **5b, the rest of completion:** level, skill, item, learn, reach and zone conditions, read from the game; the live skill strip and gate progress bars.
 - **5c, tracker, map and pointer:** the current step's quests on Blizzard's watch list, map and minimap pins, and TomTom waypoints.
 - **5d, feedback loop:** `/prophecy here`, and progress Claude can read to plan the next session.
-- Quest-name warnings on import (FORMAT.md) need quests Prophecy has seen, which arrives with 5b.
+- Quest-name warnings on import (FORMAT.md): check plan titles against the titles Prophecy has learned (`questIDs`).

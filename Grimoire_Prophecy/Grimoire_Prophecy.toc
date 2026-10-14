@@ -10,6 +10,7 @@
 
 Parser.lua
 Prophecy.lua
+Quests.lua
 Import.lua
 Viewer.lua
 Tracker.lua
