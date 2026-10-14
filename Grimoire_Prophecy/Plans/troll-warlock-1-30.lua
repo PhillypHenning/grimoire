@@ -118,9 +118,9 @@ q Head west to Hana'zua: [Sarkoth]. Kill him on the ledge above, turn in
   detail Then carry the follow-up back to {Gornek}.
   reward Sarkoth follow-up: Soft Wool Vest.
   done turnin [Sarkoth]
-c Turn in [Cutting Teeth]. Take [Tainted Parchment] and hand it to {Nartok} in the Den
+c Turn in [Cutting Teeth]. Take [Tainted Tablet] and hand it to {Nartok} in the Den
   reward Cutting Teeth: Soft Wool Boots.
-  done turnin [Cutting Teeth], [Tainted Parchment]
+  done turnin [Cutting Teeth], [Tainted Tablet]
 q Pick up [Sting of the Scorpid], [Galgar's Cactus Apple Surprise] and [Vile Familiars#792]
   verify Quest ID 792 for Zureetha's Vile Familiars is from Classic; check it on Forever
   detail Sting of the Scorpid from {Gornek}, Galgar's Cactus Apple Surprise from {Galgar}, and Zureetha's Vile Familiars from {Zureetha}.

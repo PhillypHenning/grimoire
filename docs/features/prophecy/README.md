@@ -61,7 +61,7 @@ flowchart LR
     IDs & Done & Log --> Eval["Evaluate(condition)"] --> Auto["AutoComplete: tick met steps"]
 ```
 
-- Titles match without regard to case. A plan can pin a quest with `[Name#123]`, which is checked by ID.
+- Titles match without regard to case or punctuation (the game's "From The Wreckage...." matches `[From The Wreckage...]`). A plan can pin a quest with `[Name#123]`, which is checked by ID.
 - Quest events come in bursts, so the log is read once they settle (0.3 s).
 - **Un-ticking sticks.** If you un-tick a self-ticking step (or make it the current step), it's marked manual and doesn't tick itself again until you tick it. *Reset progress* clears that, so everything you've already done ticks itself again.
 - A step that also uses a condition Prophecy can't read yet (level, skill, item, learn, reach, zone) stays manual. A gate target of that kind counts as not met, so the gate stays until you move on.

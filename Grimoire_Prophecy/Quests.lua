@@ -20,8 +20,24 @@ local M = ns.M
 
 local UPDATE_DELAY = 0.3
 
+-- Case and punctuation are ignored: the game's "From The Wreckage...." matches a plan's
+-- [From The Wreckage...].
 local function Key(name)
-	return (name:lower():gsub("^%s+", ""):gsub("%s+$", ""))
+	return (name:lower():gsub("[^%w%s]", ""):gsub("%s+", " "):gsub("^ ", ""):gsub(" $", ""))
+end
+
+-- Re-keys a { [key] = value } table saved before Key changed.
+local function Rekey(map)
+	local fixed = {}
+	for key, value in pairs(map) do
+		local new = Key(key)
+		if type(value) == "table" and type(fixed[new]) == "table" then
+			for k, v in pairs(value) do fixed[new][k] = v end
+		else
+			fixed[new] = value
+		end
+	end
+	return fixed
 end
 
 local function IsFlaggedCompleted(id)
@@ -68,6 +84,11 @@ end
 function M:GetQuestStore()
 	local char = self:GetCharacter()
 	char.quests = Grimoire.CopyDefaults({ turnedIn = {}, completedIDs = {} }, char.quests or {})
+	if not self.questsRekeyed then
+		self.questsRekeyed = true
+		char.quests.turnedIn = Rekey(char.quests.turnedIn)
+		self.store.questIDs = Rekey(self.store.questIDs)
+	end
 	return char.quests
 end
 

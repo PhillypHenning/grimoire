@@ -222,9 +222,9 @@ q Head west to Hana'zua: [Sarkoth], kill him on the ledge, turn in
   detail Carry the follow-up back to Gornek.
   reward Sarkoth follow-up: Soft Wool Vest.
   done turnin [Sarkoth]
-c Turn in [Cutting Teeth]; take [Tainted Parchment] to {Nartok}
+c Turn in [Cutting Teeth]; take [Tainted Tablet] to {Nartok}
   reward Cutting Teeth: Soft Wool Boots.
-  done turnin [Tainted Parchment]
+  done turnin [Tainted Tablet]
 c Keep Imp training to a minimum
   detail Skip the Imp grimoires; the Voidwalker takes over at level 10.
 p Loot every {Linen Cloth} from the Burning Blade in the cave
