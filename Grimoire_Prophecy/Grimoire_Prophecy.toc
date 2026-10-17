@@ -14,4 +14,5 @@ Quests.lua
 Import.lua
 Viewer.lua
 Tracker.lua
+Waypoint.lua
 Plans\troll-warlock-1-30.lua

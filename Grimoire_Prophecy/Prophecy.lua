@@ -31,9 +31,11 @@ local M = Grimoire:NewModule("Prophecy", {
 		showTracker = true,
 		trackerSteps = 4,
 		showButton = true,
+		waypoints = true,
 	},
 	options = {
 		{ type = "toggle", key = "showButton", label = "Show the Prophecy button", tooltip = "A round button that opens your levelling plan. Drag it in move mode." },
+		{ type = "toggle", key = "waypoints", label = "Waypoint arrow (TomTom)", tooltip = "When TomTom is installed, its arrow points to the next step that has a map position." },
 		{ type = "toggle", key = "showTracker", label = "Show step panel", tooltip = "A small panel listing your next steps while you play." },
 		{ type = "choice", key = "trackerSteps", label = "Steps in the panel", tooltip = "How many upcoming steps the panel lists.", values = {
 			{ 2, "2" }, { 3, "3" }, { 4, "4" }, { 6, "6" },
@@ -442,6 +444,7 @@ end
 
 function M:Refresh()
 	if not self:IsEnabled() then return end
+	self:UpdateWaypoint()
 	if self.tracker then self:UpdateTracker() end
 	if self.viewer and self.viewer:IsShown() then self:UpdateViewer() end
 end
@@ -465,6 +468,7 @@ function M:ApplySettings()
 		self.button:SetShown(self.db.showButton)
 	end
 	self:UpdateTracker()
+	self:UpdateWaypoint()
 end
 
 -- Lifecycle --------------------------------------------------------------------------------
@@ -501,6 +505,7 @@ function M:OnEnable()
 end
 
 function M:OnDisable()
+	self:ClearWaypoint()
 	if self.tracker then self.tracker:Hide() end
 	if self.button then self.button:Hide() end
 	if self.viewer then self.viewer:Hide() end
