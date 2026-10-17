@@ -546,6 +546,19 @@ local function SortKey(frame, containers)
 	end
 end
 
+-- The newest retail target frame's aura container, if this client has one.
+local function AuraContainer()
+	if type(TargetFrame.GetAuraContainer) ~= "function" then return nil end
+	local ok, container = pcall(TargetFrame.GetAuraContainer, TargetFrame)
+	if ok and type(container) == "table" and container.GetChildren then
+		return container
+	end
+end
+
+local function AuraSourceName()
+	return AuraContainer() and "aura container" or TargetFrame.auraPools and "aura pools" or "named frames"
+end
+
 -- Blizzard's active aura icons, in its order (top to bottom, left to right).
 local function BlizzardAuraFrames(containers)
 	local buffs, debuffs = {}, {}
@@ -556,7 +569,13 @@ local function BlizzardAuraFrames(containers)
 		end
 	end
 	local pools = TargetFrame.auraPools
-	if pools and pools.EnumerateActive then
+	local container = AuraContainer()
+	if container then
+		-- Forever (seen 2026-10-17): the newest retail frame keeps them in one container.
+		for _, child in ipairs({ container:GetChildren() }) do
+			add(child)
+		end
+	elseif pools and pools.EnumerateActive then
 		for frame in pools:EnumerateActive() do
 			add(frame)
 		end
@@ -618,7 +637,7 @@ function M:PlaceBlizzardAuras()
 	PlaceBorrowed(buffs, button.buffs, MAX_BUFFS, BUFF_SIZE, BUFF_SIZE, true)
 	PlaceBorrowed(debuffs, button.debuffs, MAX_DEBUFFS, DEBUFF_SIZE, OWN_DEBUFF_SIZE, false)
 	local report = ("target auras: %d buffs, %d debuffs (Blizzard's icons, %s)"):format(#buffs, #debuffs,
-		TargetFrame.auraPools and "aura pools" or "named frames")
+		AuraSourceName())
 	if report ~= self.lastAuraReport then
 		self.lastAuraReport = report
 		self:Log("info", "%s", report)
@@ -628,47 +647,50 @@ function M:PlaceBlizzardAuras()
 	end
 end
 
--- Temporary probe (2026-10-17): Forever's target frame keeps its aura icons neither in
--- auraPools nor in TargetFrameBuffN/DebuffN. Logs, once per session, what it does have.
-local function DescribeFrame(frame, depth, lines)
-	for _, child in ipairs({ frame:GetChildren() }) do
-		if #lines >= 60 then return end
-		local keys = {}
-		for key, value in pairs(child) do
-			if type(key) == "string" and (type(value) == "table" or type(value) == "number") then
-				keys[#keys + 1] = key
-			end
-		end
-		table.sort(keys)
-		lines[#lines + 1] = ("%s%s %s shown=%s children=%d keys=%s"):format(("  "):rep(depth),
-			child:GetObjectType(), child:GetName() or child:GetDebugName() or "?", tostring(child:IsShown()),
-			child:GetNumChildren(), table.concat(keys, ",", 1, math.min(#keys, 12)))
-		if depth < 2 then
-			DescribeFrame(child, depth + 1, lines)
+-- Temporary probe (2026-10-17): Forever's target frame keeps its auras in an aura
+-- container (TargetFrame:GetAuraContainer()), which was empty out of combat. Logs, once
+-- out of combat and once in combat, everything the container holds.
+local function Keys(object)
+	local keys = {}
+	for key, value in pairs(object) do
+		if type(key) == "string" then
+			keys[#keys + 1] = key .. "=" .. type(value)
 		end
 	end
+	table.sort(keys)
+	return table.concat(keys, " ", 1, math.min(#keys, 80))
+end
+
+local function Describe(frame)
+	return ("%s %s shown=%s visible=%s size=%sx%s children=%d regions=%d"):format(frame:GetObjectType(),
+		frame:GetDebugName() or "?", tostring(frame:IsShown()), tostring(frame:IsVisible()),
+		tostring(frame:GetWidth()), tostring(frame:GetHeight()), frame:GetNumChildren(), frame:GetNumRegions())
 end
 
 function M:DescribeBlizzardTargetFrame()
-	if self.describedTargetFrame then return end
-	self.describedTargetFrame = true
-	local fields = {}
-	for key, value in pairs(TargetFrame) do
-		if type(key) == "string" and (key:lower():find("aura") or key:lower():find("buff")) then
-			fields[#fields + 1] = ("%s=%s"):format(key, type(value))
-		end
+	local combat = InCombatLockdown() and "in combat" or "out of combat"
+	self.describedTargetFrame = self.describedTargetFrame or {}
+	if self.describedTargetFrame[combat] then return end
+	self.describedTargetFrame[combat] = true
+	local container = AuraContainer()
+	if not container then
+		self:Log("info", "Blizzard target auras (%s): no aura container; hooked %s", combat,
+			table.concat(self.borrowHooks or {}, ","))
+		return
 	end
-	table.sort(fields)
-	local globals = {}
-	for _, name in ipairs({ "TargetFrame_UpdateAuras", "TargetFrameBuff1", "TargetFrameDebuff1",
-		"TargetFrameBuffs", "TargetFrameDebuffs" }) do
-		globals[#globals + 1] = ("%s=%s"):format(name, type(_G[name]))
+	local lines = { Describe(container), "  keys: " .. Keys(container) }
+	for i, child in ipairs({ container:GetChildren() }) do
+		if i > 12 then break end
+		lines[#lines + 1] = "  child " .. Describe(child)
+		lines[#lines + 1] = "    keys: " .. Keys(child)
 	end
-	local lines = {}
-	pcall(DescribeFrame, TargetFrame, 0, lines)
-	self:Log("info", "Blizzard target frame: hooked %s; fields %s; globals %s; in combat %s\n%s",
-		table.concat(self.borrowHooks or {}, ","), table.concat(fields, " "), table.concat(globals, " "),
-		tostring(InCombatLockdown()), table.concat(lines, "\n"))
+	for i, region in ipairs({ container:GetRegions() }) do
+		if i > 12 then break end
+		lines[#lines + 1] = ("  region %s %s shown=%s"):format(region:GetObjectType(),
+			region:GetDebugName() or "?", tostring(region:IsShown()))
+	end
+	self:Log("info", "Blizzard target auras (%s): hooked %s\n%s", combat,
+		table.concat(self.borrowHooks or {}, ","), table.concat(lines, "\n"))
 end
 
 -- Makes Blizzard's target frame invisible and click-through but leaves it running.
