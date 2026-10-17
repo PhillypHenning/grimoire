@@ -12,6 +12,7 @@
 # Group/Category tidy the in-game AddOns list; clients that don't know them ignore them.
 
 Core\Init.lua
+Core\Log.lua
 Core\Util.lua
 Core\Database.lua
 Core\Combat.lua

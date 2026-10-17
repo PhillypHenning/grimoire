@@ -21,6 +21,7 @@ Grimoire_Tweaks/       Game settings Blizzard's menu lacks (graphics CVars); /gr
 Grimoire_Prophecy/     Levelling plans pasted in from outside the game: plan viewer, step panel; /prophecy
 Grimoire_Tempo/        Learns your best rotation (opener and cycle) from your fights; save and share them; /grim tempo
 Grimoire_Emotes/       Emote wheel: hold a key, point at an emote, let go; /grim emotes
+Grimoire_Debug/        Log window (every Lua error, Grimoire events), environment report, saved on /reload; /grim debug
 scripts/               Dev tooling: link-addons.ps1 (junctions), check-lua.ps1 (syntax + .toc check), prophecy/ (plan checker and bundler; the parser is Grimoire_Prophecy/Parser.lua), tempo/test.lua (Tempo analysis tests)
 docs/                  Component docs (summary, diagrams, screenshots) and ADRs
 ```
@@ -71,7 +72,7 @@ function M:OnDisable() end         -- events + callbacks are released automatica
 
 ## Slash commands
 
-`/grimoire` (or `/grim`) lists all commands. Core: `menu`, `unlock`, `lock`, `reset [frame]`, `modules`, `enable <module>`, `disable <module>`, `profile [name]`. Components add their own: `bags`, `bank`, `auctions`, `notes`, `icon`, `cvars`, `tempo [probe|import]`, `emotes`, `prophecy [import]` (also `/prophecy`).
+`/grimoire` (or `/grim`) lists all commands. Core: `menu`, `unlock`, `lock`, `reset [frame]`, `modules`, `enable <module>`, `disable <module>`, `profile [name]`. Components add their own: `bags`, `bank`, `auctions`, `notes`, `icon`, `cvars`, `tempo [probe|import]`, `emotes`, `debug [report]`, `prophecy [import]` (also `/prophecy`).
 
 ## Dev setup (Windows)
 

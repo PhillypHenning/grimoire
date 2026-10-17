@@ -147,5 +147,6 @@ function Grimoire:HideBlizzardFrame(frame)
 		pcall(UnregisterUnitWatch, frame)
 		pcall(RegisterStateDriver, frame, "visibility", "hide")
 		pcall(frame.Hide, frame)
+		self:Log("Grimoire", "info", "hid Blizzard frame %s", frame:GetName() or "(unnamed)")
 	end)
 end

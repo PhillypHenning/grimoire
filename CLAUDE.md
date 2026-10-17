@@ -10,13 +10,13 @@ Phil's personal WoW Forever UI suite. It's just for him, not a public release. H
 - **Forever runs Blizzard's modern (retail) UI code on classic game data**: Edit Mode, `CompactPartyFrame`, Menu API, `ObjectiveTrackerFrame`, `WorldMapFrame:AddDataProvider`, `C_QuestLog`. Read retail behaviour, not Classic 1.x FrameXML, when touching Blizzard frames.
 - **Secret values exist here** (seen 2026-10-13: Blizzard code "attempt to compare a secret number value"). Guard every unit value with `Grimoire.IsSecret` / `AnySecret`, and keep Blizzard code from running tainted: anything Grimoire writes onto Blizzard frames can make their code fail on secrets.
 - **Don't reparent Edit Mode frames** (PlayerFrame, TargetFrame, …) under Grimoire frames: Edit Mode reads their parents and becomes tainted (seen: `ADDON_ACTION_FORBIDDEN … TargetUnit()` from `EditModeManager.RefreshTargetAndFocus`).
-- BugGrabber saves its errors to `SavedVariables\!BugGrabber.lua` on `/reload`; read that file directly instead of asking for screenshots.
+- Errors: Grimoire core catches every Lua error and blocked action (`Core/Log.lua`), and Grimoire_Debug saves them with an environment report to `SavedVariables\Grimoire_Debug.lua` on `/reload`; read that file directly instead of asking for screenshots. BugGrabber (`!BugGrabber.lua`) is a second source when it's on; on this PC it was found turned off and BugSack isn't installed (2026-10-16).
 - Beta ends 2026-10-22; launch is 2026-11-04.
 
 ## Dev loop (Windows PC)
 - The repo folders are linked into `<game>\Interface\AddOns` with junctions: `scripts\link-addons.ps1 -GameDir <game>`. Re-run it when a new `Grimoire_*` folder appears.
 - Lua edits: `/reload`. `.toc` changes, new add-ons or new files: **restart the game**.
-- BugGrabber + BugSack catch errors. Saved data: `<game>\WTF\Account\<ACCOUNT>\SavedVariables\Grimoire.lua`.
+- Grimoire_Debug (`/grim debug`) shows errors in game. Saved data: `<game>\WTF\Account\<ACCOUNT>\SavedVariables\Grimoire.lua`.
 - Before pushing, run `scripts\check-lua.ps1` (`luac -p` on every file plus a `.toc` file-list check). Lua 5.4 is installed with `winget install DEVCOM.Lua` (luac is in `%LOCALAPPDATA%\Programs\Lua\bin`). This PC has no Python.
 - Game folder on this PC: `C:\Program Files (x86)\World of Warcraft\_classic_beta_`; the character is the Warlock "Manflesh" on Classic Beta PvE. Baganator is installed there, and while it's loaded Grimoire Bags turns itself off (declared conflict).
 
@@ -37,10 +37,10 @@ Phil's personal WoW Forever UI suite. It's just for him, not a public release. H
 - New architectural decisions get a new numbered ADR. Never edit an accepted ADR's decision.
 
 ## Current work
-See `docs/plans/manager-menu-debug-player-frame.md`. Milestones 1 (manager menu) and 3 (player frame) are done on branch `wip/manager-menu`, waiting for in-game testing. Milestones 4 (pet, party, target frames) and 4b (add-on buttons in the portrait menu) are done and waiting for testing. Milestone 5 (Prophecy, format spec in `docs/prophecy/FORMAT.md`): 5a (`Grimoire_Prophecy`: import, viewer, step panel) and quest auto-completion from 5b are done and waiting for testing; next is the rest of 5b (level, skill, item, zone conditions); Milestone 2 (Debug) is open; raid frames are in the backlog. Long-term goal: replace Blizzard's UI entirely (ADR 0004). Tempo (rotation recorder, `docs/plans/tempo.md`) works in game: recording, scoring, window; the playback lane was dropped at Phil's request; the damage-meter probe is optional and not run yet. Tests: `lua scripts/tempo/test.lua`. Emote wheel (`Grimoire_Emotes`, hold a key) is new and untested. All round buttons (Grimoire, Notes, Tempo, Prophecy) share Layout ▸ Button size (`buttonSize`).
+See `docs/plans/manager-menu-debug-player-frame.md`. Milestones 1 (manager menu) and 3 (player frame) are done on branch `wip/manager-menu`, waiting for in-game testing. Milestones 4 (pet, party, target frames) and 4b (add-on buttons in the portrait menu) are done and waiting for testing. Milestone 5 (Prophecy, format spec in `docs/prophecy/FORMAT.md`): 5a (`Grimoire_Prophecy`: import, viewer, step panel) and quest auto-completion from 5b are done and waiting for testing; next is the rest of 5b (level, skill, item, zone conditions); Milestone 2 (Debug: core `Log.lua` + `Grimoire_Debug`) is done and waiting for testing; raid frames are in the backlog. Long-term goal: replace Blizzard's UI entirely (ADR 0004). Tempo (rotation recorder, `docs/plans/tempo.md`) works in game: recording, scoring, window; the playback lane was dropped at Phil's request; the damage-meter probe is optional and not run yet. Tests: `lua scripts/tempo/test.lua`. Emote wheel (`Grimoire_Emotes`, hold a key) is new and untested. All round buttons (Grimoire, Notes, Tempo, Prophecy) share Layout ▸ Button size (`buttonSize`).
 
 ## Working with Phil
-- He tests in game and reports back. Ask for BugSack text, `/grim modules` output, or screenshots rather than guessing.
+- He tests in game and reports back. Read `Grimoire_Debug.lua` (log + report) first; ask for `/grim debug` text or screenshots rather than guessing.
 - He likes the faded classic mana blue `{0, 0, 1}`.
 - He wants bars to stay bright in combat or while not full, and dim only when idle.
 - Commit and push when a piece of work is ready for him to test.

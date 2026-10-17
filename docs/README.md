@@ -24,6 +24,7 @@ Each component is its own add-on and can be switched on or off in the in-game Ad
 | [Prophecy](features/prophecy/README.md) | `Grimoire_Prophecy` | Scaffolded, untested in game (phase 5a: import, viewer, step panel) |
 | [Tempo](features/tempo/README.md) | `Grimoire_Tempo` | Tested in game (plan: [plans/tempo.md](plans/tempo.md)) |
 | [Emote wheel](features/emote-wheel/README.md) | `Grimoire_Emotes` | Scaffolded, untested in game |
+| [Debug](features/debug/README.md) | `Grimoire_Debug` (+ core `Log.lua`) | Scaffolded, untested in game |
 
 New component? Copy [`features/TEMPLATE.md`](features/TEMPLATE.md) to `features/<component>/README.md` and put screenshots in `features/<component>/screenshots/`.
 

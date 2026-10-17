@@ -11,7 +11,7 @@ local Grimoire = {
 	callbacks = {},
 	defaults = {
 		profile = { movers = {}, moverGroups = {}, moverDim = {}, dimAlpha = 0.4, idleSeconds = 1.5, buttonSize = 44, addonButtons = { hidden = {}, hideAll = false }, modules = {} },
-		global = { characters = {} },
+		global = { characters = {}, logLevels = {} },
 	},
 }
 _G.Grimoire = Grimoire

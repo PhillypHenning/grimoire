@@ -1,0 +1,11 @@
+## Interface: 16001
+## Title: |cff8788eeGrimoire|r Debug
+## Notes: Grimoire's log and every Lua error, in a copyable window and saved to disk on /reload. /grim debug
+## Author: Phil Henning
+## Version: @project-version@
+## RequiredDeps: Grimoire
+## SavedVariables: GrimoireDebugDB
+## Group: Grimoire
+## Category: Grimoire
+
+Debug.lua

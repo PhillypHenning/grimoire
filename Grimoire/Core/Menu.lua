@@ -129,6 +129,24 @@ function Grimoire:GetModuleMenu(module)
 		entries[#entries + 1] = OptionEntry(module, option) -- nil appends nothing
 	end
 
+	-- Log level per component, while the Debug component is on (ADR 0002).
+	local debug = self:GetModule("Debug")
+	if debug and debug:IsEnabled() and module ~= debug then
+		local levels = self.db.global.logLevels
+		local children = {}
+		for _, choice in ipairs({ { "off", "Errors only" }, { "info", "Normal" }, { "debug", "Everything" } }) do
+			children[#children + 1] = {
+				text = choice[2],
+				radio = true,
+				checked = function() return (levels[module.name] or "info") == choice[1] end,
+				func = function() levels[module.name] = choice[1] end,
+			}
+		end
+		children[#children + 1] = { isDivider = true }
+		children[#children + 1] = { text = "Show its log", func = function() debug:ShowLog(module.name) end }
+		entries[#entries + 1] = { text = "Debug log", children = children }
+	end
+
 	local keys = {}
 	for _, key in ipairs(module.moverKeys) do
 		if self.movers[key] then
@@ -260,6 +278,10 @@ function Grimoire:GetMainMenu()
 	entries[#entries + 1] = { text = "Move frames", checked = function() return self.moversUnlocked end, func = function() self:ToggleMoveMode() end }
 	entries[#entries + 1] = { text = "Components", children = components }
 	entries[#entries + 1] = { text = "Layout", children = layout }
+	local debug = self:GetModule("Debug")
+	if debug and debug:IsEnabled() then
+		entries[#entries + 1] = { text = "Debug", children = debug:GetMenu() }
+	end
 	entries[#entries + 1] = { isDivider = true }
 	entries[#entries + 1] = { text = RELOADUI or "Reload UI", func = ReloadUI }
 	return entries

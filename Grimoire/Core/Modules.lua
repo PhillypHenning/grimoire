@@ -73,6 +73,7 @@ end
 -- Changes one setting from the menu and lets the module apply it live.
 function Grimoire:SetModuleSetting(module, key, value)
 	module.db[key] = value
+	module:Log("info", "setting %s = %s", key, tostring(value))
 	if module.ApplySettings then
 		if module:IsEnabled() then
 			module:Call("ApplySettings", key)
@@ -93,8 +94,12 @@ function Grimoire:EnableModule(name)
 	module.db.enabled = true
 	if module.state == "enabled" then return true end
 	local available, reason = module:IsAvailable()
-	if not available then return false, reason end
+	if not available then
+		module:Log("warn", "not available: %s", reason)
+		return false, reason
+	end
 	module.state = "enabled"
+	module:Log("info", "enabled")
 	module:Call("OnEnable")
 	if module.settingsChanged then
 		module.settingsChanged = nil
@@ -112,6 +117,7 @@ function Grimoire:DisableModule(name)
 	module:UnregisterAllEvents()
 	self:UnregisterAllCallbacks(module)
 	module.state = "disabled"
+	module:Log("info", "disabled")
 	module:Call("OnDisable")
 	self:Fire("ModuleDisabled", name)
 	return true
@@ -148,6 +154,11 @@ end
 
 function Module:Print(...)
 	Grimoire:Print("[" .. self.name .. "]", ...)
+end
+
+-- level: "error", "warn", "info" or "debug" (Core/Log.lua).
+function Module:Log(level, fmt, ...)
+	Grimoire:Log(self.name, level, fmt, ...)
 end
 
 function Module:IsAvailable()
@@ -196,7 +207,10 @@ end
 -- handler: function(self, event, ...) or method name; defaults to a method named after the event.
 -- Returns false if the event doesn't exist on this client.
 function Module:RegisterEvent(event, handler)
-	if not IsEventValid(event) then return false end
+	if not IsEventValid(event) then
+		self:Log("debug", "event %s doesn't exist on this client; skipped", event)
+		return false
+	end
 	local frame = self:GetEventFrame()
 	frame.handlers[event] = handler or event
 	frame:RegisterEvent(event)
@@ -204,7 +218,10 @@ function Module:RegisterEvent(event, handler)
 end
 
 function Module:RegisterUnitEvent(event, unit, handler)
-	if not IsEventValid(event) then return false end
+	if not IsEventValid(event) then
+		self:Log("debug", "event %s doesn't exist on this client; skipped", event)
+		return false
+	end
 	local frame = self:GetEventFrame()
 	frame.handlers[event] = handler or event
 	frame:RegisterUnitEvent(event, unit)
