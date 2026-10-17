@@ -41,6 +41,7 @@ Grimoire.media = {
 	auraBorder = "Interface\\Buttons\\UI-Debuff-Overlays",
 	petAttack = PET_ATTACK_TEXTURE or "Interface\\Icons\\Ability_GhoulFrenzy",
 	unknownIcon = 134400, -- the question-mark icon
+	innIcon = "Interface\\Minimap\\Tracking\\Innkeeper",
 }
 
 function Grimoire.FormatAgo(timestamp)

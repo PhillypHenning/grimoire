@@ -19,6 +19,7 @@ move-folders:
   Grimoire/Grimoire_Tempo: Grimoire_Tempo
   Grimoire/Grimoire_Emotes: Grimoire_Emotes
   Grimoire/Grimoire_Debug: Grimoire_Debug
+  Grimoire/Grimoire_Map: Grimoire_Map
 
 ignore:
   - scripts
