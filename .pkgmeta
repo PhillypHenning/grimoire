@@ -17,6 +17,7 @@ move-folders:
   Grimoire/Grimoire_Tweaks: Grimoire_Tweaks
   Grimoire/Grimoire_Prophecy: Grimoire_Prophecy
   Grimoire/Grimoire_Tempo: Grimoire_Tempo
+  Grimoire/Grimoire_Emotes: Grimoire_Emotes
 
 ignore:
   - scripts

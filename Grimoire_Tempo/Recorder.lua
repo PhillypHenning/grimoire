@@ -57,7 +57,6 @@ function M:AddCast(spellID, name, pet)
 		end
 		list[#list + 1] = cast
 	end
-	self:JudgeCast(name, now, pet)
 end
 
 -- Abilities your pet casts by itself (autocast on) would flood the music, so only the ones

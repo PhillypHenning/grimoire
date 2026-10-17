@@ -48,7 +48,8 @@ foreach ($addon in $addons) {
         }
     }
     foreach ($file in Get-ChildItem -Path $addon.FullName -Recurse -Include "*.lua", "*.xml") {
-        if (-not $listed[$file.FullName]) {
+        # Bindings.xml is loaded by the game on its own and must not be listed.
+        if (-not $listed[$file.FullName] -and $file.Name -ne "Bindings.xml") {
             Write-Host "$($addon.Name): $($file.Name) isn't in the .toc" -ForegroundColor Yellow
         }
     }

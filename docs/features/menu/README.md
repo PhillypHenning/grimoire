@@ -106,6 +106,7 @@ Stored in `GrimoireDB.profiles[<profile>]`. Component settings are listed in eac
 | --- | --- | --- |
 | `dimAlpha` | 0.4 | Layout ▸ Dim strength: Faint 0.2, Medium 0.4, Light 0.6 |
 | `idleSeconds` | 1.5 | Layout ▸ Dim after: 1, 1.5 or 3 seconds |
+| `buttonSize` | 44 | Layout ▸ Button size: every round Grimoire button (Grimoire, Notes, Tempo, Prophecy): Small 31, Medium 38, Large 44, Huge 52 px |
 
 ## Screenshots
 

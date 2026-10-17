@@ -1,0 +1,10 @@
+## Interface: 16001
+## Title: |cff8788eeGrimoire|r Emotes
+## Notes: An emote wheel: hold its key (Key Bindings, Grimoire), point at an emote, let go. /grim emotes
+## Author: Phil Henning
+## Version: @project-version@
+## RequiredDeps: Grimoire
+## Group: Grimoire
+## Category: Grimoire
+
+EmoteWheel.lua

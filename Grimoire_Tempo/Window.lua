@@ -5,9 +5,9 @@ local Cycles = ns.Cycles
 local Share = ns.Share
 
 -- The Tempo window (plan milestones T3 and T5): this character's best opener and cycle,
--- the pinned rotation, saved (imported) rotations, and recent fights. Click a fight to
--- see its opener and cycles. Every rotation row shows its spells in order and can be
--- pinned (played in your next fight) or exported as text for someone else.
+-- saved (and imported) rotations, and recent fights. Click a fight to see its opener and
+-- cycles. Every rotation row shows its spells in order and can be saved (kept in Saved
+-- rotations, account-wide) or exported as text for someone else.
 -- Pet steps (abilities you had your pet use) are drawn smaller.
 
 local WIDTH, HEIGHT = 560, 440
@@ -115,7 +115,7 @@ function M:AddRotation(label, rotation, buttons)
 		local icon, step = row.icons[i], steps[i]
 		icon.spell, icon.name, icon.at, icon.pet = step.spell, step.name, step.at, step.pet
 		icon.texture:SetTexture(M.StepIcon(step))
-		-- Pet steps are smaller, like their row in the lane.
+		-- Pet steps are drawn smaller.
 		local inset = step.pet and 3 or 0
 		icon.texture:SetPoint("TOPLEFT", inset, -inset)
 		icon.texture:SetPoint("BOTTOMRIGHT", -inset, inset)
@@ -140,12 +140,17 @@ end
 
 -- Contents ---------------------------------------------------------------------------------
 
-function M:RotationButtons(rotation, extra)
-	local buttons = {
-		{ "Export", function() self:ShowShare(rotation) end },
-		{ "Pin", function() self:Pin(rotation) end },
-	}
-	if extra then buttons[#buttons + 1] = extra end
+-- Buttons, right to left: Export, then Save (or Delete for one already saved).
+function M:RotationButtons(rotation, savedIndex)
+	local buttons = { { "Export", function() self:ShowShare(rotation) end } }
+	if savedIndex then
+		buttons[2] = { "Delete", function() self:DeleteRotation(savedIndex) end }
+	else
+		buttons[2] = { "Save", function()
+			self:SaveRotation(rotation)
+			self:Print(("Saved \"%s\" to Saved rotations."):format(rotation.name or "rotation"))
+		end }
+	end
 	return buttons
 end
 
@@ -178,9 +183,7 @@ end
 function M:UpdateWindow()
 	self.rowCount = 0
 	local char = self:GetCharacter()
-	local modeLabels = { follow = "following your best", pinned = "pinned rotation", experiment = "experimenting" }
-	self.window.subtitle:SetText(("%s  |cff9d9d9dPlayback: %s|r"):format(
-		Grimoire:FormatCharacterName(), modeLabels[self.db.mode] or self.db.mode))
+	self.window.subtitle:SetText(Grimoire:FormatCharacterName())
 
 	self:AddHeader("Your best")
 	if char.best.opener or char.best.cycle then
@@ -194,19 +197,10 @@ function M:UpdateWindow()
 		self:AddText("Nothing yet. Fight something and Tempo learns your rotation.")
 	end
 
-	if char.pinned then
-		self:AddHeader("Pinned")
-		self:AddRotation(char.pinned.name or "Pinned", char.pinned, {
-			{ "Export", function() self:ShowShare(char.pinned) end },
-			{ "Unpin", function() self:Unpin() end },
-		})
-	end
-
 	if #self.store.rotations > 0 then
 		self:AddHeader("Saved rotations")
 		for index, rotation in ipairs(self.store.rotations) do
-			self:AddRotation(rotation.name or "Rotation", rotation, self:RotationButtons(rotation,
-				{ "Delete", function() self:DeleteRotation(index) end }))
+			self:AddRotation(rotation.name or "Rotation", rotation, self:RotationButtons(rotation, index))
 		end
 	end
 
@@ -320,7 +314,7 @@ function M:BuildShare()
 		rotation.scored = rotation.unit ~= nil
 		rotation.time = time()
 		self:SaveRotation(rotation)
-		frame.result:SetText(("|cff66ff66Saved \"%s\" (%d steps).|r Pin it in the Tempo window."):format(rotation.name, #rotation.steps))
+		frame.result:SetText(("|cff66ff66Saved \"%s\" (%d steps).|r It's in Saved rotations in the Tempo window."):format(rotation.name, #rotation.steps))
 	end)
 end
 

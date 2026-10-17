@@ -241,6 +241,8 @@ function Grimoire:GetMainMenu()
 			function() self:UpdateMoverDimming() end),
 		ProfileChoice("Dim after", "idleSeconds", { { 1, "1 second" }, { 1.5, "1.5 seconds" }, { 3, "3 seconds" } },
 			function() self:NotifyAllMoverActivity() end),
+		ProfileChoice("Button size", "buttonSize", { { 31, "Small" }, { 38, "Medium" }, { 44, "Large" }, { 52, "Huge" } },
+			function() self:ApplyRoundButtonSize() end),
 		{ text = "Reset all positions", func = function() self:ResetAllPositions() end },
 	}
 	local selected = self:GetSelectedMovers()

@@ -104,6 +104,7 @@ Stored in `GrimoireDB.profiles[<profile>].modules.Prophecy`. In the menu: **Comp
 | --- | --- | --- | --- |
 | `showTracker` | true | toggle | Show the step panel |
 | `trackerSteps` | 4 | 2 / 3 / 4 / 6 | How many entries the panel lists (a gate counts as one) |
+| `showButton` | true | toggle | Show the floating Prophecy button (opens your plan; a mover, sized by Layout ▸ Button size) |
 
 Plans and progress: `WTF\Account\<ACCOUNT>\SavedVariables\Grimoire_Prophecy.lua`.
 

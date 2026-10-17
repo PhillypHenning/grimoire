@@ -30,8 +30,10 @@ local M = Grimoire:NewModule("Prophecy", {
 	defaults = {
 		showTracker = true,
 		trackerSteps = 4,
+		showButton = true,
 	},
 	options = {
+		{ type = "toggle", key = "showButton", label = "Show the Prophecy button" },
 		{ type = "toggle", key = "showTracker", label = "Show step panel" },
 		{ type = "choice", key = "trackerSteps", label = "Steps in the panel", values = {
 			{ 2, "2" }, { 3, "3" }, { 4, "4" }, { 6, "6" },
@@ -449,6 +451,19 @@ function M:Toggle()
 end
 
 function M:ApplySettings()
+	if self.db.showButton and not self.button then
+		self.button = Grimoire.CreateModuleButton(self, {
+			name = "GrimoireProphecyButton",
+			icon = "Interface\\Icons\\INV_Scroll_03",
+			title = "Prophecy",
+			hint = "Click: your levelling plan",
+			onClick = function() self:ToggleViewer() end,
+			default = { "BOTTOMRIGHT", "UIParent", "BOTTOMRIGHT", -205, 120 },
+		})
+	end
+	if self.button then
+		self.button:SetShown(self.db.showButton)
+	end
 	self:UpdateTracker()
 end
 
@@ -482,11 +497,12 @@ function M:OnEnable()
 	self:RegisterCallback("MoversUnlocked", "UpdateTracker")
 	self:RegisterCallback("MoversLocked", "UpdateTracker")
 	self:EnableQuests()
-	self:UpdateTracker()
+	self:ApplySettings()
 end
 
 function M:OnDisable()
 	if self.tracker then self.tracker:Hide() end
+	if self.button then self.button:Hide() end
 	if self.viewer then self.viewer:Hide() end
 	if self.importWindow then self.importWindow:Hide() end
 end

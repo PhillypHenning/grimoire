@@ -1,6 +1,6 @@
 ## Interface: 16001
 ## Title: |cff8788eeGrimoire|r Tempo
-## Notes: Learns your best rotation from your fights and plays it back as a music-staff guide. /grim tempo
+## Notes: Learns your best rotation (opener and cycle) from your fights; browse, save and share them. /grim tempo
 ## Author: Phil Henning
 ## Version: @project-version@
 ## RequiredDeps: Grimoire
@@ -12,6 +12,5 @@ Cycles.lua
 Share.lua
 Tempo.lua
 Recorder.lua
-Lane.lua
 Window.lua
 Probe.lua

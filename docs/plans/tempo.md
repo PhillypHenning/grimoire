@@ -3,6 +3,7 @@
 > **Progress (2026-10-16, on the PC):**
 > - **T1 (probe):** code done. `/grim tempo probe`. Waiting for Phil to fight one mob and `/reload`; then Claude reads `SavedVariables\Grimoire_Tempo.lua` and tunes the damage-source order.
 > - **T2–T5:** code done the same day (Phil: "go ahead with the plan"), without waiting for the probe: the recorder listens to every damage source at once and keeps the best that gave data. `Cycles.lua` and `Share.lua` are tested with `lua scripts/tempo/test.lua`. Waiting on in-game testing.
+> - **Changed 2026-10-16 (Phil):** the T4 playback lane was dropped ("it's fun but it might just be better to capture rotations in the menu"); Tempo got a floating button; pins became "Save". T1 probe run twice; the damage-meter part of the probe is optional and not run yet.
 
 ## Context
 Phil wants a component that watches his fights, works out which sequence of casts did the most damage, and plays that sequence back in later fights like sheet music, so he can repeat it or try variations. He wants it as a teaching aid.
@@ -42,7 +43,7 @@ Per character (ADR 0003): each fight saves casts with timestamps, damage over ti
 - Keep the best opener and the best cycle per character. (Built: every fight's segments can be opened in the window to compare; a "top few" list wasn't needed.)
 - A window lists past fights and cycles: spell icons in order, DPS, which one is best.
 
-### T4: playback lane (done, waiting on a test)
+### T4: playback lane (built, then dropped 2026-10-16 at Phil's request)
 - A music-staff style lane (classic look, ADR 0001), movable: upcoming spell icons scroll toward a "now" line at the pace they were cast.
 - Each cast you make is checked against the next note: on time, early, late or a different spell. Matches light up; misses show in red.
 - Modes: **Follow** (best rotation), **Pinned** (a rotation you chose), **Experiment** (no guide, records only, so a new idea can beat the best).

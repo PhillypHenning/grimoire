@@ -255,18 +255,14 @@ end
 -- mode, and the menu offers its reset and dimming options.
 
 function M:BuildButton()
-	local button = Grimoire.CreateRoundButton("GrimoireNotesButton")
-	button.icon:SetTexture(NOTE_ICON)
-	button:SetScript("OnClick", function() self:Toggle() end)
-	button:SetScript("OnEnter", function(b)
-		GameTooltip:SetOwner(b, "ANCHOR_LEFT")
-		GameTooltip:AddLine("Notes")
-		GameTooltip:AddLine("Click: open your notes", 1, 1, 1)
-		GameTooltip:Show()
-	end)
-	button:SetScript("OnLeave", GameTooltip_Hide)
-	self.button = button
-	self:RegisterMover(button, "Notes button", { "BOTTOMRIGHT", "UIParent", "BOTTOMRIGHT", -95, 120 }, { suffix = "Button" })
+	self.button = Grimoire.CreateModuleButton(self, {
+		name = "GrimoireNotesButton",
+		icon = NOTE_ICON,
+		title = "Notes",
+		hint = "Click: open your notes",
+		onClick = function() self:Toggle() end,
+		default = { "BOTTOMRIGHT", "UIParent", "BOTTOMRIGHT", -95, 120 },
+	})
 end
 
 function M:ApplySettings()

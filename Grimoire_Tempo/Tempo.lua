@@ -2,16 +2,16 @@ local ADDON_NAME, ns = ...
 local Grimoire = Grimoire
 local Cycles = ns.Cycles
 
--- Tempo: learns your best rotation from your fights and plays it back as a guide
--- (docs/plans/tempo.md). Recorder.lua records each fight, Cycles.lua splits and scores
--- it, Lane.lua is the music-staff playback, Window.lua the history, Share.lua the text
--- format for teaching, Probe.lua the data probe.
+-- Tempo: learns your best rotation from your fights (docs/plans/tempo.md). Recorder.lua
+-- records each fight, Cycles.lua splits and scores it, Window.lua shows your best and your
+-- fights, Share.lua is the text format for teaching, Probe.lua the data probe.
+-- (A music-staff playback lane was built and then dropped at Phil's request, 2026-10-16:
+-- rotations are studied in the window instead.)
 --
 -- GrimoireTempoDB = {
 --     characters = { ["Name - Realm"] = {
 --         fights = { fight, ... },          -- newest first; see Recorder.lua
 --         best = { opener = rotation, cycle = rotation },
---         pinned = rotation,                -- what "Pinned" mode plays
 --     } },
 --     rotations = { rotation, ... },        -- imported or saved, account-wide
 --     probe = { ... },                      -- last /grim tempo probe
@@ -22,15 +22,11 @@ local M = Grimoire:NewModule("Tempo", {
 	addon = ADDON_NAME,
 	label = "Tempo",
 	defaults = {
-		mode = "follow",
-		showLane = true,
+		showButton = true,
 		keepFights = 20,
 	},
 	options = {
-		{ type = "choice", key = "mode", label = "Playback", values = {
-			{ "follow", "Follow my best" }, { "pinned", "Pinned rotation" }, { "experiment", "Experiment (record only)" },
-		} },
-		{ type = "toggle", key = "showLane", label = "Show the playback lane" },
+		{ type = "toggle", key = "showButton", label = "Show the Tempo button" },
 		{ type = "choice", key = "keepFights", label = "Fights kept", values = {
 			{ 10, "10" }, { 20, "20" }, { 50, "50" },
 		} },
@@ -44,6 +40,7 @@ function M:GetCharacter()
 	local chars = self.store.characters
 	local key = Grimoire.db.charKey
 	chars[key] = Grimoire.CopyDefaults({ fights = {}, best = {} }, chars[key] or {})
+	chars[key].pinned = nil -- from the playback lane, which is gone
 	return chars[key]
 end
 
@@ -106,34 +103,8 @@ function M:ForgetBest()
 	self:Refresh()
 end
 
--- Pinned: an opener plays once, then your best cycle; a cycle loops.
-function M:Pin(rotation)
-	self:GetCharacter().pinned = CopyTable(rotation)
-	Grimoire:SetModuleSetting(self, "mode", "pinned")
-	self:Print(("Pinned \"%s\". Your next fight plays it."):format(rotation.name))
-	self:Refresh()
-end
-
-function M:Unpin()
-	self:GetCharacter().pinned = nil
-	Grimoire:SetModuleSetting(self, "mode", "follow")
-	self:Refresh()
-end
-
--- What the lane plays: opener (once), then cycle (looped). Either may be nil.
-function M:GetPlayback()
-	local char = self:GetCharacter()
-	if self.db.mode == "experiment" then return nil, nil end
-	local pinned = self.db.mode == "pinned" and char.pinned
-	if pinned then
-		if pinned.kind == "opener" then return pinned, char.best.cycle end
-		return nil, pinned
-	end
-	return char.best.opener, char.best.cycle
-end
-
 function M:SaveRotation(rotation)
-	table.insert(self.store.rotations, 1, rotation)
+	table.insert(self.store.rotations, 1, CopyTable(rotation))
 	self:Refresh()
 end
 
@@ -146,13 +117,16 @@ end
 
 function M:OnCombatStart()
 	self:StartRecording()
-	self:StartPlayback()
 	self:ProbeStart()
 end
 
 function M:OnCombatEnd()
 	local fight, improved = self:StopRecording()
-	self:StopPlayback(fight, improved)
+	for _, kind in ipairs(improved or {}) do
+		local best = self:GetCharacter().best[kind]
+		self:Print(("New best %s: %s (%s). /grim tempo to see it."):format(
+			M.KindLabel(kind):lower(), Cycles.FormatScore(best), best.target or "?"))
+	end
 	self:ProbeStop()
 	self:Refresh()
 end
@@ -162,7 +136,6 @@ end
 function M:Refresh()
 	if not self:IsEnabled() then return end
 	if self.window and self.window:IsShown() then self:UpdateWindow() end
-	self:UpdateLane()
 end
 
 function M:Toggle()
@@ -170,6 +143,19 @@ function M:Toggle()
 end
 
 function M:ApplySettings()
+	if self.db.showButton and not self.button then
+		self.button = Grimoire.CreateModuleButton(self, {
+			name = "GrimoireTempoButton",
+			icon = "Interface\\Icons\\INV_Misc_PocketWatch_01",
+			title = "Tempo",
+			hint = "Click: your rotations",
+			onClick = function() self:ToggleWindow() end,
+			default = { "BOTTOMRIGHT", "UIParent", "BOTTOMRIGHT", -150, 120 },
+		})
+	end
+	if self.button then
+		self.button:SetShown(self.db.showButton)
+	end
 	self:Refresh()
 end
 
@@ -195,16 +181,13 @@ function M:OnEnable()
 	self:RegisterEvent("PLAYER_REGEN_DISABLED", "OnCombatStart")
 	self:RegisterEvent("PLAYER_REGEN_ENABLED", "OnCombatEnd")
 	self:EnableRecorder()
-	self:RegisterCallback("MoversUnlocked", "UpdateLane")
-	self:RegisterCallback("MoversLocked", "UpdateLane")
-	self:UpdateLane()
+	self:ApplySettings()
 end
 
 function M:OnDisable()
 	self:StopRecording()
-	self:StopPlayback()
 	self:ProbeStop()
-	if self.lane then self.lane:Hide() end
+	if self.button then self.button:Hide() end
 	if self.window then self.window:Hide() end
 	if self.shareWindow then self.shareWindow:Hide() end
 end

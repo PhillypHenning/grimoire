@@ -68,28 +68,69 @@ end
 
 -- A round button in the minimap-button style (ADR 0001): border, background and
 -- highlight from the game's own art. Set the picture with button.icon:SetTexture.
-function Grimoire.CreateRoundButton(name, parent)
+-- Every round button has the same size, the profile's buttonSize (Layout ▸ Button size);
+-- the art is resized rather than the button scaled, so saved positions don't move.
+-- Pass `size` for a button that keeps its own (e.g. the emote wheel's slices).
+
+local BASE_SIZE = 31 -- the art's own size, in Blizzard's minimap-button proportions
+Grimoire.roundButtons = {}
+
+local function LayoutRoundButton(button, size)
+	local s = size / BASE_SIZE
+	button:SetSize(size, size)
+	button.background:SetSize(20 * s, 20 * s)
+	button.background:SetPoint("TOPLEFT", 7 * s, -5 * s)
+	button.icon:SetSize(17 * s, 17 * s)
+	button.icon:SetPoint("TOPLEFT", 7 * s, -6 * s)
+	button.border:SetSize(53 * s, 53 * s)
+end
+
+function Grimoire.CreateRoundButton(name, parent, size)
 	local media = Grimoire.media
 	local button = CreateFrame("Button", name, parent or UIParent)
-	button:SetSize(31, 31)
 	button:SetFrameStrata("MEDIUM")
 	button:RegisterForClicks("LeftButtonUp", "RightButtonUp")
 	button:SetHighlightTexture(media.roundButtonHighlight, "ADD")
 
-	local background = button:CreateTexture(nil, "BACKGROUND")
-	background:SetTexture(media.roundButtonBackground)
-	background:SetSize(20, 20)
-	background:SetPoint("TOPLEFT", 7, -5)
+	button.background = button:CreateTexture(nil, "BACKGROUND")
+	button.background:SetTexture(media.roundButtonBackground)
 
-	local icon = button:CreateTexture(nil, "ARTWORK")
-	icon:SetSize(17, 17)
-	icon:SetPoint("TOPLEFT", 7, -6)
-	button.icon = icon
+	button.icon = button:CreateTexture(nil, "ARTWORK")
 
-	local border = button:CreateTexture(nil, "OVERLAY")
-	border:SetTexture(media.roundButtonBorder)
-	border:SetSize(53, 53)
-	border:SetPoint("TOPLEFT")
+	button.border = button:CreateTexture(nil, "OVERLAY")
+	button.border:SetTexture(media.roundButtonBorder)
+	button.border:SetPoint("TOPLEFT")
+
+	if size then
+		LayoutRoundButton(button, size)
+	else
+		Grimoire.roundButtons[#Grimoire.roundButtons + 1] = button
+		LayoutRoundButton(button, Grimoire.db.profile.buttonSize or 44)
+	end
+	return button
+end
+
+function Grimoire:ApplyRoundButtonSize()
+	for _, button in ipairs(self.roundButtons) do
+		LayoutRoundButton(button, self.db.profile.buttonSize)
+	end
+end
+
+-- A component's floating button: a round button that's a mover of its module (drag it in
+-- move mode; the menu offers its reset), shown while db[optionKey] is on.
+--   opts = { name, icon, title, hint, onClick, default (mover position) }
+function Grimoire.CreateModuleButton(module, opts)
+	local button = Grimoire.CreateRoundButton(opts.name)
+	button.icon:SetTexture(opts.icon)
+	button:SetScript("OnClick", opts.onClick)
+	button:SetScript("OnEnter", function(b)
+		GameTooltip:SetOwner(b, "ANCHOR_LEFT")
+		GameTooltip:AddLine(opts.title)
+		GameTooltip:AddLine(opts.hint, 1, 1, 1)
+		GameTooltip:Show()
+	end)
+	button:SetScript("OnLeave", GameTooltip_Hide)
+	module:RegisterMover(button, opts.title .. " button", opts.default, { suffix = "Button" })
 	return button
 end
 
