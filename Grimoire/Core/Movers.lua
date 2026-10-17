@@ -156,6 +156,19 @@ function Grimoire:ApplyMoverPosition(key)
 	end)
 end
 
+-- Changes a mover's scale without moving it on screen. Positions are saved in the frame's
+-- own units, so the saved offsets are rescaled with it.
+function Grimoire:SetMoverScale(key, scale)
+	local mover = self.movers[key]
+	if not mover then return end
+	local old = mover.frame:GetScale()
+	if math.abs(old - scale) < 0.001 then return end
+	local pos = self.db.profile.movers[key] or mover.default
+	self.db.profile.movers[key] = { pos[1], pos[2], pos[3], pos[4] * old / scale, pos[5] * old / scale }
+	mover.frame:SetScale(scale)
+	self:ApplyMoverPosition(key)
+end
+
 function Grimoire:ResetMover(key)
 	if key then
 		if not self.movers[key] then return false end

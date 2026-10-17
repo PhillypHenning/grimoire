@@ -104,6 +104,8 @@ Stored in `GrimoireDB.profiles[<profile>].modules.Prophecy`. In the menu: **Comp
 | --- | --- | --- | --- |
 | `showTracker` | true | toggle | Show the step panel |
 | `trackerSteps` | 4 | 2 / 3 / 4 / 6 | How many entries the panel lists (a gate counts as one) |
+| `trackerScale` | 1 | Small / Normal / Large / Huge (0.8–1.4) | Step panel size; changing it keeps the panel where it is (`Grimoire:SetMoverScale`) |
+| `windowScale` | 1 | Small / Normal / Large / Huge (0.8–1.4) | Plan window size, the same way |
 | `showButton` | true | toggle | Show the floating Prophecy button (opens your plan; a mover, sized by Layout ▸ Button size) |
 | `waypoints` | true | toggle | Waypoint arrow (TomTom): when TomTom is loaded, the next step with an @coordinate becomes a TomTom waypoint and its arrow points there (learned from RestedXP / Guidelime; `Waypoint.lua`, zone names matched to map IDs from the game's map list) |
 

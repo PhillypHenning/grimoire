@@ -129,6 +129,8 @@ end
 
 Any frame registered with `Grimoire:RegisterMover(frame, key, label, default, { dim = true })` gets a move-mode overlay (from the Launcher or `/grimoire unlock`). Windows from `CreateWindow` are movers automatically.
 
+`Grimoire:SetMoverScale(key, scale)` resizes a mover without moving it: positions are saved in the frame's own (scaled) units, so it rescales the saved offsets along with the frame. A frame built at a saved scale is scaled before its position is applied.
+
 ```mermaid
 flowchart LR
     Shift[Shift-click overlays] --> Sel[moverSelection]

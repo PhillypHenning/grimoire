@@ -355,6 +355,9 @@ end
 function M:BuildViewer()
 	local frame = Grimoire:CreateWindow("Prophecy", "Prophecy", self)
 	frame:SetContentSize(VIEW_WIDTH, VIEW_HEIGHT)
+	-- The saved position is in the scaled frame's units: scale first, then place it.
+	frame:SetScale(self.db.windowScale)
+	Grimoire:ApplyMoverPosition("ProphecyWindow")
 	frame:SetScript("OnShow", function() self:UpdateViewer() end)
 	self.viewer = frame
 	local content = frame.content

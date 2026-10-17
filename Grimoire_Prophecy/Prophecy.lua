@@ -32,6 +32,8 @@ local M = Grimoire:NewModule("Prophecy", {
 		trackerSteps = 4,
 		showButton = true,
 		waypoints = true,
+		trackerScale = 1,
+		windowScale = 1,
 	},
 	options = {
 		{ type = "toggle", key = "showButton", label = "Show the Prophecy button", tooltip = "A round button that opens your levelling plan. Drag it in move mode." },
@@ -39,6 +41,12 @@ local M = Grimoire:NewModule("Prophecy", {
 		{ type = "toggle", key = "showTracker", label = "Show step panel", tooltip = "A small panel listing your next steps while you play." },
 		{ type = "choice", key = "trackerSteps", label = "Steps in the panel", tooltip = "How many upcoming steps the panel lists.", values = {
 			{ 2, "2" }, { 3, "3" }, { 4, "4" }, { 6, "6" },
+		} },
+		{ type = "choice", key = "trackerScale", label = "Step panel size", tooltip = "How large the step panel is.", values = {
+			{ 0.8, "Small" }, { 1, "Normal" }, { 1.2, "Large" }, { 1.4, "Huge" },
+		} },
+		{ type = "choice", key = "windowScale", label = "Plan window size", tooltip = "How large the Prophecy plan window is.", values = {
+			{ 0.8, "Small" }, { 1, "Normal" }, { 1.2, "Large" }, { 1.4, "Huge" },
 		} },
 	},
 })
@@ -466,6 +474,12 @@ function M:ApplySettings()
 	end
 	if self.button then
 		self.button:SetShown(self.db.showButton)
+	end
+	if self.tracker then
+		Grimoire:SetMoverScale("ProphecyTracker", self.db.trackerScale)
+	end
+	if self.viewer then
+		Grimoire:SetMoverScale("ProphecyWindow", self.db.windowScale)
 	end
 	self:UpdateTracker()
 	self:UpdateWaypoint()

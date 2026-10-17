@@ -103,6 +103,7 @@ function M:BuildTracker()
 	Grimoire.ApplyClassicBackdrop(frame)
 	frame:SetWidth(WIDTH)
 	frame:SetFrameStrata("LOW")
+	frame:SetScale(self.db.trackerScale) -- before RegisterMover places it
 	self.tracker = frame
 	self.trackerRows = {}
 
