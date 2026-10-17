@@ -22,6 +22,7 @@ Each component is its own add-on and can be switched on or off in the in-game Ad
 | [Launcher](features/launcher/README.md) | `Grimoire_Launcher` | Scaffolded, untested in game |
 | [Tweaks](features/tweaks/README.md) | `Grimoire_Tweaks` | Scaffolded, untested in game |
 | [Prophecy](features/prophecy/README.md) | `Grimoire_Prophecy` | Scaffolded, untested in game (phase 5a: import, viewer, step panel) |
+| [Tempo](features/tempo/README.md) | `Grimoire_Tempo` | Probe only (plan: [plans/tempo.md](plans/tempo.md)), untested in game |
 
 New component? Copy [`features/TEMPLATE.md`](features/TEMPLATE.md) to `features/<component>/README.md` and put screenshots in `features/<component>/screenshots/`.
 

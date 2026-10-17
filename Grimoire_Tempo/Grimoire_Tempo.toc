@@ -1,0 +1,11 @@
+## Interface: 16001
+## Title: |cff8788eeGrimoire|r Tempo
+## Notes: Learns your best rotation from your fights and plays it back as a guide. /grim tempo probe checks what fight data this client gives.
+## Author: Phil Henning
+## Version: @project-version@
+## RequiredDeps: Grimoire
+## SavedVariables: GrimoireTempoDB
+## Group: Grimoire
+## Category: Grimoire
+
+Probe.lua
