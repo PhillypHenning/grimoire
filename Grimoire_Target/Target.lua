@@ -678,7 +678,13 @@ function M:DescribeBlizzardTargetFrame()
 			table.concat(self.borrowHooks or {}, ","))
 		return
 	end
-	local lines = { Describe(container), "  keys: " .. Keys(container) }
+	local settings = {}
+	for _, getter in ipairs({ "IsEnabled", "GetUnit", "GetBuffFilterString", "GetDebuffFilterString",
+		"GetMaxBuffs", "GetMaxDebuffs", "GetBuffTemplate", "GetDebuffTemplate", "GetSmallAuraSize" }) do
+		local ok, value = pcall(container[getter], container)
+		settings[#settings + 1] = ("%s=%s"):format(getter, ok and (Grimoire.IsSecret(value) and "<secret>" or tostring(value)) or "error")
+	end
+	local lines = { Describe(container), "  " .. table.concat(settings, " "), "  keys: " .. Keys(container) }
 	for i, child in ipairs({ container:GetChildren() }) do
 		if i > 12 then break end
 		lines[#lines + 1] = "  child " .. Describe(child)
@@ -712,6 +718,16 @@ function M:BorrowBlizzardAuras()
 		end)
 		hooked = true
 		self.borrowHooks[#self.borrowHooks + 1] = "TargetFrame_UpdateAuras"
+	end
+	-- Forever's aura container refreshes itself, without the target frame's UpdateAuras.
+	local container = AuraContainer()
+	if container and type(container.UpdateAllAuras) == "function" then
+		hooksecurefunc(container, "UpdateAllAuras", place)
+		self.borrowHooks[#self.borrowHooks + 1] = "container.UpdateAllAuras"
+	end
+	if container and container:GetScript("OnEvent") then
+		container:HookScript("OnEvent", place)
+		self.borrowHooks[#self.borrowHooks + 1] = "container.OnEvent"
 	end
 	if not hooked then return false end
 
@@ -827,6 +843,10 @@ end
 function M:OnTargetAura(_, unit)
 	if unit == "target" then
 		self:UpdateAuras()
+		if self.borrowingAuras then
+			-- Catch-all: Blizzard has handled this aura change by the next frame.
+			C_Timer.After(0, function() self:PlaceBlizzardAuras() end)
+		end
 	end
 end
 
