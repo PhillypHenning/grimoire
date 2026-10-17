@@ -93,6 +93,8 @@ button:SetShown(module and module:IsEnabled())
 
 - **Sort uses Blizzard's `C_Container.SortBags()`.** It physically rearranges items. The button disables itself if the client lacks the API.
 - **Search dims rather than hides.** Slots stay in place, so muscle memory keeps working.
+- **Search language** (2026-10-16, learned from Baganator; [`Search.lua`](../../../Grimoire_Bags/Search.lua), tested by `lua scripts/bags/test.lua`): words match names, item types and subtypes; `junk`/`poor`, `common` … `legendary`; `boe`, `bop`; slots (`head`, `chest`, `feet`, `finger`, `trinket`, `ranged`, `bag` …); item level `>20`, `<10`, `10-15`; a space or `&` is and, `|` is or, `!` is not. Hovering the box lists them.
+- **Icon corners** (learned from Baganator): equipment shows its item level bottom-left, and items that bind when equipped show BoE top-left (setting `iconInfo`).
 - **Classic art ([ADR 0001](../../adr/0001-prefer-classic-style-ui.md)):** dialog border, header, empty-slot texture, quality borders, Blizzard bag sounds.
 
 ## Combat & secret-value constraints
@@ -108,6 +110,7 @@ Stored in `GrimoireDB.profiles[<profile>].modules.Bags`. In the menu: **Componen
 | --- | --- | --- | --- |
 | `columns` | 10 | 8 / 10 / 12 / 14 | Slots per row |
 | `ownerTooltips` | true | toggle | Item tooltips list every character that has the item, with bag and bank counts |
+| `iconInfo` | true | toggle | Item level and BoE on icons |
 
 While Baganator, Bagnon, AdiBags or ArkInventory is loaded, the module stays off and the menu shows "(conflicts with …)".
 

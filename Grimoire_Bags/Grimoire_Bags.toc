@@ -7,4 +7,5 @@
 ## Group: Grimoire
 ## Category: Grimoire
 
+Search.lua
 Bags.lua

@@ -23,7 +23,7 @@ Grimoire_Tempo/        Learns your best rotation (opener and cycle) from your fi
 Grimoire_Emotes/       Emote wheel: hold a key, point at an emote, let go; /grim emotes
 Grimoire_Debug/        Log window (every Lua error, Grimoire events), environment report, saved on /reload; /grim debug
 Grimoire_Map/          Your hearthstone on the world map; flight times on the flight map
-scripts/               Dev tooling: link-addons.ps1 (junctions), check-lua.ps1 (syntax + .toc check), prophecy/ (plan checker and bundler; the parser is Grimoire_Prophecy/Parser.lua), tempo/test.lua (Tempo analysis tests), core/test.lua (serializer tests)
+scripts/               Dev tooling: link-addons.ps1 (junctions), check-lua.ps1 (syntax + .toc check), prophecy/ (plan checker and bundler; the parser is Grimoire_Prophecy/Parser.lua), tempo/test.lua (Tempo analysis tests), core/test.lua (serializer tests), bags/test.lua (bag search tests)
 docs/                  Component docs (summary, diagrams, screenshots) and ADRs
 ```
 

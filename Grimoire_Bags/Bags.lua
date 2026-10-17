@@ -1,5 +1,6 @@
-local ADDON_NAME = ...
+local ADDON_NAME, ns = ...
 local Grimoire = Grimoire
+local Search = ns.Search
 
 local SLOT_SIZE = 37
 local SLOT_SPACING = 4
@@ -14,9 +15,11 @@ local M = Grimoire:NewModule("Bags", {
 	defaults = {
 		columns = 10,
 		ownerTooltips = true,
+		iconInfo = true,
 	},
 	options = {
 		{ type = "toggle", key = "ownerTooltips", label = "Show who owns an item in tooltips", tooltip = "Item tooltips list each of your characters that has it, with how many in bags and bank (learned from Syndicator)." },
+		{ type = "toggle", key = "iconInfo", label = "Item level and BoE on icons", tooltip = "Equipment shows its item level in the corner; items that bind when equipped show BoE (learned from Baganator)." },
 		{ type = "choice", key = "columns", label = "Columns", tooltip = "How many item slots each row of the bag window has.", values = {
 			{ 8, "8" }, { 10, "10" }, { 12, "12" }, { 14, "14" },
 		} },
@@ -127,6 +130,17 @@ function M:Build()
 	search:HookScript("OnTextChanged", function(box)
 		self:SetSearch(box:GetText())
 	end)
+	search:HookScript("OnEnter", function(box)
+		GameTooltip:SetOwner(box, "ANCHOR_TOP")
+		GameTooltip:AddLine("Search")
+		GameTooltip:AddLine("Words match names and item types: linen, cloth, potion", 1, 1, 1)
+		GameTooltip:AddLine("junk, common, uncommon, rare, epic · boe, bop", 1, 1, 1)
+		GameTooltip:AddLine("Slots: head, chest, feet, finger, trinket, ranged, bag ...", 1, 1, 1)
+		GameTooltip:AddLine("Item level: >20  <10  10-15", 1, 1, 1)
+		GameTooltip:AddLine("Combine: space or & = and, | = or, ! = not", 1, 1, 1)
+		GameTooltip:Show()
+	end)
+	search:HookScript("OnLeave", GameTooltip_Hide)
 	self.search = search
 
 	self.sortButton = CreateToolbarButton(content, "Sort", function()
@@ -253,6 +267,13 @@ function M:GetButton(holder, slot)
 		bg:SetAllPoints()
 		button:SetID(slot)
 		button:HookScript("OnEnter", Button_OnEnter)
+		-- Item level (bottom-left) and BoE (top-left), like Baganator's icon corners.
+		button.ilvlText = button:CreateFontString(nil, "OVERLAY", "NumberFontNormalSmall")
+		button.ilvlText:SetPoint("BOTTOMLEFT", 2, 2)
+		button.boeText = button:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+		button.boeText:SetPoint("TOPLEFT", 2, -2)
+		button.boeText:SetText("BoE")
+		button.boeText:SetTextColor(0.1, 1, 0.1)
 		holder.buttons[slot] = button
 	end
 	return button
@@ -321,6 +342,44 @@ local function UpdateCooldown(button, bag, slot, hasItem)
 	end
 end
 
+-- What the search and icon corners know about an item. Item info may not be cached yet;
+-- GET_ITEM_INFO_RECEIVED refreshes the window when it arrives.
+local GetItemInfo = C_Item and C_Item.GetItemInfo or GetItemInfo
+local GetDetailedItemLevelInfo = C_Item and C_Item.GetDetailedItemLevelInfo or GetDetailedItemLevelInfo
+
+local function ItemRecord(info)
+	local link = info.hyperlink
+	local name, ilvl, itemType, subType, equipLoc, bindType
+	if link then
+		local _
+		name, _, _, ilvl, _, itemType, subType, _, equipLoc, _, _, _, _, bindType = GetItemInfo(link)
+		local detailed = GetDetailedItemLevelInfo and GetDetailedItemLevelInfo(link)
+		ilvl = detailed or ilvl
+	end
+	local bind
+	if info.isBound or bindType == 1 then
+		bind = "bop"
+	elseif bindType == 2 then
+		bind = "boe"
+	end
+	return {
+		name = name or Grimoire.ItemNameFromLink(link),
+		quality = info.quality,
+		itemType = itemType,
+		subType = subType,
+		slot = (equipLoc and equipLoc ~= "") and equipLoc or nil,
+		ilvl = ilvl,
+		bind = bind,
+	}
+end
+
+function M:UpdateIconInfo(button)
+	local item = self.db.iconInfo and button.searchItem
+	local equipment = item and item.slot and item.slot ~= "INVTYPE_BAG" and item.ilvl
+	button.ilvlText:SetText(equipment and item.ilvl or "")
+	button.boeText:SetShown(item and item.bind == "boe" or false)
+end
+
 function M:UpdateButton(button, bag, slot)
 	local info = C_Container.GetContainerItemInfo(bag, slot)
 	SetItemButtonTexture(button, info and info.iconFileID or nil)
@@ -329,7 +388,8 @@ function M:UpdateButton(button, bag, slot)
 	SetItemButtonQuality(button, info and info.quality or nil, info and info.hyperlink or nil)
 	SetNewGlow(button, IsNewItem(bag, slot, info ~= nil), info and info.quality)
 	UpdateCooldown(button, bag, slot, info ~= nil)
-	button.itemName = info and (Grimoire.ItemNameFromLink(info.hyperlink) or ""):lower() or nil
+	button.searchItem = info and ItemRecord(info) or nil
+	self:UpdateIconInfo(button)
 	self:ApplySearch(button)
 end
 
@@ -351,8 +411,9 @@ end
 
 -- Search -----------------------------------------------------------------------
 
+-- The query language is in Search.lua (names, quality, boe/bop, slots, item level; & | !).
 function M:SetSearch(text)
-	self.query = (text or ""):lower()
+	self.matcher = Search.Compile(text)
 	for _, holder in pairs(self.holders) do
 		for slot = 1, holder.numSlots or 0 do
 			self:ApplySearch(holder.buttons[slot])
@@ -361,8 +422,8 @@ function M:SetSearch(text)
 end
 
 function M:ApplySearch(button)
-	local query = self.query or ""
-	local matches = query == "" or (button.itemName and button.itemName:find(query, 1, true))
+	local match = self.matcher
+	local matches = not match or (button.searchItem ~= nil and match(button.searchItem))
 	button:SetAlpha(matches and 1 or DIMMED_ALPHA)
 end
 
@@ -427,6 +488,16 @@ function M:OnItemLockChanged(_, bag, slot)
 	end
 end
 
+-- Item details arrived from the server: refresh once they stop coming.
+function M:OnItemInfoReceived()
+	if not self.frame:IsShown() or self.itemInfoQueued then return end
+	self.itemInfoQueued = true
+	C_Timer.After(0.3, function()
+		self.itemInfoQueued = false
+		self:Refresh()
+	end)
+end
+
 function M:Open()
 	self.frame:Show()
 end
@@ -454,6 +525,7 @@ function M:OnEnable()
 	self:RegisterEvent("BAG_UPDATE_DELAYED", "Refresh")
 	self:RegisterEvent("BAG_UPDATE_COOLDOWN", "Refresh")
 	self:RegisterEvent("ITEM_LOCK_CHANGED", "OnItemLockChanged")
+	self:RegisterEvent("GET_ITEM_INFO_RECEIVED", "OnItemInfoReceived")
 	self:RegisterEvent("PLAYER_MONEY", "Refresh")
 	Grimoire:RegisterCallback("ModuleEnabled", self, "Refresh")
 	Grimoire:RegisterCallback("ModuleDisabled", self, "Refresh")
