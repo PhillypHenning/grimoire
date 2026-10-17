@@ -26,8 +26,8 @@ local M = Grimoire:NewModule("Tempo", {
 		keepFights = 20,
 	},
 	options = {
-		{ type = "toggle", key = "showButton", label = "Show the Tempo button" },
-		{ type = "choice", key = "keepFights", label = "Fights kept", values = {
+		{ type = "toggle", key = "showButton", label = "Show the Tempo button", tooltip = "A round button that opens your rotations. Drag it in move mode." },
+		{ type = "choice", key = "keepFights", label = "Fights kept", tooltip = "How many recent fights Tempo keeps for each character.", values = {
 			{ 10, "10" }, { 20, "20" }, { 50, "50" },
 		} },
 	},

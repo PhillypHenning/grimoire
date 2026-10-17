@@ -206,9 +206,9 @@ function Grimoire:NewUnitBar(name, opts)
 		label = opts.label,
 		defaults = opts.defaults,
 		options = {
-			{ type = "toggle", key = "showText", label = "Show %" },
-			{ type = "choice", key = "width", label = "Width", values = Choices(opts.widths) },
-			{ type = "choice", key = "height", label = "Height", values = Choices(opts.heights) },
+			{ type = "toggle", key = "showText", label = "Show %", tooltip = "Show the value as a percentage on the bar." },
+			{ type = "choice", key = "width", label = "Width", tooltip = "How wide the bar is.", values = Choices(opts.widths) },
+			{ type = "choice", key = "height", label = "Height", tooltip = "How tall the bar is.", values = Choices(opts.heights) },
 		},
 	})
 	Mix(module, Bar, opts.kind == "power" and PowerBar or HealthBar)
@@ -401,7 +401,7 @@ end
 
 -- The "Portrait" style choice, for a portrait module's options.
 function Grimoire.UnitPortraitStyleOption()
-	return { type = "choice", key = "style", label = "Portrait", values = {
+	return { type = "choice", key = "style", label = "Portrait", tooltip = "Animated 3D model, or the classic flat picture.", values = {
 		{ "animated", "Animated (3D)" }, { "classic", "Classic (2D)" },
 	} }
 end

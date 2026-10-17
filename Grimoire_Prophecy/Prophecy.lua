@@ -33,9 +33,9 @@ local M = Grimoire:NewModule("Prophecy", {
 		showButton = true,
 	},
 	options = {
-		{ type = "toggle", key = "showButton", label = "Show the Prophecy button" },
-		{ type = "toggle", key = "showTracker", label = "Show step panel" },
-		{ type = "choice", key = "trackerSteps", label = "Steps in the panel", values = {
+		{ type = "toggle", key = "showButton", label = "Show the Prophecy button", tooltip = "A round button that opens your levelling plan. Drag it in move mode." },
+		{ type = "toggle", key = "showTracker", label = "Show step panel", tooltip = "A small panel listing your next steps while you play." },
+		{ type = "choice", key = "trackerSteps", label = "Steps in the panel", tooltip = "How many upcoming steps the panel lists.", values = {
 			{ 2, "2" }, { 3, "3" }, { 4, "4" }, { 6, "6" },
 		} },
 	},

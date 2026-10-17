@@ -21,9 +21,9 @@ local PetFrame = Grimoire:NewUnitPortrait("PetFrame", {
 	defaultPosition = { "TOPRIGHT", "UIParent", "CENTER", -118, -250 },
 	options = {
 		Grimoire.UnitPortraitStyleOption(),
-		{ type = "choice", key = "size", label = "Size", values = { { 36, "Small" }, { 48, "Medium" }, { 64, "Large" } } },
-		{ type = "toggle", key = "showName", label = "Show name" },
-		{ type = "toggle", key = "hideBlizzard", label = "Hide Blizzard pet frame", reload = true },
+		{ type = "choice", key = "size", label = "Size", tooltip = "How large the pet frame is.", values = { { 36, "Small" }, { 48, "Medium" }, { 64, "Large" } } },
+		{ type = "toggle", key = "showName", label = "Show name", tooltip = "Show your pet's name above its frame." },
+		{ type = "toggle", key = "hideBlizzard", label = "Hide Blizzard pet frame", tooltip = "Hide the game's own pet frame; Grimoire's replaces it.", reload = true },
 	},
 })
 

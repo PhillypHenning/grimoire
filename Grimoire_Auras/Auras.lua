@@ -91,7 +91,7 @@ local function NewAuraModule(name, label, frameNames, rows, missingReason, defau
 		label = label,
 		defaults = { scale = 1 },
 		options = {
-			{ type = "choice", key = "scale", label = "Size", values = {
+			{ type = "choice", key = "scale", label = "Size", tooltip = "How large the buff and debuff icons are.", values = {
 				{ 0.8, "Small" }, { 1, "Normal" }, { 1.2, "Large" }, { 1.4, "Huge" },
 			} },
 		},

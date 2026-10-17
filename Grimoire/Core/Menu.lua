@@ -64,10 +64,19 @@ end
 
 -- Module entries ---------------------------------------------------------------------
 
+-- An option's hover text (learned from Leatrix Plus: every setting explains itself).
+local function OptionTooltip(option)
+	if option.reload then
+		return (option.tooltip and (option.tooltip .. " ") or "") .. "Needs /reload."
+	end
+	return option.tooltip
+end
+
 local function OptionEntry(module, option)
 	if option.type == "toggle" then
 		return {
 			text = option.label,
+			tooltip = OptionTooltip(option),
 			checked = function() return module.db[option.key] and true or false end,
 			func = function() Grimoire:SetModuleSetting(module, option.key, not module.db[option.key]) end,
 		}
@@ -83,7 +92,7 @@ local function OptionEntry(module, option)
 			func = function() Grimoire:SetModuleSetting(module, option.key, value) end,
 		}
 	end
-	return { text = option.label, children = children }
+	return { text = option.label, tooltip = OptionTooltip(option), children = children }
 end
 
 local function MoverEntries(key, prefix)
@@ -144,7 +153,7 @@ function Grimoire:GetModuleMenu(module)
 		end
 		children[#children + 1] = { isDivider = true }
 		children[#children + 1] = { text = "Show its log", func = function() debug:ShowLog(module.name) end }
-		entries[#entries + 1] = { text = "Debug log", children = children }
+		entries[#entries + 1] = { text = "Debug log", tooltip = "How much this component writes to the Debug log.", children = children }
 	end
 
 	local keys = {}
@@ -209,7 +218,7 @@ end
 
 -- Main menu ----------------------------------------------------------------------------
 
-local function ProfileChoice(label, key, values, onChange)
+local function ProfileChoice(label, key, values, onChange, tooltip)
 	local children = {}
 	for _, choice in ipairs(values) do
 		local value, text = choice[1], choice[2]
@@ -223,7 +232,7 @@ local function ProfileChoice(label, key, values, onChange)
 			end,
 		}
 	end
-	return { text = label, children = children }
+	return { text = label, tooltip = tooltip, children = children }
 end
 
 function Grimoire:ToggleMoveMode()
@@ -256,12 +265,12 @@ function Grimoire:GetMainMenu()
 
 	local layout = {
 		ProfileChoice("Dim strength", "dimAlpha", { { 0.2, "Faint" }, { 0.4, "Medium" }, { 0.6, "Light" } },
-			function() self:UpdateMoverDimming() end),
+			function() self:UpdateMoverDimming() end, "How faint idle frames become (Dim when idle)."),
 		ProfileChoice("Dim after", "idleSeconds", { { 1, "1 second" }, { 1.5, "1.5 seconds" }, { 3, "3 seconds" } },
-			function() self:NotifyAllMoverActivity() end),
+			function() self:NotifyAllMoverActivity() end, "How long a frame waits, unused, before it dims."),
 		ProfileChoice("Button size", "buttonSize", { { 31, "Small" }, { 38, "Medium" }, { 44, "Large" }, { 52, "Huge" } },
-			function() self:ApplyRoundButtonSize() end),
-		{ text = "Reset all positions", func = function() self:ResetAllPositions() end },
+			function() self:ApplyRoundButtonSize() end, "The size of every round Grimoire button (Grimoire, Notes, Tempo, Prophecy)."),
+		{ text = "Reset all positions", tooltip = "Put every Grimoire frame and window back where it started.", func = function() self:ResetAllPositions() end },
 	}
 	local selected = self:GetSelectedMovers()
 	if #selected >= 2 then

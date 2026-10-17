@@ -15,7 +15,7 @@ local M = Grimoire:NewModule("WarlockResources", {
 		iconSize = 26,
 	},
 	options = {
-		{ type = "choice", key = "iconSize", label = "Icon size", values = {
+		{ type = "choice", key = "iconSize", label = "Icon size", tooltip = "How large the soul shard icons are.", values = {
 			{ 20, "Small" }, { 26, "Medium" }, { 32, "Large" },
 		} },
 	},

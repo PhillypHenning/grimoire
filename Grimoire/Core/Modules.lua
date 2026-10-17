@@ -16,6 +16,8 @@ Module.__index = Module
 -- opts.options: settings the menu offers (see docs/adr/0005):
 --   { type = "toggle", key = "showText", label = "Show %" }
 --   { type = "choice", key = "width", label = "Width", values = { { 180, "180" }, ... } }
+--   Any option may add tooltip = "one line" (shown on hover; "Needs /reload." is added
+--   for reload = true).
 --   either may set reload = true when the change needs a /reload.
 ---@param name string
 ---@param opts? { addon?: string, label?: string, options?: table[], defaults?: table, class?: string, conflicts?: string[], enabledByDefault?: boolean }

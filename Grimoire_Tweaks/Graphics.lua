@@ -11,19 +11,19 @@ local GetCVar = C_CVar and C_CVar.GetCVar or GetCVar
 local SetCVar = C_CVar and C_CVar.SetCVar or SetCVar
 
 local TWEAKS = {
-	{ key = "sharpen", cvar = "ResampleAlwaysSharpen", label = "Sharpen image",
+	{ key = "sharpen", cvar = "ResampleAlwaysSharpen", label = "Sharpen image", tooltip = "Sharper picture when the game renders below your screen resolution.",
 		values = { { "1", "On" } }, default = "1" },
-	{ key = "groundDensity", cvar = "groundEffectDensity", label = "Grass density",
+	{ key = "groundDensity", cvar = "groundEffectDensity", label = "Grass density", tooltip = "How thick grass and ground clutter are.",
 		values = { { "128", "128" }, { "256", "256" } }, default = "256" },
-	{ key = "groundDistance", cvar = "groundEffectDist", label = "Grass distance",
+	{ key = "groundDistance", cvar = "groundEffectDist", label = "Grass distance", tooltip = "How far away grass and ground clutter still show.",
 		values = { { "320", "320" }, { "500", "500" } }, default = "500" },
-	{ key = "terrainDistance", cvar = "terrainLodDist", label = "Terrain detail distance",
+	{ key = "terrainDistance", cvar = "terrainLodDist", label = "Terrain detail distance", tooltip = "How far away the ground keeps its full detail.",
 		values = { { "650", "650" }, { "1000", "1000" } }, default = "1000" },
-	{ key = "reflections", cvar = "reflectionMode", label = "Water reflections",
+	{ key = "reflections", cvar = "reflectionMode", label = "Water reflections", tooltip = "Reflection quality on water.",
 		values = { { "3", "Highest (3)" } }, default = "3" },
-	{ key = "weather", cvar = "weatherDensity", label = "Weather",
+	{ key = "weather", cvar = "weatherDensity", label = "Weather", tooltip = "How heavy rain, snow and other weather look.",
 		values = { { "3", "Highest (3)" } }, default = "3" },
-	{ key = "cameraZoom", cvar = "cameraDistanceMaxZoomFactor", label = "Max camera zoom",
+	{ key = "cameraZoom", cvar = "cameraDistanceMaxZoomFactor", label = "Max camera zoom", tooltip = "How far the camera can zoom out.",
 		values = { { "2.6", "2.6" }, { "4", "4" } }, default = "4" },
 }
 
@@ -35,7 +35,7 @@ for _, tweak in ipairs(TWEAKS) do
 	for _, choice in ipairs(tweak.values) do
 		values[#values + 1] = choice
 	end
-	options[#options + 1] = { type = "choice", key = tweak.key, label = tweak.label, values = values }
+	options[#options + 1] = { type = "choice", key = tweak.key, label = tweak.label, tooltip = tweak.tooltip, values = values }
 end
 
 local M = Grimoire:NewModule("Graphics", {

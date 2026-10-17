@@ -28,13 +28,13 @@ local M = Grimoire:NewModule("Party", {
 		hideBlizzard = true,
 	},
 	options = {
-		{ type = "choice", key = "scale", label = "Size", values = {
+		{ type = "choice", key = "scale", label = "Size", tooltip = "How large the party frames are.", values = {
 			{ 0.9, "Small" }, { 1, "Normal" }, { 1.2, "Large" }, { 1.4, "Huge" },
 		} },
-		{ type = "choice", key = "spacing", label = "Spacing", values = { { "compact", "Compact" }, { "normal", "Normal" } } },
-		{ type = "toggle", key = "showText", label = "Show % on bars" },
-		{ type = "toggle", key = "showInRaid", label = "Show in raid" },
-		{ type = "toggle", key = "hideBlizzard", label = "Hide Blizzard party frames", reload = true },
+		{ type = "choice", key = "spacing", label = "Spacing", tooltip = "How far apart the party frames sit.", values = { { "compact", "Compact" }, { "normal", "Normal" } } },
+		{ type = "toggle", key = "showText", label = "Show % on bars", tooltip = "Show health and power as percentages." },
+		{ type = "toggle", key = "showInRaid", label = "Show in raid", tooltip = "Keep showing the party frames while you are in a raid." },
+		{ type = "toggle", key = "hideBlizzard", label = "Hide Blizzard party frames", tooltip = "Hide the game's own party frames; Grimoire's replace them.", reload = true },
 	},
 })
 

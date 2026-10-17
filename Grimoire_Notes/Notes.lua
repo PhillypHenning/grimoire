@@ -18,7 +18,7 @@ local M = Grimoire:NewModule("Notes", {
 		showButton = true,
 	},
 	options = {
-		{ type = "toggle", key = "showButton", label = "Show Notes button" },
+		{ type = "toggle", key = "showButton", label = "Show Notes button", tooltip = "A round button that opens your notes. Drag it in move mode." },
 	},
 })
 

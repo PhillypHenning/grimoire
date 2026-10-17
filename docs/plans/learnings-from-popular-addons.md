@@ -1,6 +1,6 @@
 # Learnings from popular add-ons
 
-> **Progress (2026-10-16, on the PC):** plan written; work in order L1 → L7, each pushed for testing as it lands. L1 done.
+> **Progress (2026-10-16, on the PC):** plan written; work in order L1 → L7, each pushed for testing as it lands. L1, L2 done.
 
 ## Context
 Phil asked what the most popular related add-ons do that Grimoire should learn from, then picked (2026-10-16): layout sharing, a better bag search, Prophecy waypoints, an error count, setting tooltips, a shared item-data layer, and, last, an Auctionator-style expansion of Auctions. Only these; nothing else from the review.

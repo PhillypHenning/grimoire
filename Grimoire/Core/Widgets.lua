@@ -176,7 +176,7 @@ end
 --   { text = "Do it", func = fn }
 --   { text = "Option", func = fn, checked = fn() -> bool, radio = true? }
 --   { text = "More", children = { ...entries } }       -- submenu
--- Any entry may set disabled = true.
+-- Any entry may set disabled = true, and tooltip = "text" (shown on hover).
 -- anchor nil opens at the cursor. Uses Blizzard's Menu API when the client has it,
 -- otherwise UIDropDownMenu. Returns false if neither exists.
 
@@ -200,6 +200,12 @@ local function AddMenuEntries(root, entries)
 		if element and e.disabled and element.SetEnabled then
 			element:SetEnabled(false)
 		end
+		if element and e.tooltip and element.SetTooltip then
+			element:SetTooltip(function(tooltip)
+				GameTooltip_SetTitle(tooltip, e.text)
+				GameTooltip_AddNormalLine(tooltip, e.tooltip)
+			end)
+		end
 	end
 end
 
@@ -215,6 +221,9 @@ local function AddDropDownEntries(entries, level)
 			local info = UIDropDownMenu_CreateInfo()
 			info.text = e.text
 			info.disabled = e.disabled
+			if e.tooltip then
+				info.tooltipTitle, info.tooltipText, info.tooltipOnButton = e.text, e.tooltip, true
+			end
 			if e.isTitle then
 				info.isTitle = true
 				info.notCheckable = true

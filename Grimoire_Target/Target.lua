@@ -34,11 +34,11 @@ local M = Grimoire:NewModule("Target", {
 	},
 	options = {
 		Grimoire.UnitPortraitStyleOption(),
-		{ type = "choice", key = "size", label = "Size", values = { { 48, "Small" }, { 64, "Medium" }, { 80, "Large" } } },
-		{ type = "toggle", key = "showText", label = "Show values on bars" },
-		{ type = "toggle", key = "showAuras", label = "Show buffs and debuffs" },
-		{ type = "toggle", key = "showTargetOfTarget", label = "Show target of target" },
-		{ type = "toggle", key = "hideBlizzard", label = "Hide Blizzard target frame", reload = true },
+		{ type = "choice", key = "size", label = "Size", tooltip = "How large the target frame is.", values = { { 48, "Small" }, { 64, "Medium" }, { 80, "Large" } } },
+		{ type = "toggle", key = "showText", label = "Show values on bars", tooltip = "Show the target's health and power numbers on its bars." },
+		{ type = "toggle", key = "showAuras", label = "Show buffs and debuffs", tooltip = "Show your target's buffs and debuffs under its frame; your own are larger." },
+		{ type = "toggle", key = "showTargetOfTarget", label = "Show target of target", tooltip = "A small frame showing who your target is targeting." },
+		{ type = "toggle", key = "hideBlizzard", label = "Hide Blizzard target frame", tooltip = "Hide the game's own target frame; Grimoire's replaces it.", reload = true },
 	},
 })
 

@@ -15,7 +15,7 @@ local M = Grimoire:NewModule("Bags", {
 		columns = 10,
 	},
 	options = {
-		{ type = "choice", key = "columns", label = "Columns", values = {
+		{ type = "choice", key = "columns", label = "Columns", tooltip = "How many item slots each row of the bag window has.", values = {
 			{ 8, "8" }, { 10, "10" }, { 12, "12" }, { 14, "14" },
 		} },
 	},
