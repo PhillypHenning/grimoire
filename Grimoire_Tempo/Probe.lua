@@ -63,20 +63,63 @@ local function Inventory()
 	}
 end
 
--- Damage-meter API: unknown shape, so every Get* function is tried with no arguments.
+-- A nested table as text lines, a few levels deep and a few list items wide.
+local function Dump(value, depth, lines, indent)
+	lines, indent = lines or {}, indent or ""
+	if type(value) ~= "table" or Grimoire.IsSecret(value) then
+		lines[#lines + 1] = indent .. Describe(value)
+		return lines
+	end
+	local shown = 0
+	for _, key in ipairs(SortedKeys(value)) do
+		local child = value[key] ~= nil and value[key] or value[tonumber(key)]
+		shown = shown + 1
+		if shown > 8 then
+			lines[#lines + 1] = indent .. "..."
+			break
+		end
+		if type(child) == "table" and depth > 1 then
+			lines[#lines + 1] = indent .. key .. ":"
+			Dump(child, depth - 1, lines, indent .. "  ")
+		else
+			lines[#lines + 1] = indent .. key .. " = " .. Describe(child)
+		end
+	end
+	return lines
+end
+
+local function Try(fn, ...)
+	if type(fn) ~= "function" then return { "missing" } end
+	local packed = { pcall(fn, ...) }
+	if not table.remove(packed, 1) then
+		return { "error: " .. Describe(packed[1]) }
+	end
+	return Dump(packed[1], 4)
+end
+
+-- Blizzard's damage meter (the first probe, 2026-10-16, found C_DamageMeter but called it
+-- without arguments). Every session type is asked for every meter type, whole and for
+-- the player alone: the player-only damage would leave out other players and the pet.
 local function SampleDamageMeter()
-	if type(C_DamageMeter) ~= "table" then return nil end
-	local results = {}
-	for _, name in ipairs(SortedKeys(C_DamageMeter)) do
-		local fn = C_DamageMeter[name]
-		if type(fn) == "function" and name:find("^Get") then
-			local packed = { pcall(fn) }
-			local ok = table.remove(packed, 1)
-			local line = ok and DescribeAll(unpack(packed)) or ("error: " .. Describe(packed[1]))
-			if ok and type(packed[1]) == "table" then
-				line = line .. " keys: " .. table.concat(SortedKeys(packed[1]), " ")
-			end
-			results[name] = line
+	local api = C_DamageMeter
+	if type(api) ~= "table" then return nil end
+	local sessionTypes = Enum and Enum.DamageMeterSessionType or {}
+	local meterTypes = Enum and Enum.DamageMeterType or {}
+	local results = {
+		available = Try(api.IsDamageMeterAvailable),
+		combatLogRestricted = C_CombatLog and Try(C_CombatLog.IsCombatLogRestricted),
+		sessionTypes = Dump(sessionTypes, 1),
+		meterTypes = Dump(meterTypes, 1),
+		sessions = Try(api.GetAvailableCombatSessions),
+		byType = {},
+	}
+	local guid = UnitGUID("player")
+	for sessionName, sessionType in pairs(sessionTypes) do
+		results.byType[sessionName .. " duration"] = Try(api.GetSessionDurationSeconds, sessionType)
+		for meterName, meterType in pairs(meterTypes) do
+			local key = sessionName .. " " .. meterName
+			results.byType[key] = Try(api.GetCombatSessionFromType, sessionType, meterType)
+			results.byType[key .. " (you)"] = Try(api.GetCombatSessionSourceFromType, sessionType, meterType, guid)
 		end
 	end
 	return results
@@ -116,6 +159,9 @@ local HANDLERS = {
 	UNIT_COMBAT = function(event, unit, action, descriptor, amount, school)
 		Add(event, DescribeAll(unit, action, descriptor, amount, school))
 	end,
+	PET_ATTACK_START = function(event)
+		Add(event, "pet sent in")
+	end,
 	UNIT_HEALTH = function(event)
 		TargetHealth(event)
 	end,
@@ -136,7 +182,8 @@ function M:ProbeStart()
 		probe.frame = frame
 	end
 	frame:RegisterUnitEvent("UNIT_SPELLCAST_SENT", "player")
-	frame:RegisterUnitEvent("UNIT_SPELLCAST_SUCCEEDED", "player")
+	frame:RegisterUnitEvent("UNIT_SPELLCAST_SUCCEEDED", "player", "pet")
+	pcall(frame.RegisterEvent, frame, "PET_ATTACK_START") -- in case this client lacks it
 	frame:RegisterUnitEvent("UNIT_COMBAT", "target")
 	frame:RegisterUnitEvent("UNIT_HEALTH", "target")
 	TargetHealth("UNIT_HEALTH (start)")
@@ -151,6 +198,12 @@ function M:ProbeStop()
 	fight.duration = GetTime() - fight.start
 	fight.start = nil
 	fight.damageMeter = SampleDamageMeter()
+	-- The meter may settle after combat: read it again a moment later.
+	C_Timer.After(3, function()
+		if self.store.probe and self.store.probe.fight == fight then
+			fight.damageMeterLater = SampleDamageMeter()
+		end
+	end)
 	fight.recorder = {
 		usedSource = self:GetCharacter().fights[1] and self:GetCharacter().fights[1].source or "none",
 	}

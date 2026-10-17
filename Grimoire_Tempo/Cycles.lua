@@ -23,7 +23,8 @@ local Cycles = {}
 -- Spells whose re-cast starts a new cycle. Names, not IDs: every rank of a spell has its
 -- own ID, and a rotation should survive learning a new rank.
 Cycles.RESET_SPELLS = {
-	WARLOCK = { "Corruption", "Curse of Agony", "Immolate", "Siphon Life", "Curse of Doom" },
+	-- Forever renames some Warlock curses to banes (Bane of Agony seen 2026-10-16); both count.
+	WARLOCK = { "Corruption", "Curse of Agony", "Bane of Agony", "Immolate", "Siphon Life", "Curse of Doom", "Bane of Doom" },
 	PRIEST = { "Shadow Word: Pain", "Devouring Plague", "Vampiric Touch" },
 	DRUID = { "Moonfire", "Insect Swarm", "Rake", "Rip" },
 	HUNTER = { "Serpent Sting" },

@@ -48,6 +48,13 @@ Per character (ADR 0003): each fight saves casts with timestamps, damage over ti
 - Modes: **Follow** (best rotation), **Pinned** (a rotation you chose), **Experiment** (no guide, records only, so a new idea can beat the best).
 - After the fight: a short summary (accuracy, DPS against the rotation's).
 
+### Probe results (2026-10-16, 18:49, one fight on a Zhevra Runner)
+- Combat log: blocked (see above). `C_CombatLog.IsCombatLogRestricted` exists.
+- `UNIT_COMBAT` on the target: works, amounts readable; includes the pet (fire school = imp). This is the source Tempo uses.
+- Target health and `UnitHealthPercent`: all secret in combat, so the health fallback gives nothing here.
+- `C_DamageMeter` exists (`GetCombatSessionFromType(sessionType, type)`, `GetCombatSessionSourceFromType(sessionType, type, sourceGUID)`, …). The probe now queries every session and meter type, also 3 s after combat; if it gives the player's own damage, it becomes the first source.
+- Forever calls Curse of Agony "Bane of Agony"; banes added to the Warlock cycle list.
+
 ### T4b: pets (done 2026-10-16, Phil asked: "it needs to account for pet attacks as well")
 - Sending the pet in is a judged "Pet Attack" step; abilities you have the pet use are pet steps on their own lane row (not judged as missed); autocast abilities are left out; pet damage was already in the score.
 - Share format: `0.0 0 Pet Attack`, `2.1 3110 pet: Firebolt`.
