@@ -45,6 +45,8 @@ flowchart TD
 
 **Auras are display only.** Plain buttons with icon, stack count, debuff-type border and a cooldown swipe; hovering shows the aura's tooltip. Debuffs you or your pet cast are 21 px instead of 17.
 
+**Reading auras without tripping secrets.** Forever refuses `GetAuraDataByIndex` on the target while its auras are secret ("Auras cannot be accessed when secret", seen 2026-10-13); the error stopped the whole aura row, so no debuffs showed. `GetAuras` now tries `C_UnitAuras.GetUnitAuras`, then `GetAuraSlots` + `GetAuraDataBySlot`, then by index, each call in `pcall`. Fields that may be secret only go to widgets; your own debuffs are found with the `HARMFUL|PLAYER` filter instead of comparing the (secret) caster.
+
 **Target of target is polled.** No event fires when the target's target changes, so it refreshes every 0.2 s while it's shown.
 
 ## Design decisions
@@ -59,7 +61,7 @@ flowchart TD
 ## Combat & secret-value constraints
 
 - The target and target-of-target buttons are protected: built and laid out out of combat; they show and hide with their units in combat through unit watches.
-- Forever hides real health values (secret values), so the bars show the value the client gives instead of a percentage; secret aura durations show no swipe; a secret level is shown as given.
+- Forever hides real health values (secret values), so the bars show the value the client gives instead of a percentage; secret aura durations use `C_UnitAuras.GetAuraDuration` + `SetCooldownFromDurationObject` where the client has them (no swipe otherwise), secret stack counts use `GetAuraApplicationDisplayCount`, and a secret debuff type gets the default border; a secret level is shown as given.
 
 ## Settings
 

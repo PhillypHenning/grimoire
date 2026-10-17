@@ -62,17 +62,50 @@ local function CreateBoxedBar(parent, width, height)
 	return box
 end
 
--- Aura data, from whichever API this client has.
-local function GetAura(unit, index, filter)
+-- Aura data, from whichever API this client has. Forever won't hand out a target's auras
+-- by index while they're secret ("GetAuraDataByIndex(): Auras cannot be accessed when
+-- secret", seen 2026-10-13), so the whole-list and slot calls are tried first. Every call
+-- is guarded: a refusal yields fewer auras, never an error. Fields may be secret values.
+local function GetAuraByIndex(unit, index, filter)
 	if C_UnitAuras and C_UnitAuras.GetAuraDataByIndex then
-		local aura = C_UnitAuras.GetAuraDataByIndex(unit, index, filter)
-		if aura then
-			return aura.name, aura.icon, aura.applications, aura.dispelName, aura.duration, aura.expirationTime, aura.sourceUnit
-		end
-		return nil
+		return C_UnitAuras.GetAuraDataByIndex(unit, index, filter)
 	end
 	local name, icon, count, debuffType, duration, expirationTime, source = UnitAura(unit, index, filter)
-	return name, icon, count, debuffType, duration, expirationTime, source
+	if name then
+		return { name = name, icon = icon, applications = count, dispelName = debuffType,
+			duration = duration, expirationTime = expirationTime, sourceUnit = source }
+	end
+end
+
+local function GetAurasBySlot(unit, filter, max)
+	local result = { pcall(C_UnitAuras.GetAuraSlots, unit, filter, max) }
+	if not result[1] then return nil end
+	local auras = {}
+	for i = 3, #result do
+		local ok, aura = pcall(C_UnitAuras.GetAuraDataBySlot, unit, result[i])
+		if ok and aura then auras[#auras + 1] = aura end
+	end
+	return auras
+end
+
+local function GetAuras(unit, filter, max)
+	local api = C_UnitAuras or {}
+	if api.GetUnitAuras then
+		local ok, auras = pcall(api.GetUnitAuras, unit, filter, max)
+		if ok and auras then return auras end
+	end
+	if api.GetAuraSlots and api.GetAuraDataBySlot then
+		local auras = GetAurasBySlot(unit, filter, max)
+		if auras then return auras end
+	end
+	local auras = {}
+	for i = 1, max do
+		local ok, aura = pcall(GetAuraByIndex, unit, i, filter)
+		if not ok or not aura then break end
+		aura.index = i
+		auras[#auras + 1] = aura
+	end
+	return auras
 end
 
 -- Frame -----------------------------------------------------------------------------------
@@ -276,11 +309,22 @@ end
 
 -- Auras -----------------------------------------------------------------------------------------
 -- Display only: buffs first, then debuffs, in rows of AURAS_PER_ROW. Your own debuffs
--- (your DoTs) are larger.
+-- (your DoTs) are larger. Secret fields only ever go to widgets (texture, cooldown, text),
+-- which accept them; they're never compared or used as table keys.
+
+local function Usable(value)
+	return value ~= nil and not Grimoire.IsSecret(value)
+end
 
 local function Aura_OnEnter(aura)
 	GameTooltip:SetOwner(aura, "ANCHOR_BOTTOMRIGHT")
-	GameTooltip:SetUnitAura("target", aura.index, aura.filter)
+	local id, harmful = aura.instanceID, aura.filter == "HARMFUL"
+	local byID = harmful and GameTooltip.SetUnitDebuffByAuraInstanceID or GameTooltip.SetUnitBuffByAuraInstanceID
+	if id and byID then
+		byID(GameTooltip, "target", id, aura.filter)
+	elseif aura.index then
+		GameTooltip:SetUnitAura("target", aura.index, aura.filter)
+	end
 	GameTooltip:Show()
 end
 
@@ -310,38 +354,100 @@ end
 
 local ROW_WIDTH = AURAS_PER_ROW * (AURA_SIZE + AURA_GAP)
 
+-- Your debuffs: asked for with the PLAYER filter (works when the caster is secret), with
+-- the caster as a fallback where it's readable (that one also catches the pet's).
+local function OwnAuraIDs(unit, max)
+	local ids = {}
+	for _, aura in ipairs(GetAuras(unit, "HARMFUL|PLAYER", max)) do
+		if Usable(aura.auraInstanceID) then
+			ids[aura.auraInstanceID] = true
+		end
+	end
+	return ids
+end
+
+local function IsOwn(aura, ownIDs)
+	if Usable(aura.auraInstanceID) and ownIDs[aura.auraInstanceID] then
+		return true
+	end
+	local source = aura.sourceUnit
+	return Usable(source) and (source == "player" or source == "pet")
+end
+
+local function CountText(unit, data)
+	local count = data.applications
+	if Usable(count) then
+		return count > 1 and count or ""
+	end
+	local display = C_UnitAuras and C_UnitAuras.GetAuraApplicationDisplayCount
+	if count ~= nil and display and Usable(data.auraInstanceID) then
+		local ok, text = pcall(display, unit, data.auraInstanceID, 2)
+		if ok and text then return text end
+	end
+	return ""
+end
+
+local function BorderColor(debuffType)
+	local colors = DebuffTypeColor
+	local color = colors and Usable(debuffType) and colors[debuffType] or colors and colors.none
+	return color or { r = 0.8, g = 0, b = 0 }
+end
+
+local function SetAuraCooldown(cooldown, unit, data)
+	local duration, expirationTime = data.duration, data.expirationTime
+	if Usable(duration) and Usable(expirationTime) then
+		if duration > 0 then
+			cooldown:SetCooldown(expirationTime - duration, duration)
+			cooldown:Show()
+			return
+		end
+	else
+		-- Secret timings: let the client hand the widget a duration it can draw.
+		local getDuration = C_UnitAuras and C_UnitAuras.GetAuraDuration
+		if getDuration and cooldown.SetCooldownFromDurationObject and Usable(data.auraInstanceID) then
+			local ok, object = pcall(getDuration, unit, data.auraInstanceID)
+			if ok and object and pcall(cooldown.SetCooldownFromDurationObject, cooldown, object) then
+				cooldown:Show()
+				return
+			end
+		end
+		if cooldown.SetCooldownFromExpirationTime and pcall(cooldown.SetCooldownFromExpirationTime, cooldown, expirationTime, duration) then
+			cooldown:Show()
+			return
+		end
+	end
+	cooldown:Hide()
+end
+
 -- Lays out one aura list from (x, y); returns where the next one starts.
-local function LayoutAuras(parent, list, filter, max, x, y, rowHeight)
+local function LayoutAuras(parent, list, filter, max, x, y, rowHeight, ownIDs)
+	local unit = "target"
+	local auras = GetAuras(unit, filter, max)
 	local shown = 0
-	for i = 1, max do
-		local name, icon, count, debuffType, duration, expirationTime, source = GetAura("target", i, filter)
-		if not name then break end
-		shown = shown + 1
+	for i = 1, math.min(#auras, max) do
+		local data = auras[i]
+		shown = i
 		local aura = GetAuraButton(parent, list, i)
-		local own = filter == "HARMFUL" and (source == "player" or source == "pet")
+		local own = ownIDs and IsOwn(data, ownIDs)
 		local size = own and OWN_AURA_SIZE or AURA_SIZE
 		if x + size > ROW_WIDTH then
 			x, y, rowHeight = 0, y - rowHeight - AURA_GAP, 0
 		end
-		aura.index, aura.filter = i, filter
+		aura.index, aura.filter = data.index, filter
+		aura.instanceID = Usable(data.auraInstanceID) and data.auraInstanceID or nil
 		aura:SetSize(size, size)
 		aura:ClearAllPoints()
 		aura:SetPoint("TOPLEFT", parent, "TOPLEFT", x, y)
-		aura.icon:SetTexture(icon)
-		aura.count:SetText((not Grimoire.IsSecret(count) and count and count > 1) and count or "")
+		aura.icon:SetTexture(data.icon)
+		aura.count:SetText(CountText(unit, data))
 		if filter == "HARMFUL" then
-			local color = (DebuffTypeColor and DebuffTypeColor[debuffType or "none"]) or { r = 0.8, g = 0, b = 0 }
+			local color = BorderColor(data.dispelName)
 			aura.border:SetVertexColor(color.r, color.g, color.b)
 			aura.border:Show()
 		else
 			aura.border:Hide()
 		end
-		if not Grimoire.AnySecret(duration, expirationTime) and duration and duration > 0 then
-			aura.cooldown:SetCooldown(expirationTime - duration, duration)
-			aura.cooldown:Show()
-		else
-			aura.cooldown:Hide()
-		end
+		SetAuraCooldown(aura.cooldown, unit, data)
 		aura:Show()
 		x = x + size + AURA_GAP
 		rowHeight = math.max(rowHeight, size)
@@ -362,7 +468,8 @@ function M:UpdateAuras()
 		-- Debuffs start on a new row under the buffs.
 		x, y, rowHeight = 0, y - rowHeight - AURA_GAP, 0
 	end
-	LayoutAuras(button.auras, button.debuffButtons, "HARMFUL", MAX_DEBUFFS, x, y, rowHeight)
+	LayoutAuras(button.auras, button.debuffButtons, "HARMFUL", MAX_DEBUFFS, x, y, rowHeight,
+		OwnAuraIDs("target", MAX_DEBUFFS))
 end
 
 -- Target of target ------------------------------------------------------------------------------
