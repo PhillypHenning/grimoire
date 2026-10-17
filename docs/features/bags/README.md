@@ -2,7 +2,7 @@
 
 - **Add-on:** `Grimoire_Bags`
 - **Module:** `Bags`
-- **Status:** Scaffolded, untested in game
+- **Status:** Tested in game (2026-10-16: the window opens, the new-item glow clears on hover)
 - **Replaces:** Bagnon / Baganator / AdiBags / ArkInventory (declared as conflicts)
 - **Related:** [Bank](../bank/README.md), [Auctions](../auctions/README.md) (separate, optional add-ons)
 

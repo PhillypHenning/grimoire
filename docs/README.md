@@ -15,7 +15,7 @@ Each component is its own add-on and can be switched on or off in the in-game Ad
 | [Target frame](features/target/README.md) | `Grimoire_Target` | Scaffolded, untested in game |
 | [Warlock resources](features/warlock-resources/README.md) | `Grimoire_Warlock` | Scaffolded, untested in game |
 | [Auras](features/auras/README.md) | `Grimoire_Auras` | Scaffolded, untested in game (moves Blizzard's buff frame) |
-| [Bags](features/bags/README.md) | `Grimoire_Bags` | Scaffolded, untested in game |
+| [Bags](features/bags/README.md) | `Grimoire_Bags` | Tested in game (window, new-item glow) |
 | [Bank](features/bank/README.md) | `Grimoire_Bank` | Scaffolded, untested in game |
 | [Auctions](features/auctions/README.md) | `Grimoire_Auctions` | Scaffolded, untested in game |
 | [Notes](features/notes/README.md) | `Grimoire_Notes` | Scaffolded, untested in game |
