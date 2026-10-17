@@ -72,6 +72,8 @@ if pending ~= "toggle" then
 end
 ```
 
+**New-item glow is cleared like Blizzard's bags.** The client keeps "new" flags (`C_NewItems`) until a bag UI clears them. The first version never did, so every item glowed every time (Phil, 2026-10-16). Now a slot glows while `C_NewItems.IsNewItem` says so, hovering it calls `RemoveNewItem`, and closing the window calls `ClearAll`. The flags live in the client, so "seen" survives reloads.
+
 **Bank bags are left alone.** Only frames for player bags are hidden, so the Blizzard bank still works:
 
 ```lua

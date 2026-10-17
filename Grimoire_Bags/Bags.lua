@@ -114,6 +114,7 @@ function M:Build()
 	end)
 	frame:SetScript("OnHide", function()
 		if SOUNDKIT then PlaySound(SOUNDKIT.IG_BACKPACK_CLOSE) end
+		self:ClearNewItems()
 	end)
 	self.frame = frame
 	local content = frame.content
@@ -202,6 +203,7 @@ function M:GetButton(holder, slot)
 		bg:SetTexture(Grimoire.media.emptySlot)
 		bg:SetAllPoints()
 		button:SetID(slot)
+		button:HookScript("OnEnter", Button_OnEnter)
 		holder.buttons[slot] = button
 	end
 	return button
@@ -270,12 +272,60 @@ local function UpdateCooldown(button, bag, slot, hasItem)
 	end
 end
 
+-- New items ----------------------------------------------------------------------
+-- The client keeps "new" flags (C_NewItems) until a bag UI clears them; nothing did,
+-- so every item ever looted glowed (Phil, 2026-10-16). Like Blizzard's bags: an item
+-- glows while new, hovering it marks it seen, and closing the window marks all seen.
+
+local function IsNewItem(bag, slot, hasItem)
+	return hasItem and C_NewItems and C_NewItems.IsNewItem and C_NewItems.IsNewItem(bag, slot) or false
+end
+
+local function SetNewGlow(button, isNew, quality)
+	local texture, flash, glow = button.NewItemTexture, button.flashAnim, button.newitemglowAnim
+	if button.BattlepayItemTexture then button.BattlepayItemTexture:Hide() end
+	if not texture then return end
+	if isNew then
+		local atlas = NEW_ITEM_ATLAS_BY_QUALITY and quality and NEW_ITEM_ATLAS_BY_QUALITY[quality]
+		texture:SetAtlas(atlas or "bags-glow-white")
+		texture:Show()
+		if flash and glow and not flash:IsPlaying() and not glow:IsPlaying() then
+			flash:Play()
+			glow:Play()
+		end
+	else
+		texture:Hide()
+		if flash then flash:Stop() end
+		if glow then glow:Stop() end
+	end
+end
+
+local function Button_OnEnter(button)
+	local bag, slot = button:GetParent():GetID(), button:GetID()
+	if IsNewItem(bag, slot, true) then
+		C_NewItems.RemoveNewItem(bag, slot)
+	end
+	SetNewGlow(button, false)
+end
+
+function M:ClearNewItems()
+	if C_NewItems and C_NewItems.ClearAll then
+		C_NewItems.ClearAll()
+	end
+	for _, holder in pairs(self.holders) do
+		for _, button in ipairs(holder.buttons) do
+			SetNewGlow(button, false)
+		end
+	end
+end
+
 function M:UpdateButton(button, bag, slot)
 	local info = C_Container.GetContainerItemInfo(bag, slot)
 	SetItemButtonTexture(button, info and info.iconFileID or nil)
 	SetItemButtonCount(button, info and info.stackCount or 0)
 	SetItemButtonDesaturated(button, info and info.isLocked or false)
 	SetItemButtonQuality(button, info and info.quality or nil, info and info.hyperlink or nil)
+	SetNewGlow(button, IsNewItem(bag, slot, info ~= nil), info and info.quality)
 	UpdateCooldown(button, bag, slot, info ~= nil)
 	button.itemName = info and (Grimoire.ItemNameFromLink(info.hyperlink) or ""):lower() or nil
 	self:ApplySearch(button)
