@@ -92,6 +92,7 @@ local name, title, _, loadable, reason = C_AddOns.GetAddOnInfo(i)
 - **Built in core, opened by the launcher.** The launcher only shows the menu. Any other component, or `/grim menu`, can open it too, and the launcher stays optional (ADR 0002).
 - **Turning an add-on off needs a reload.** `C_AddOns.DisableAddOn` only changes the AddOns list. The menu says so and offers *Reload UI*, which works because it runs from a click.
 - **Enabled (module) vs. Enabled in AddOns list (add-on).** Turning a module off is instant and can be undone without a reload. Turning the add-on off stops its code from loading at all, which is the safety net from ADR 0002.
+- **Layout sharing** (2026-10-16, learned from Shadowed Unit Frames / ElvUI): *Layout ▸ Export layout* shows the profile's frame positions, groups, dimming, dim strength and delay, button size and every component's settings as text (`# Grimoire layout v1` + data); *Import layout* checks pasted text and replaces this profile's layout, then a Reload button applies it. The text is read by `Core/Serialize.lua`, never run, and only those settings are accepted (`Core/Layout.lua`).
 - **Every setting explains itself** (2026-10-16, learned from Leatrix Plus): options carry a one-line `tooltip`, shown on hover; settings that need a reload say so.
 - **Dim strength and dim delay are profile settings** (`dimAlpha`, `idleSeconds`), so each character can have its own.
 

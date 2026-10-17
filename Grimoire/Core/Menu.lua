@@ -271,6 +271,8 @@ function Grimoire:GetMainMenu()
 		ProfileChoice("Button size", "buttonSize", { { 31, "Small" }, { 38, "Medium" }, { 44, "Large" }, { 52, "Huge" } },
 			function() self:ApplyRoundButtonSize() end, "The size of every round Grimoire button (Grimoire, Notes, Tempo, Prophecy)."),
 		{ text = "Reset all positions", tooltip = "Put every Grimoire frame and window back where it started.", func = function() self:ResetAllPositions() end },
+		{ text = "Export layout", tooltip = "Your frame positions, groups, dimming, button size and component settings as text to copy (learned from Shadowed Unit Frames).", func = function() self:ShowLayoutExport() end },
+		{ text = "Import layout", tooltip = "Paste a layout to replace this profile's. Needs /reload.", func = function() self:ShowLayoutImport() end },
 	}
 	local selected = self:GetSelectedMovers()
 	if #selected >= 2 then
