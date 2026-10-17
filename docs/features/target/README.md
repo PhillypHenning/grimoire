@@ -27,7 +27,8 @@ flowchart LR
 flowchart TD
     subgraph Mover["GrimoireTargetFrame (one mover)"]
         T["target: SecureUnitButton<br/>name · health/power boxes · portrait box (model or 2D) · level"]
-        A[Auras: buffs, then debuffs<br/>own debuffs larger]
+        B[Buffs above the name, 17 px]
+        D[Debuffs under the bars, 24 px<br/>your own 30 px]
         ToT[targettarget: SecureUnitButton<br/>name + health box]
     end
     PTC[PLAYER_TARGET_CHANGED] --> RA[RefreshAll]
@@ -43,9 +44,9 @@ flowchart TD
 
 **Same pieces as the player frame**: bars in classic bordered boxes, the portrait in a `PlayerModel` (or `SetPortraitTexture`), and the shared helpers `UpdateUnitBar`, `UnitLevelText`, `SetUnitRightClickMenu` from [`Core/UnitFrames.lua`](../../../Grimoire/Core/UnitFrames.lua).
 
-**Auras are display only.** Plain buttons with icon, stack count, debuff-type border and a cooldown swipe; hovering shows the aura's tooltip. Debuffs you or your pet cast are 21 px instead of 17.
+**Auras are display only.** Plain buttons with icon, stack count, debuff-type border and a cooldown swipe; hovering shows the aura's tooltip. Buffs sit above the name in 17 px rows that grow upward; debuffs sit under the bars in 24 px rows that grow downward, and debuffs you or your pet cast are 30 px (Phil, 2026-10-17: enemy debuffs were hard to see). Rows are as wide as the bars.
 
-**Reading auras without tripping secrets.** Forever refuses `GetAuraDataByIndex` on the target while its auras are secret ("Auras cannot be accessed when secret", seen 2026-10-13); the error stopped the whole aura row, so no debuffs showed. `GetAuras` now tries `C_UnitAuras.GetUnitAuras`, then `GetAuraSlots` + `GetAuraDataBySlot`, then by index, each call in `pcall`. Fields that may be secret only go to widgets; your own debuffs are found with the `HARMFUL|PLAYER` filter instead of comparing the (secret) caster.
+**Reading auras without tripping secrets.** Forever refuses `GetAuraDataByIndex` on the target while its auras are secret ("Auras cannot be accessed when secret", seen 2026-10-13); the error stopped the whole aura row, so no debuffs showed. `GetAuras` now tries `C_UnitAuras.GetUnitAuras`, then `GetAuraSlots` + `GetAuraDataBySlot`, then by index, then the old `UnitAura`, each call in `pcall`; an empty answer moves on to the next method too (Phil saw no auras at all once, with nothing in the error log), and the module logs which method answered whenever that changes. Fields that may be secret only go to widgets; your own debuffs are found with the `HARMFUL|PLAYER` filter instead of comparing the (secret) caster.
 
 **Target of target is polled.** No event fires when the target's target changes, so it refreshes every 0.2 s while it's shown.
 
@@ -72,7 +73,7 @@ Stored in `GrimoireDB.profiles[<profile>].modules.Target`. In the menu: **Compon
 | `style` | `animated` | Animated (3D) / Classic (2D) | Portrait type |
 | `size` | 64 | Small 48 / Medium 64 / Large 80 | Portrait size |
 | `showText` | true | toggle | Values on the bars |
-| `showAuras` | true | toggle | Buffs and debuffs under the frame |
+| `showAuras` | true | toggle | Buffs above the frame, debuffs under it |
 | `showTargetOfTarget` | true | toggle | The target-of-target frame |
 | `hideBlizzard` | true | toggle (needs `/reload` to turn off) | Hide Blizzard's target frame |
 

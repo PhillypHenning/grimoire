@@ -16,7 +16,7 @@ local BAR_WIDTH = 180
 local HEALTH_HEIGHT, POWER_HEIGHT = 16, 12
 local NAME_HEIGHT = 14
 local GAP = 2
-local AURA_SIZE, OWN_AURA_SIZE, AURA_GAP, AURAS_PER_ROW = 17, 21, 3, 8
+local BUFF_SIZE, DEBUFF_SIZE, OWN_DEBUFF_SIZE, AURA_GAP = 17, 24, 30, 3
 local MAX_BUFFS, MAX_DEBUFFS = 16, 16
 local TOT_WIDTH, TOT_BAR_HEIGHT = 90, 8
 local TOT_UPDATE_SECONDS = 0.2
@@ -36,7 +36,7 @@ local M = Grimoire:NewModule("Target", {
 		Grimoire.UnitPortraitStyleOption(),
 		{ type = "choice", key = "size", label = "Size", tooltip = "How large the target frame is.", values = { { 48, "Small" }, { 64, "Medium" }, { 80, "Large" } } },
 		{ type = "toggle", key = "showText", label = "Show values on bars", tooltip = "Show the target's health and power numbers on its bars." },
-		{ type = "toggle", key = "showAuras", label = "Show buffs and debuffs", tooltip = "Show your target's buffs and debuffs under its frame; your own are larger." },
+		{ type = "toggle", key = "showAuras", label = "Show buffs and debuffs", tooltip = "Show your target's buffs above its frame and its debuffs under it; your own debuffs are larger." },
 		{ type = "toggle", key = "showTargetOfTarget", label = "Show target of target", tooltip = "A small frame showing who your target is targeting." },
 		{ type = "toggle", key = "hideBlizzard", label = "Hide Blizzard target frame", tooltip = "Hide the game's own target frame; Grimoire's replaces it.", reload = true },
 	},
@@ -66,10 +66,22 @@ end
 -- by index while they're secret ("GetAuraDataByIndex(): Auras cannot be accessed when
 -- secret", seen 2026-10-13), so the whole-list and slot calls are tried first. Every call
 -- is guarded: a refusal yields fewer auras, never an error. Fields may be secret values.
-local function GetAuraByIndex(unit, index, filter)
-	if C_UnitAuras and C_UnitAuras.GetAuraDataByIndex then
-		return C_UnitAuras.GetAuraDataByIndex(unit, index, filter)
+-- An empty answer moves on to the next method too: Phil saw no target auras at all on
+-- 2026-10-17 with nothing in the error log. GetAuras reports which method answered.
+local function ByIndex(read)
+	return function(unit, filter, max)
+		local auras = {}
+		for i = 1, max do
+			local aura = read(unit, i, filter)
+			if not aura then break end
+			aura.index = i
+			auras[#auras + 1] = aura
+		end
+		return auras
 	end
+end
+
+local function LegacyAura(unit, index, filter)
 	local name, icon, count, debuffType, duration, expirationTime, source = UnitAura(unit, index, filter)
 	if name then
 		return { name = name, icon = icon, applications = count, dispelName = debuffType,
@@ -77,35 +89,47 @@ local function GetAuraByIndex(unit, index, filter)
 	end
 end
 
-local function GetAurasBySlot(unit, filter, max)
-	local result = { pcall(C_UnitAuras.GetAuraSlots, unit, filter, max) }
-	if not result[1] then return nil end
+local function BySlot(unit, filter, max)
+	local result = { C_UnitAuras.GetAuraSlots(unit, filter, max) }
 	local auras = {}
-	for i = 3, #result do
+	for i = 2, #result do
 		local ok, aura = pcall(C_UnitAuras.GetAuraDataBySlot, unit, result[i])
 		if ok and aura then auras[#auras + 1] = aura end
 	end
 	return auras
 end
 
-local function GetAuras(unit, filter, max)
+local AURA_METHODS = {}
+do
 	local api = C_UnitAuras or {}
 	if api.GetUnitAuras then
-		local ok, auras = pcall(api.GetUnitAuras, unit, filter, max)
-		if ok and auras then return auras end
+		AURA_METHODS[#AURA_METHODS + 1] = { "GetUnitAuras", function(unit, filter, max)
+			return api.GetUnitAuras(unit, filter, max)
+		end }
 	end
 	if api.GetAuraSlots and api.GetAuraDataBySlot then
-		local auras = GetAurasBySlot(unit, filter, max)
-		if auras then return auras end
+		AURA_METHODS[#AURA_METHODS + 1] = { "slots", BySlot }
 	end
-	local auras = {}
-	for i = 1, max do
-		local ok, aura = pcall(GetAuraByIndex, unit, i, filter)
-		if not ok or not aura then break end
-		aura.index = i
-		auras[#auras + 1] = aura
+	if api.GetAuraDataByIndex then
+		AURA_METHODS[#AURA_METHODS + 1] = { "index", ByIndex(api.GetAuraDataByIndex) }
 	end
-	return auras
+	if UnitAura then
+		AURA_METHODS[#AURA_METHODS + 1] = { "UnitAura", ByIndex(LegacyAura) }
+	end
+end
+
+-- Returns the auras, the method that found them (or nil) and what each method said.
+local function GetAuras(unit, filter, max)
+	local tried = {}
+	for _, method in ipairs(AURA_METHODS) do
+		local ok, auras = pcall(method[2], unit, filter, max)
+		if ok and type(auras) == "table" and #auras > 0 then
+			return auras, method[1], tried
+		end
+		local reason = ok and " empty" or (Grimoire.IsSecret(auras) and ": <secret>" or (": " .. tostring(auras)))
+		tried[#tried + 1] = method[1] .. reason
+	end
+	return {}, nil, tried
 end
 
 -- Frame -----------------------------------------------------------------------------------
@@ -169,10 +193,14 @@ function M:Build()
 	button.pvp:SetSize(24, 24)
 	button.pvp:SetPoint("BOTTOMRIGHT", box, "BOTTOMLEFT", 7, -7)
 
-	-- Auras under the bars; children of the button so they hide with the target.
-	button.auras = CreateFrame("Frame", nil, button)
-	button.auras:SetPoint("TOPLEFT", button.power, "BOTTOMLEFT", 0, -GAP - 1)
-	button.auras:SetSize(AURAS_PER_ROW * (AURA_SIZE + AURA_GAP), 1)
+	-- Buffs above the name, debuffs under the bars (Phil, 2026-10-17); children of the
+	-- button so they hide with the target.
+	button.buffs = CreateFrame("Frame", nil, button)
+	button.buffs:SetPoint("BOTTOMLEFT", button, "TOPLEFT", 0, GAP + 1)
+	button.buffs:SetSize(BAR_WIDTH + INSET * 2, 1)
+	button.debuffs = CreateFrame("Frame", nil, button)
+	button.debuffs:SetPoint("TOPLEFT", button.power, "BOTTOMLEFT", 0, -GAP - 1)
+	button.debuffs:SetSize(BAR_WIDTH + INSET * 2, 1)
 	button.buffButtons, button.debuffButtons = {}, {}
 
 	self:BuildTargetOfTarget()
@@ -308,8 +336,8 @@ function M:UpdatePvP()
 end
 
 -- Auras -----------------------------------------------------------------------------------------
--- Display only: buffs first, then debuffs, in rows of AURAS_PER_ROW. Your own debuffs
--- (your DoTs) are larger. Secret fields only ever go to widgets (texture, cooldown, text),
+-- Display only: buffs in rows growing up from above the name, debuffs (larger) in rows
+-- growing down from under the bars. Your own debuffs (your DoTs) are larger still. Secret fields only ever go to widgets (texture, cooldown, text),
 -- which accept them; they're never compared or used as table keys.
 
 local function Usable(value)
@@ -352,7 +380,7 @@ local function GetAuraButton(parent, list, i)
 	return aura
 end
 
-local ROW_WIDTH = AURAS_PER_ROW * (AURA_SIZE + AURA_GAP)
+local ROW_WIDTH = BAR_WIDTH + INSET * 2 -- as wide as the bars
 
 -- Your debuffs: asked for with the PLAYER filter (works when the caster is secret), with
 -- the caster as a fallback where it's readable (that one also catches the pet's).
@@ -419,25 +447,27 @@ local function SetAuraCooldown(cooldown, unit, data)
 	cooldown:Hide()
 end
 
--- Lays out one aura list from (x, y); returns where the next one starts.
-local function LayoutAuras(parent, list, filter, max, x, y, rowHeight, ownIDs)
+-- Lays out one aura list in rows, growing down from the parent's top-left corner, or up
+-- from its bottom-left one. Returns how many it showed and how it read them.
+local function LayoutAuras(parent, list, filter, max, size, ownSize, growUp, ownIDs)
 	local unit = "target"
-	local auras = GetAuras(unit, filter, max)
-	local shown = 0
+	local auras, method, tried = GetAuras(unit, filter, max)
+	local point, sign = growUp and "BOTTOMLEFT" or "TOPLEFT", growUp and 1 or -1
+	local x, y, rowHeight, shown = 0, 0, 0, 0
 	for i = 1, math.min(#auras, max) do
 		local data = auras[i]
 		shown = i
 		local aura = GetAuraButton(parent, list, i)
 		local own = ownIDs and IsOwn(data, ownIDs)
-		local size = own and OWN_AURA_SIZE or AURA_SIZE
-		if x + size > ROW_WIDTH then
-			x, y, rowHeight = 0, y - rowHeight - AURA_GAP, 0
+		local auraSize = own and ownSize or size
+		if x + auraSize > ROW_WIDTH then
+			x, y, rowHeight = 0, y + sign * (rowHeight + AURA_GAP), 0
 		end
 		aura.index, aura.filter = data.index, filter
 		aura.instanceID = Usable(data.auraInstanceID) and data.auraInstanceID or nil
-		aura:SetSize(size, size)
+		aura:SetSize(auraSize, auraSize)
 		aura:ClearAllPoints()
-		aura:SetPoint("TOPLEFT", parent, "TOPLEFT", x, y)
+		aura:SetPoint(point, parent, point, x, y)
 		aura.icon:SetTexture(data.icon)
 		aura.count:SetText(CountText(unit, data))
 		if filter == "HARMFUL" then
@@ -449,27 +479,31 @@ local function LayoutAuras(parent, list, filter, max, x, y, rowHeight, ownIDs)
 		end
 		SetAuraCooldown(aura.cooldown, unit, data)
 		aura:Show()
-		x = x + size + AURA_GAP
-		rowHeight = math.max(rowHeight, size)
+		x = x + auraSize + AURA_GAP
+		rowHeight = math.max(rowHeight, auraSize)
 	end
 	for i = shown + 1, #list do
 		list[i]:Hide()
 	end
-	return x, y, rowHeight, shown
+	return shown, (method or "none") .. (#tried > 0 and (" (" .. table.concat(tried, ", ") .. ")") or "")
 end
 
 function M:UpdateAuras()
 	local button = self.button
-	local show = self.db.showAuras and UnitExists("target")
-	button.auras:SetShown(show and true or false)
+	local show = (self.db.showAuras and UnitExists("target")) and true or false
+	button.buffs:SetShown(show)
+	button.debuffs:SetShown(show)
 	if not show then return end
-	local x, y, rowHeight, buffs = LayoutAuras(button.auras, button.buffButtons, "HELPFUL", MAX_BUFFS, 0, 0, 0)
-	if buffs > 0 then
-		-- Debuffs start on a new row under the buffs.
-		x, y, rowHeight = 0, y - rowHeight - AURA_GAP, 0
+	local buffs, buffMethod = LayoutAuras(button.buffs, button.buffButtons, "HELPFUL", MAX_BUFFS,
+		BUFF_SIZE, BUFF_SIZE, true)
+	local debuffs, debuffMethod = LayoutAuras(button.debuffs, button.debuffButtons, "HARMFUL", MAX_DEBUFFS,
+		DEBUFF_SIZE, OWN_DEBUFF_SIZE, false, OwnAuraIDs("target", MAX_DEBUFFS))
+	-- Which aura API Forever answers, logged when it changes (for /grim debug).
+	local report = ("target auras: %d buffs via %s; %d debuffs via %s"):format(buffs, buffMethod, debuffs, debuffMethod)
+	if report ~= self.lastAuraReport then
+		self.lastAuraReport = report
+		self:Log("info", "%s", report)
 	end
-	LayoutAuras(button.auras, button.debuffButtons, "HARMFUL", MAX_DEBUFFS, x, y, rowHeight,
-		OwnAuraIDs("target", MAX_DEBUFFS))
 end
 
 -- Target of target ------------------------------------------------------------------------------
