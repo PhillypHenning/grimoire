@@ -1,6 +1,6 @@
 # Learnings from popular add-ons
 
-> **Progress (2026-10-16, on the PC):** plan written; work in order L1 → L7, each pushed for testing as it lands. L1–L6 done.
+> **Progress (2026-10-16, on the PC):** plan written; work in order L1 → L7, each pushed for testing as it lands. L1–L7 done; all waiting on in-game testing.
 
 ## Context
 Phil asked what the most popular related add-ons do that Grimoire should learn from, then picked (2026-10-16): layout sharing, a better bag search, Prophecy waypoints, an error count, setting tooltips, a shared item-data layer, and, last, an Auctionator-style expansion of Auctions. Only these; nothing else from the review.
@@ -31,6 +31,6 @@ Phil asked what the most popular related add-ons do that Grimoire should learn f
 - Item level and "BoE" on item icons (a Bags setting).
 
 ## L7: auctions expansion (from Auctionator)
-- **Prices:** while the auction house is open, Grimoire scans it and saves the lowest buyout per item (per realm, with the time). Supports both the modern (`C_AuctionHouse`) and the legacy (`QueryAuctionItems`) API; Debug logs which one ran.
+- **Prices:** at the auction house, a *Scan prices* button scans it and saves the lowest buyout per item (per realm, with the time). (Built as a button, not automatic: a full scan is allowed once every 15 minutes and can take a while.) Supports both the modern (`C_AuctionHouse`) and the legacy (`QueryAuctionItems`) API; Debug logs which one ran.
 - **Tooltips:** item tooltips show the auction price and its age.
 - **Shopping lists:** named lists of item names; at the auction house, *Search* looks each up and shows the cheapest price.

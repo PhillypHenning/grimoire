@@ -1,4 +1,4 @@
-local ADDON_NAME = ...
+local ADDON_NAME, ns = ...
 local Grimoire = Grimoire
 
 local ROW_HEIGHT = 36
@@ -7,9 +7,19 @@ local VIEW_WIDTH = 400
 local VIEW_HEIGHT = 340
 local SCROLLBAR_WIDTH = 24
 local STATUS_HEIGHT = 30
-local FOOTER_HEIGHT = 20
+local FOOTER_HEIGHT = 28
 
-local M = Grimoire:NewModule("Auctions", { addon = ADDON_NAME, label = "Auctions" })
+local M = Grimoire:NewModule("Auctions", {
+	addon = ADDON_NAME,
+	label = "Auctions",
+	defaults = {
+		priceTooltips = true,
+	},
+	options = {
+		{ type = "toggle", key = "priceTooltips", label = "Auction prices in tooltips", tooltip = "Item tooltips show the lowest auction price from your last scan or search, and how old it is (learned from Auctionator)." },
+	},
+})
+ns.M = M -- Prices.lua and Shopping.lua add to it
 
 -- The Mainline client exposes C_AuctionHouse; classic-era rules might use the
 -- legacy owner-list API instead. Support whichever this client has.
@@ -178,12 +188,14 @@ function M:OnInteractionShow(_, interactionType)
 	if IsAuctioneer(interactionType) then
 		self.atAuctionHouse = true
 		self:Query()
+		self:Refresh()
 	end
 end
 
 function M:OnInteractionHide(_, interactionType)
 	if IsAuctioneer(interactionType) then
 		self.atAuctionHouse = false
+		self.shopping = nil -- a search can only run at the auction house
 		self:Refresh()
 	end
 end
@@ -235,7 +247,19 @@ function M:Build()
 	self.rows = {}
 
 	self.total = frame.content:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-	self.total:SetPoint("BOTTOMRIGHT", -SCROLLBAR_WIDTH, 2)
+	self.total:SetPoint("BOTTOMRIGHT", -SCROLLBAR_WIDTH, 6)
+
+	-- Price scan and shopping lists (Prices.lua, Shopping.lua).
+	self.scanButton = CreateFrame("Button", nil, frame.content, "UIPanelButtonTemplate")
+	self.scanButton:SetSize(100, 22)
+	self.scanButton:SetPoint("BOTTOMLEFT")
+	self.scanButton:SetText("Scan prices")
+	self.scanButton:SetScript("OnClick", function() self:StartScan() end)
+	self.shoppingButton = CreateFrame("Button", nil, frame.content, "UIPanelButtonTemplate")
+	self.shoppingButton:SetSize(110, 22)
+	self.shoppingButton:SetPoint("LEFT", self.scanButton, "RIGHT", 6, 0)
+	self.shoppingButton:SetText("Shopping lists")
+	self.shoppingButton:SetScript("OnClick", function() self:ToggleShopping() end)
 end
 
 function M:GetRow(index)
@@ -269,7 +293,10 @@ function M:GetRow(index)
 end
 
 function M:Refresh()
+	self:UpdateShopping()
 	if not self.frame or not self.frame:IsShown() then return end
+	self.scanButton:SetEnabled((self:CanScan()))
+	self.scanButton:SetText(self.scan and "Scanning..." or "Scan prices")
 	local isCurrent = self.charKey == Grimoire.db.charKey
 	local auctions = Grimoire:GetCharacterStore(self.charKey).auctions
 
@@ -318,8 +345,13 @@ end
 -- Lifecycle --------------------------------------------------------------------
 
 function M:OnInitialize()
-	Grimoire:RegisterCommand("auctions", "auctions - view your saved auctions", function()
-		if self:IsEnabled() then self:Toggle() end
+	Grimoire:RegisterCommand("auctions", "auctions [shopping] - your saved auctions, or your shopping lists", function(arg)
+		if not self:IsEnabled() then return end
+		if (arg or ""):lower() == "shopping" then
+			self:ToggleShopping()
+		else
+			self:Toggle()
+		end
 	end)
 end
 
@@ -332,12 +364,16 @@ function M:OnEnable()
 	self:RegisterEvent("AUCTION_CANCELED", "OnAuctionsChanged")
 	-- Legacy API
 	self:RegisterEvent("AUCTION_OWNED_LIST_UPDATE", "Record")
+	self:RegisterEvent("AUCTION_ITEM_LIST_UPDATE", "OnItemList") -- price scan and shopping searches
 	-- Sales and expiries arriving by mail
 	self:RegisterEvent("MAIL_INBOX_UPDATE", "OnMailUpdate")
+	self:HookPriceTooltips() -- hooks can't be removed; AddPrice checks IsEnabled()
 end
 
 function M:OnDisable()
 	self.atAuctionHouse = false
+	self.scan, self.shopping = nil, nil
+	if self.shoppingWindow then self.shoppingWindow:Hide() end
 	if self.frame then
 		self.frame:Hide()
 	end

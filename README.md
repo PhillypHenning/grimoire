@@ -73,7 +73,7 @@ function M:OnDisable() end         -- events + callbacks are released automatica
 
 ## Slash commands
 
-`/grimoire` (or `/grim`) lists all commands. Core: `menu`, `unlock`, `lock`, `reset [frame]`, `modules`, `enable <module>`, `disable <module>`, `profile [name]`. Components add their own: `bags`, `bank`, `auctions`, `notes`, `icon`, `cvars`, `tempo [probe|import]`, `emotes`, `debug [report]`, `prophecy [import]` (also `/prophecy`).
+`/grimoire` (or `/grim`) lists all commands. Core: `menu`, `unlock`, `lock`, `reset [frame]`, `modules`, `enable <module>`, `disable <module>`, `profile [name]`. Components add their own: `bags`, `bank`, `auctions [shopping]`, `notes`, `icon`, `cvars`, `tempo [probe|import]`, `emotes`, `debug [report]`, `prophecy [import]` (also `/prophecy`).
 
 ## Dev setup (Windows)
 

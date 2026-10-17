@@ -432,7 +432,7 @@ end
 -- (Grimoire:GetItemCounts; bank counts are from the last bank visit).
 
 local function AddOwners(tooltip, itemID)
-	if not (M:IsEnabled() and M.db.ownerTooltips) or not itemID or Grimoire.IsSecret(itemID) then return end
+	if not (M:IsEnabled() and M.db.ownerTooltips) then return end
 	local owners = Grimoire:GetItemCounts(itemID)
 	if #owners == 0 then return end
 	tooltip:AddLine(" ")
@@ -448,18 +448,7 @@ end
 function M:HookTooltips()
 	if self.tooltipsHooked then return end
 	self.tooltipsHooked = true
-	if TooltipDataProcessor and TooltipDataProcessor.AddTooltipPostCall and Enum.TooltipDataType then
-		TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Item, function(tooltip, data)
-			AddOwners(tooltip, data and data.id)
-		end)
-	else
-		local function OnSetItem(tooltip)
-			local _, link = tooltip:GetItem()
-			AddOwners(tooltip, link and GetItemInfoInstant(link))
-		end
-		GameTooltip:HookScript("OnTooltipSetItem", OnSetItem)
-		if ItemRefTooltip then ItemRefTooltip:HookScript("OnTooltipSetItem", OnSetItem) end
-	end
+	Grimoire.AddItemTooltipLines(AddOwners)
 end
 
 -- Lifecycle --------------------------------------------------------------------

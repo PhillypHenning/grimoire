@@ -148,6 +148,29 @@ local function DisplaySlot_OnClick(slot)
 	end
 end
 
+-- Item tooltips: fn(tooltip, itemID) runs whenever any tooltip shows an item, to add lines.
+-- Uses TooltipDataProcessor where the client has it, else OnTooltipSetItem. The hook can't
+-- be removed, so fn should check that its component is still enabled.
+function Grimoire.AddItemTooltipLines(fn)
+	local function Safe(tooltip, itemID)
+		if itemID and not Grimoire.IsSecret(itemID) then
+			Grimoire.SafeCall(fn, tooltip, itemID)
+		end
+	end
+	if TooltipDataProcessor and TooltipDataProcessor.AddTooltipPostCall and Enum.TooltipDataType then
+		TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Item, function(tooltip, data)
+			Safe(tooltip, data and data.id)
+		end)
+		return
+	end
+	local function OnSetItem(tooltip)
+		local _, link = tooltip:GetItem()
+		Safe(tooltip, link and GetItemInfoInstant(link))
+	end
+	GameTooltip:HookScript("OnTooltipSetItem", OnSetItem)
+	if ItemRefTooltip then ItemRefTooltip:HookScript("OnTooltipSetItem", OnSetItem) end
+end
+
 -- A read-only item slot for cached data (bank, auctions). Shows the tooltip on
 -- hover and supports shift-click linking, but can't use or move the item.
 function Grimoire.CreateDisplaySlot(parent)

@@ -71,6 +71,12 @@ flowchart LR
 - **Listed value** totals unsold auctions (buyout, or bid if no buyout).
 - **A snapshot, updated from your mail.** Opening the mailbox marks auctions as *Sold* (sale invoices, including pending ones) or *Expired* (expired/cancelled mail) without revisiting the auction house.
 
+## Prices and shopping lists (2026-10-16, learned from Auctionator)
+
+- **Scan prices** (button in the Auctions window, at the auction house; [`Prices.lua`](../../../Grimoire_Auctions/Prices.lua)): reads every auction and saves the lowest buyout per item, per unit, per realm, with the time (`GrimoireAuctionsDB.prices`). Modern client: `C_AuctionHouse.ReplicateItems`; legacy: `QueryAuctionItems(..., getAll)`. Results are read 500 per frame so a big scan doesn't freeze the game; the Debug log records which API ran. A full scan is allowed every 15 minutes, so it's a button, not automatic.
+- **Price tooltips** (setting `priceTooltips`, on): item tooltips show "Auction  <price> (<age>)".
+- **Shopping lists** (*Shopping lists* button or `/grim auctions shopping`; [`Shopping.lua`](../../../Grimoire_Auctions/Shopping.lua)): named lists of item names (type a name or shift-click an item into the box). At the auction house, *Search* looks each up in turn (`SendBrowseQuery`, or `QueryAuctionItems` with an exact name) and shows the cheapest price per unit, how many are listed, and when. Prices found are saved for tooltips too.
+
 ## Combat & secret-value constraints
 
 None expected.
