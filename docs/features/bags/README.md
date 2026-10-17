@@ -74,6 +74,8 @@ end
 
 **New-item glow is cleared like Blizzard's bags.** The client keeps "new" flags (`C_NewItems`) until a bag UI clears them. The first version never did, so every item glowed every time (Phil, 2026-10-16). Now a slot glows while `C_NewItems.IsNewItem` says so, hovering it calls `RemoveNewItem`, and closing the window calls `ClearAll`. The flags live in the client, so "seen" survives reloads.
 
+**Who owns an item** (2026-10-16, learned from Syndicator). Core's shared item data (`Grimoire/Core/Items.lua`) keeps each character's bag counts current (`bagCounts`, rescanned when bags settle) and reads bank counts from the Bank component's snapshot. `Grimoire:GetItemCounts(itemID)` answers for any component; Bags adds the class-coloured owner lines to item tooltips (`TooltipDataProcessor`, or `OnTooltipSetItem` on older clients).
+
 **Bank bags are left alone.** Only frames for player bags are hidden, so the Blizzard bank still works:
 
 ```lua
@@ -105,6 +107,7 @@ Stored in `GrimoireDB.profiles[<profile>].modules.Bags`. In the menu: **Componen
 | Key | Default | Menu choices | Description |
 | --- | --- | --- | --- |
 | `columns` | 10 | 8 / 10 / 12 / 14 | Slots per row |
+| `ownerTooltips` | true | toggle | Item tooltips list every character that has the item, with bag and bank counts |
 
 While Baganator, Bagnon, AdiBags or ArkInventory is loaded, the module stays off and the menu shows "(conflicts with …)".
 

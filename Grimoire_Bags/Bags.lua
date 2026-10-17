@@ -13,8 +13,10 @@ local M = Grimoire:NewModule("Bags", {
 	conflicts = { "Bagnon", "Baganator", "AdiBags", "ArkInventory" },
 	defaults = {
 		columns = 10,
+		ownerTooltips = true,
 	},
 	options = {
+		{ type = "toggle", key = "ownerTooltips", label = "Show who owns an item in tooltips", tooltip = "Item tooltips list each of your characters that has it, with how many in bags and bank (learned from Syndicator)." },
 		{ type = "choice", key = "columns", label = "Columns", tooltip = "How many item slots each row of the bag window has.", values = {
 			{ 8, "8" }, { 10, "10" }, { 12, "12" }, { 14, "14" },
 		} },
@@ -364,6 +366,41 @@ function M:ApplySearch(button)
 	button:SetAlpha(matches and 1 or DIMMED_ALPHA)
 end
 
+-- Who owns an item ---------------------------------------------------------------
+-- Item tooltips list every character holding the item, from core's shared item data
+-- (Grimoire:GetItemCounts; bank counts are from the last bank visit).
+
+local function AddOwners(tooltip, itemID)
+	if not (M:IsEnabled() and M.db.ownerTooltips) or not itemID or Grimoire.IsSecret(itemID) then return end
+	local owners = Grimoire:GetItemCounts(itemID)
+	if #owners == 0 then return end
+	tooltip:AddLine(" ")
+	for _, owner in ipairs(owners) do
+		local parts = {}
+		if owner.bags > 0 then parts[#parts + 1] = "bags " .. owner.bags end
+		if owner.bank > 0 then parts[#parts + 1] = "bank " .. owner.bank end
+		tooltip:AddDoubleLine(Grimoire:FormatCharacterName(owner.charKey),
+			("%d (%s)"):format(owner.bags + owner.bank, table.concat(parts, ", ")), nil, nil, nil, 1, 1, 1)
+	end
+end
+
+function M:HookTooltips()
+	if self.tooltipsHooked then return end
+	self.tooltipsHooked = true
+	if TooltipDataProcessor and TooltipDataProcessor.AddTooltipPostCall and Enum.TooltipDataType then
+		TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Item, function(tooltip, data)
+			AddOwners(tooltip, data and data.id)
+		end)
+	else
+		local function OnSetItem(tooltip)
+			local _, link = tooltip:GetItem()
+			AddOwners(tooltip, link and GetItemInfoInstant(link))
+		end
+		GameTooltip:HookScript("OnTooltipSetItem", OnSetItem)
+		if ItemRefTooltip then ItemRefTooltip:HookScript("OnTooltipSetItem", OnSetItem) end
+	end
+end
+
 -- Lifecycle --------------------------------------------------------------------
 
 function M:Refresh()
@@ -413,6 +450,7 @@ function M:OnEnable()
 		self:Build()
 	end
 	self:InstallHooks()
+	self:HookTooltips() -- hooks can't be removed; AddOwners checks IsEnabled()
 	self:RegisterEvent("BAG_UPDATE_DELAYED", "Refresh")
 	self:RegisterEvent("BAG_UPDATE_COOLDOWN", "Refresh")
 	self:RegisterEvent("ITEM_LOCK_CHANGED", "OnItemLockChanged")

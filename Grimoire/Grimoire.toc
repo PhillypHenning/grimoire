@@ -19,6 +19,7 @@ Core\Database.lua
 Core\Combat.lua
 Core\Characters.lua
 Core\Containers.lua
+Core\Items.lua
 Core\Widgets.lua
 Core\Modules.lua
 Core\Movers.lua
