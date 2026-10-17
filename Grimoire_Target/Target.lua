@@ -337,8 +337,10 @@ end
 
 -- Auras -----------------------------------------------------------------------------------------
 -- Display only: buffs in rows growing up from above the name, debuffs (larger) in rows
--- growing down from under the bars. Your own debuffs (your DoTs) are larger still. Secret fields only ever go to widgets (texture, cooldown, text),
--- which accept them; they're never compared or used as table keys.
+-- growing down from under the bars. Your own debuffs (your DoTs) are larger still. Secret
+-- fields only ever go to widgets (texture, cooldown, text), which accept them; they're
+-- never compared or used as table keys. With Blizzard's frame hidden, its own icons are
+-- borrowed instead (see "Borrowed Blizzard icons" below).
 
 local function Usable(value)
 	return value ~= nil and not Grimoire.IsSecret(value)
@@ -381,6 +383,24 @@ local function GetAuraButton(parent, list, i)
 end
 
 local ROW_WIDTH = BAR_WIDTH + INSET * 2 -- as wide as the bars
+
+-- Rows of icons, growing down from the parent's top-left corner or up from its
+-- bottom-left one. The caller sizes each icon first; offsets allow for its scale.
+local function NewFlow(parent, growUp)
+	return { parent = parent, point = growUp and "BOTTOMLEFT" or "TOPLEFT", sign = growUp and 1 or -1,
+		x = 0, y = 0, rowHeight = 0 }
+end
+
+local function FlowPlace(flow, frame, size)
+	if flow.x + size > ROW_WIDTH then
+		flow.x, flow.y, flow.rowHeight = 0, flow.y + flow.sign * (flow.rowHeight + AURA_GAP), 0
+	end
+	local scale = frame:GetScale()
+	frame:ClearAllPoints()
+	frame:SetPoint(flow.point, flow.parent, flow.point, flow.x / scale, flow.y / scale)
+	flow.x = flow.x + size + AURA_GAP
+	flow.rowHeight = math.max(flow.rowHeight, size)
+end
 
 -- Your debuffs: asked for with the PLAYER filter (works when the caster is secret), with
 -- the caster as a fallback where it's readable (that one also catches the pet's).
@@ -452,22 +472,18 @@ end
 local function LayoutAuras(parent, list, filter, max, size, ownSize, growUp, ownIDs)
 	local unit = "target"
 	local auras, method, tried = GetAuras(unit, filter, max)
-	local point, sign = growUp and "BOTTOMLEFT" or "TOPLEFT", growUp and 1 or -1
-	local x, y, rowHeight, shown = 0, 0, 0, 0
+	local flow = NewFlow(parent, growUp)
+	local shown = 0
 	for i = 1, math.min(#auras, max) do
 		local data = auras[i]
 		shown = i
 		local aura = GetAuraButton(parent, list, i)
 		local own = ownIDs and IsOwn(data, ownIDs)
 		local auraSize = own and ownSize or size
-		if x + auraSize > ROW_WIDTH then
-			x, y, rowHeight = 0, y + sign * (rowHeight + AURA_GAP), 0
-		end
 		aura.index, aura.filter = data.index, filter
 		aura.instanceID = Usable(data.auraInstanceID) and data.auraInstanceID or nil
 		aura:SetSize(auraSize, auraSize)
-		aura:ClearAllPoints()
-		aura:SetPoint(point, parent, point, x, y)
+		FlowPlace(flow, aura, auraSize)
 		aura.icon:SetTexture(data.icon)
 		aura.count:SetText(CountText(unit, data))
 		if filter == "HARMFUL" then
@@ -479,8 +495,6 @@ local function LayoutAuras(parent, list, filter, max, size, ownSize, growUp, own
 		end
 		SetAuraCooldown(aura.cooldown, unit, data)
 		aura:Show()
-		x = x + auraSize + AURA_GAP
-		rowHeight = math.max(rowHeight, auraSize)
 	end
 	for i = shown + 1, #list do
 		list[i]:Hide()
@@ -493,7 +507,8 @@ function M:UpdateAuras()
 	local show = (self.db.showAuras and UnitExists("target")) and true or false
 	button.buffs:SetShown(show)
 	button.debuffs:SetShown(show)
-	if not show then return end
+	-- Borrowed icons are placed after each Blizzard update, not here.
+	if not show or self.borrowingAuras then return end
 	local buffs, buffMethod = LayoutAuras(button.buffs, button.buffButtons, "HELPFUL", MAX_BUFFS,
 		BUFF_SIZE, BUFF_SIZE, true)
 	local debuffs, debuffMethod = LayoutAuras(button.debuffs, button.debuffButtons, "HARMFUL", MAX_DEBUFFS,
@@ -504,6 +519,146 @@ function M:UpdateAuras()
 		self.lastAuraReport = report
 		self:Log("info", "%s", report)
 	end
+end
+
+-- Borrowed Blizzard icons -------------------------------------------------------------------
+-- Forever won't let add-on code read an enemy's auras in combat ("GetUnitAuras(): Auras
+-- cannot be accessed when secret while tainted by 'Grimoire_Target'", seen 2026-10-17);
+-- only Blizzard's own code may. So Blizzard's target frame keeps running, invisible and
+-- click-through, and after each of its aura updates its icons are moved onto this frame
+-- (Phil's choice, 2026-10-17). The icons stay Blizzard's: textures, timers, counts and
+-- tooltips are all its code. They're resized with SetScale, so border, timer and count
+-- grow with them; Blizzard's own debuffs-larger rule tells which debuffs are yours.
+
+local function IsDebuffFrame(frame)
+	return (frame.Border or frame.DebuffBorder) and true or false
+end
+
+-- Where each borrowed icon was last placed, kept on our side: nothing is written onto
+-- Blizzard's frames. An icon still on our anchors keeps that order; one Blizzard has just
+-- re-anchored is ordered by its position.
+local placedOrder = setmetatable({}, { __mode = "k" })
+
+local function SortKey(frame, containers)
+	local _, relativeTo = frame:GetPoint(1)
+	if placedOrder[frame] and containers[relativeTo] then
+		return placedOrder[frame]
+	end
+end
+
+-- Blizzard's active aura icons, in its order (top to bottom, left to right).
+local function BlizzardAuraFrames(containers)
+	local buffs, debuffs = {}, {}
+	local function add(frame)
+		if frame and frame:IsShown() then
+			local list = IsDebuffFrame(frame) and debuffs or buffs
+			list[#list + 1] = frame
+		end
+	end
+	local pools = TargetFrame.auraPools
+	if pools and pools.EnumerateActive then
+		for frame in pools:EnumerateActive() do
+			add(frame)
+		end
+	else
+		for i = 1, 40 do
+			add(_G["TargetFrameBuff" .. i])
+			add(_G["TargetFrameDebuff" .. i])
+		end
+	end
+	local function order(a, b)
+		local ak, bk = SortKey(a, containers), SortKey(b, containers)
+		if ak and bk then return ak < bk end
+		-- Screen positions: borrowed icons keep the scale we gave them.
+		local as, bs = a:GetEffectiveScale(), b:GetEffectiveScale()
+		local at, bt = (a:GetTop() or 0) * as, (b:GetTop() or 0) * bs
+		if math.abs(at - bt) > 1 then return at > bt end
+		return (a:GetLeft() or 0) * as < (b:GetLeft() or 0) * bs
+	end
+	pcall(table.sort, buffs, order)
+	pcall(table.sort, debuffs, order)
+	return buffs, debuffs
+end
+
+-- Blizzard's size for an icon, or nil when it can't be read.
+local function BlizzardSize(frame)
+	local width = frame:GetWidth()
+	if Usable(width) and width > 0 then return width end
+end
+
+local function PlaceBorrowed(frames, parent, max, size, ownSize, growUp)
+	-- Blizzard draws your own debuffs larger than the rest.
+	local smallest
+	for _, frame in ipairs(frames) do
+		local width = BlizzardSize(frame)
+		if width and (not smallest or width < smallest) then smallest = width end
+	end
+	local flow = NewFlow(parent, growUp)
+	for i, frame in ipairs(frames) do
+		if i > max then
+			frame:Hide()
+		else
+			local width = BlizzardSize(frame)
+			local own = width and smallest and width > smallest + 0.5
+			local target = own and ownSize or size
+			if frame:GetParent() ~= parent then
+				frame:SetParent(parent)
+			end
+			frame:SetScale(width and target / width or 1)
+			FlowPlace(flow, frame, target)
+			placedOrder[frame] = i
+		end
+	end
+end
+
+function M:PlaceBlizzardAuras()
+	if not (self:IsEnabled() and self.borrowingAuras and self.button) then return end
+	local button = self.button
+	local buffs, debuffs = BlizzardAuraFrames({ [button.buffs] = true, [button.debuffs] = true })
+	PlaceBorrowed(buffs, button.buffs, MAX_BUFFS, BUFF_SIZE, BUFF_SIZE, true)
+	PlaceBorrowed(debuffs, button.debuffs, MAX_DEBUFFS, DEBUFF_SIZE, OWN_DEBUFF_SIZE, false)
+	local report = ("target auras: %d buffs, %d debuffs (Blizzard's icons, %s)"):format(#buffs, #debuffs,
+		TargetFrame.auraPools and "aura pools" or "named frames")
+	if report ~= self.lastAuraReport then
+		self.lastAuraReport = report
+		self:Log("info", "%s", report)
+	end
+end
+
+-- Makes Blizzard's target frame invisible and click-through but leaves it running.
+-- Returns false when its aura updates can't be hooked (then it's hidden as before).
+function M:BorrowBlizzardAuras()
+	local hooked = false
+	local function place() self:PlaceBlizzardAuras() end
+	for _, method in ipairs({ "UpdateAuras", "UpdateAuraPositions" }) do
+		if type(TargetFrame[method]) == "function" then
+			hooksecurefunc(TargetFrame, method, place)
+			hooked = true
+		end
+	end
+	if type(_G.TargetFrame_UpdateAuras) == "function" then
+		hooksecurefunc("TargetFrame_UpdateAuras", function(frame)
+			if frame == TargetFrame then place() end
+		end)
+		hooked = true
+	end
+	if not hooked then return false end
+
+	self.borrowingAuras = true
+	-- Kept at zero: anything that sets its alpha back (Edit Mode, fades) is undone.
+	local zeroing = false
+	TargetFrame:SetAlpha(0)
+	hooksecurefunc(TargetFrame, "SetAlpha", function(frame)
+		if zeroing then return end
+		zeroing = true
+		frame:SetAlpha(0)
+		zeroing = false
+	end)
+	for _, frame in ipairs({ TargetFrame, TargetFrameToT }) do
+		if frame then pcall(frame.EnableMouse, frame, false) end
+	end
+	self:Log("info", "Blizzard's target frame kept running invisibly to borrow its aura icons")
+	return true
 end
 
 -- Target of target ------------------------------------------------------------------------------
@@ -572,7 +727,9 @@ function M:HideBlizzard()
 		ComboFrame:ClearAllPoints()
 		ComboFrame:SetPoint("BOTTOMRIGHT", self.button.box, "TOPRIGHT", 0, 2)
 	end
-	Grimoire:HideBlizzardFrame(TargetFrame)
+	if not self:BorrowBlizzardAuras() then
+		Grimoire:HideBlizzardFrame(TargetFrame)
+	end
 end
 
 -- Events ----------------------------------------------------------------------------------------

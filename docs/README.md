@@ -46,6 +46,7 @@ Plans: [Troll Warlock, 1 to 30](prophecy/plans/troll-warlock-1-30.prophecy) (con
 | [0005](adr/0005-modules-describe-their-settings.md) | Modules describe their settings; core builds the menu | Accepted |
 | [0006](adr/0006-prophecy-plans-are-pasted-text.md) | Prophecy plans are pasted text, stored in saved variables | Accepted |
 | [0007](adr/0007-hide-blizzard-frames-in-place.md) | Hide Blizzard frames in place, without reparenting (supersedes part of 0004) | Accepted |
+| [0008](adr/0008-borrow-blizzard-target-auras.md) | Borrow Blizzard's target aura icons (amends 0007 for the target frame) | Accepted |
 
 Number new ADRs sequentially and never edit an accepted one's decision. Supersede it with a new ADR instead.
 

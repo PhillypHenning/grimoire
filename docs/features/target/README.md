@@ -44,6 +44,8 @@ flowchart TD
 
 **Same pieces as the player frame**: bars in classic bordered boxes, the portrait in a `PlayerModel` (or `SetPortraitTexture`), and the shared helpers `UpdateUnitBar`, `UnitLevelText`, `SetUnitRightClickMenu` from [`Core/UnitFrames.lua`](../../../Grimoire/Core/UnitFrames.lua).
 
+**Borrowed icons** (`PlaceBlizzardAuras`). Post-hooks on Blizzard's `UpdateAuras` / `UpdateAuraPositions` collect its active icons (aura pools, or the older `TargetFrameBuffN` / `TargetFrameDebuffN` frames), split them into buffs and debuffs by the debuff border, and lay them out in the same rows as Grimoire's own icons. Order comes from Blizzard's screen positions, or from where Grimoire last placed an icon, kept in a weak table on Grimoire's side. Debuffs Blizzard draws larger than the smallest are yours. Each change is logged (`target auras: N buffs, M debuffs (Blizzard's icons, …)`).
+
 **Auras are display only.** Plain buttons with icon, stack count, debuff-type border and a cooldown swipe; hovering shows the aura's tooltip. Buffs sit above the name in 20 px rows that grow upward; debuffs sit under the bars in 24 px rows that grow downward, and debuffs you or your pet cast are 30 px (Phil, 2026-10-17: enemy debuffs were hard to see). Rows are as wide as the bars.
 
 **Reading auras without tripping secrets.** Forever refuses `GetAuraDataByIndex` on the target while its auras are secret ("Auras cannot be accessed when secret", seen 2026-10-13); the error stopped the whole aura row, so no debuffs showed. `GetAuras` now tries `C_UnitAuras.GetUnitAuras`, then `GetAuraSlots` + `GetAuraDataBySlot`, then by index, then the old `UnitAura`, each call in `pcall`; an empty answer moves on to the next method too (Phil saw no auras at all once, with nothing in the error log), and the module logs which method answered whenever that changes. Fields that may be secret only go to widgets; your own debuffs are found with the `HARMFUL|PLAYER` filter instead of comparing the (secret) caster.
@@ -58,6 +60,7 @@ flowchart TD
 - **Grimoire's own target of target**: Blizzard's is inside its target frame and goes with it.
 - **Tagged mobs** (tapped by someone else) get a grey health bar.
 - **Hidden in place** ([ADR 0007](../../adr/0007-hide-blizzard-frames-in-place.md)): Blizzard's frame isn't reparented, so Edit Mode stays untainted.
+- **Blizzard's aura icons are borrowed** ([ADR 0008](../../adr/0008-borrow-blizzard-target-auras.md), Phil's choice, 2026-10-17): in combat Forever refuses every aura API to add-on code ("Auras cannot be accessed when secret while tainted by 'Grimoire_Target'"). So Blizzard's target frame keeps running, invisible (alpha 0, held there by a hook) and click-through, and after each of its aura updates its icons are moved onto this frame and resized with `SetScale`. Grimoire's own icons are only used when Blizzard's frame is shown (the setting off) or can't be hooked.
 
 ## Combat & secret-value constraints
 
