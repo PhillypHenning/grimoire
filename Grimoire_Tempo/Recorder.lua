@@ -4,8 +4,10 @@ local M = ns.M
 local Cycles = ns.Cycles
 
 -- The recorder (plan milestone T2). Casts come from UNIT_SPELLCAST_SUCCEEDED, so keybinds,
--- clicks and macros all count. Damage comes from whichever source gives data, both
--- listened to at once and the better one kept per fight:
+-- clicks and macros all count; your pet's casts too (pet = true), except abilities it casts
+-- by itself, and sending it in (PET_ATTACK_START) as a "Pet Attack" step.
+-- Damage comes from whichever source gives data, both listened to at once and the better
+-- one kept per fight. Both measure what the target takes, so your pet's damage counts:
 --   unitCombat  damage your target takes (anyone's), from UNIT_COMBAT
 --   health      percent of your target's health lost; the last resort
 -- The combat log is off limits: Forever blocks it for add-ons (an "action only available
@@ -15,7 +17,7 @@ local Cycles = ns.Cycles
 -- empty and the next one is used.
 --
 -- fight = { time, target, level, duration, unit, source, total, dps,
---           casts = { { t, spell, name } }, damage = { { t, amount } } }   -- t: seconds
+--           casts = { { t, spell, name, pet } }, damage = { { t, amount } } }   -- t: seconds
 
 local PREPULL = 3          -- casts this long before combat count: the pull lands first
 local MIN_FIGHT = 6        -- seconds; shorter fights aren't kept
@@ -35,27 +37,55 @@ end
 
 -- Casts ------------------------------------------------------------------------------------
 
-function M:OnPlayerCast(_, unit, _, spellID)
-	if not spellID or Grimoire.IsSecret(spellID) then return end
-	local name = SpellName(spellID)
-	if not name or Grimoire.IsSecret(name) then return end
+-- spellID is nil for Pet Attack; pet is true for an ability the pet cast.
+function M:AddCast(spellID, name, pet)
 	local now = GetTime()
 	local rec = self.recording
 	local list = rec and rec.casts or self.recentCasts
 	local last = list[#list]
-	if COLLAPSE[spellID] and last and last.spell == spellID then return end
+	-- A wand or Auto Shot fires every swing, and the pet is often re-sent: one note per run.
+	if last and last.name == name and (COLLAPSE[spellID] or name == Cycles.PET_ATTACK) then return end
+	local cast = { time = now, spell = spellID, name = name, pet = pet or nil }
 	if rec then
 		if #list < MAX_CASTS then
-			list[#list + 1] = { time = now, spell = spellID, name = name }
+			list[#list + 1] = cast
 		end
 	else
 		-- Out of combat only the last few seconds are kept, for the pull.
 		while list[1] and now - list[1].time > PREPULL do
 			table.remove(list, 1)
 		end
-		list[#list + 1] = { time = now, spell = spellID, name = name }
+		list[#list + 1] = cast
 	end
-	self:JudgeCast(name, now)
+	self:JudgeCast(name, now, pet)
+end
+
+-- Abilities your pet casts by itself (autocast on) would flood the music, so only the ones
+-- you trigger are kept. If the client can't say, the ability is kept.
+local function IsAutocast(spellID, name)
+	if C_Spell and C_Spell.GetSpellAutoCast then
+		local ok, _, enabled = pcall(C_Spell.GetSpellAutoCast, spellID)
+		if ok and enabled ~= nil then return enabled and true or false end
+	end
+	if GetSpellAutocast then
+		local ok, _, enabled = pcall(GetSpellAutocast, name, "pet")
+		if ok then return enabled and true or false end
+	end
+	return false
+end
+
+function M:OnCast(_, unit, _, spellID)
+	if not spellID or Grimoire.IsSecret(spellID) then return end
+	local name = SpellName(spellID)
+	if not name or Grimoire.IsSecret(name) then return end
+	local pet = unit == "pet"
+	if pet and IsAutocast(spellID, name) then return end
+	self:AddCast(spellID, name, pet)
+end
+
+-- Sending the pet in: there's no spell for it, only this event.
+function M:OnPetAttack()
+	self:AddCast(nil, Cycles.PET_ATTACK)
 end
 
 -- Damage -----------------------------------------------------------------------------------
@@ -111,7 +141,11 @@ end
 
 function M:EnableRecorder()
 	self.recentCasts = {}
-	self:RegisterUnitEvent("UNIT_SPELLCAST_SUCCEEDED", "player", "OnPlayerCast")
+	-- Your casts and your pet's, on one registration (RegisterUnitEvent takes two units).
+	local frame = self:GetEventFrame()
+	frame.handlers.UNIT_SPELLCAST_SUCCEEDED = "OnCast"
+	frame:RegisterUnitEvent("UNIT_SPELLCAST_SUCCEEDED", "player", "pet")
+	self:RegisterEvent("PET_ATTACK_START", "OnPetAttack")
 	self:RegisterUnitEvent("UNIT_COMBAT", "target", "OnTargetCombat")
 	self:RegisterUnitEvent("UNIT_HEALTH", "target", "OnTargetHealth")
 	self:RegisterEvent("PLAYER_TARGET_CHANGED", "OnTargetHealth")
@@ -153,7 +187,7 @@ function M:StopRecording()
 
 	local fight = { time = time(), target = rec.target, level = UnitLevel("player"), duration = now - start, casts = {}, damage = {} }
 	for _, cast in ipairs(rec.casts) do
-		fight.casts[#fight.casts + 1] = { t = cast.time - start, spell = cast.spell, name = cast.name }
+		fight.casts[#fight.casts + 1] = { t = cast.time - start, spell = cast.spell, name = cast.name, pet = cast.pet }
 	end
 	for _, source in ipairs(SOURCES) do
 		if #rec.sources[source] > 0 then

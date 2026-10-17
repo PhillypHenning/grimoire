@@ -12,11 +12,15 @@ local Cycles = ns.Cycles
 --   a cast with no note      shown in red at the line ("off script")
 -- A matched note re-syncs the music to you, so being a little slow doesn't push every
 -- later note out of reach. The opener plays once, then the cycle repeats.
+-- Pet notes (abilities you had your pet use) sit on a smaller, lower row: they light up when
+-- they happen but never count as missed or off script, since the pet's timing isn't all
+-- yours. Sending the pet in ("Pet Attack") is your own action and is judged like a spell.
 
 local WIDTH, HEIGHT = 380, 64
-local STAFF_Y = -5         -- notes sit on the staff, below the status line
+local STAFF_Y = -5         -- the staff's middle, below the status line
+local PET_Y, PET_ICON = -20, 16
 local NOW_X = 40
-local ICON = 26
+local ICON = 24
 local VIEW = 8            -- seconds of music on screen
 local HIT, CLOSE = 0.6, 2.0
 local SUMMARY_SECONDS = 10
@@ -28,12 +32,8 @@ local STATE_COLORS = {
 	hit = { 0.2, 1, 0.2 },
 	close = { 1, 0.82, 0 },
 	missed = { 1, 0.15, 0.15 },
+	passed = { 0.4, 0.4, 0.4 },   -- a pet note nobody played
 }
-
-local function SpellIcon(spell)
-	if C_Spell and C_Spell.GetSpellTexture then return C_Spell.GetSpellTexture(spell) end
-	return GetSpellTexture and GetSpellTexture(spell)
-end
 
 -- Frame ------------------------------------------------------------------------------------
 
@@ -97,7 +97,8 @@ end
 
 local function AddSteps(play, rotation, from)
 	for _, step in ipairs(rotation.steps) do
-		play.notes[#play.notes + 1] = { at = from + step.at, spell = step.spell, key = Cycles.Key(step.name), state = "pending" }
+		play.notes[#play.notes + 1] = { at = from + step.at, spell = step.spell, name = step.name, pet = step.pet,
+			key = Cycles.Key(step.name), state = "pending" }
 	end
 	return from + math.max(rotation.length or 0, MIN_LOOP)
 end
@@ -121,7 +122,7 @@ function M:StartPlayback()
 	end
 	Extend(self.play, 0)
 	for _, cast in ipairs(pulls) do
-		self:JudgeCast(cast.name, cast.time)
+		self:JudgeCast(cast.name, cast.time, cast.pet)
 	end
 	self:UpdateLane()
 end
@@ -131,23 +132,27 @@ function M:SongTime(now)
 	return (now or GetTime()) - play.start - play.offset
 end
 
-function M:JudgeCast(name, now)
+function M:JudgeCast(name, now, pet)
 	local play = self.play
 	if not play or not play.playing then return end
 	local songTime, key = self:SongTime(now), Cycles.Key(name)
 	for _, note in ipairs(play.notes) do
-		if note.state == "pending" and note.key == key and math.abs(note.at - songTime) <= CLOSE then
+		if note.state == "pending" and note.key == key and (note.pet or false) == (pet or false) and math.abs(note.at - songTime) <= CLOSE then
 			local delta = songTime - note.at
 			local onTime = math.abs(delta) <= HIT
 			note.state = onTime and "hit" or "close"
-			if onTime then play.hits = play.hits + 1 else play.close = play.close + 1 end
-			play.offset = play.offset + delta -- follow the player's pace
+			if not note.pet then
+				-- Pet notes light up but don't count toward your accuracy or set the pace.
+				if onTime then play.hits = play.hits + 1 else play.close = play.close + 1 end
+				play.offset = play.offset + delta -- follow the player's pace
+			end
 			return
 		end
 	end
+	if pet then return end -- the pet doing something unscripted isn't your mistake
 	play.wrong = play.wrong + 1
 	if self.lane then
-		self.lane.wrong:SetTexture(SpellIcon(name) or 134400)
+		self.lane.wrong:SetTexture(M.StepIcon({ name = name }))
 		self.lane.wrong:Show()
 		self.wrongUntil = GetTime() + 0.6
 	end
@@ -175,17 +180,23 @@ function M:OnLaneUpdate()
 	local shown = 0
 	for _, note in ipairs(play.notes) do
 		if note.state == "pending" and songTime - note.at > CLOSE then
-			note.state = "missed"
-			play.missed = play.missed + 1
+			if note.pet then
+				note.state = "passed"
+			else
+				note.state = "missed"
+				play.missed = play.missed + 1
+			end
 		end
 		local x = NOW_X + (note.at - songTime) * PX
 		if x > WIDTH + ICON then break end
 		shown = shown + 1
 		local frame = NoteFrame(lane, shown)
 		frame:ClearAllPoints()
-		frame:SetPoint("CENTER", lane, "LEFT", x, STAFF_Y)
-		frame.icon:SetTexture(SpellIcon(note.spell) or 134400)
-		frame.icon:SetDesaturated(note.state == "missed")
+		local size = note.pet and PET_ICON or ICON
+		frame:SetSize(size, size)
+		frame:SetPoint("CENTER", lane, "LEFT", x, note.pet and PET_Y or STAFF_Y + 4)
+		frame.icon:SetTexture(M.StepIcon(note))
+		frame.icon:SetDesaturated(note.state == "missed" or note.state == "passed")
 		local color = STATE_COLORS[note.state]
 		frame.border:SetVertexColor(color[1], color[2], color[3])
 		frame:Show()

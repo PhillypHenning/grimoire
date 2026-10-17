@@ -51,6 +51,20 @@ function M:GetClass()
 	return select(2, UnitClass("player"))
 end
 
+function M.SpellIcon(spell)
+	if not spell then return nil end
+	if C_Spell and C_Spell.GetSpellTexture then return C_Spell.GetSpellTexture(spell) end
+	return GetSpellTexture and GetSpellTexture(spell)
+end
+
+-- A step's icon: its spell's, the pet-attack icon for sending the pet, or a question mark.
+function M.StepIcon(step)
+	if step.name == Cycles.PET_ATTACK and not step.spell then
+		return Grimoire.media.petAttack
+	end
+	return M.SpellIcon(step.spell) or M.SpellIcon(step.name) or Grimoire.media.unknownIcon
+end
+
 local KIND_LABELS = { opener = "Opener", cycle = "Cycle" }
 
 function M.KindLabel(kind)

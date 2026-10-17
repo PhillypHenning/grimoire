@@ -8,6 +8,7 @@ local Share = ns.Share
 -- the pinned rotation, saved (imported) rotations, and recent fights. Click a fight to
 -- see its opener and cycles. Every rotation row shows its spells in order and can be
 -- pinned (played in your next fight) or exported as text for someone else.
+-- Pet steps (abilities you had your pet use) are drawn smaller.
 
 local WIDTH, HEIGHT = 560, 440
 local ROW_HEIGHT = 24
@@ -17,17 +18,15 @@ local LABEL_WIDTH = 110
 local SCROLLBAR = 28
 local BUTTON_WIDTH = 52
 
-local function SpellIcon(spell)
-	if C_Spell and C_Spell.GetSpellTexture then return C_Spell.GetSpellTexture(spell) end
-	return GetSpellTexture and GetSpellTexture(spell)
-end
-
 local function Icon_OnEnter(icon)
 	GameTooltip:SetOwner(icon, "ANCHOR_RIGHT")
 	if icon.spell and GameTooltip.SetSpellByID then
 		GameTooltip:SetSpellByID(icon.spell)
 	else
 		GameTooltip:SetText(icon.name or "")
+	end
+	if icon.pet then
+		GameTooltip:AddLine("Your pet", 0.4, 0.8, 1)
 	end
 	GameTooltip:AddLine(("%.1f s into the rotation"):format(icon.at or 0), 0.7, 0.7, 0.7)
 	GameTooltip:Show()
@@ -114,8 +113,12 @@ function M:AddRotation(label, rotation, buttons)
 	local steps = rotation.steps or {}
 	for i = 1, math.min(#steps, MAX_ICONS) do
 		local icon, step = row.icons[i], steps[i]
-		icon.spell, icon.name, icon.at = step.spell, step.name, step.at
-		icon.texture:SetTexture(SpellIcon(step.spell) or SpellIcon(step.name) or 134400)
+		icon.spell, icon.name, icon.at, icon.pet = step.spell, step.name, step.at, step.pet
+		icon.texture:SetTexture(M.StepIcon(step))
+		-- Pet steps are smaller, like their row in the lane.
+		local inset = step.pet and 3 or 0
+		icon.texture:SetPoint("TOPLEFT", inset, -inset)
+		icon.texture:SetPoint("BOTTOMRIGHT", -inset, inset)
 		icon:Show()
 	end
 	local shownIcons = math.min(#steps, MAX_ICONS)

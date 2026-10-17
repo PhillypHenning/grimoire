@@ -63,6 +63,17 @@ local ranks = Cycles.Split({ duration = 10, unit = "damage", damage = {},
 	casts = { cast(0, "Corruption", 172), cast(2, "Shadow Bolt"), cast(4, "corruption", 6222) } }, "WARLOCK")
 check(#ranks == 2, "another rank of Corruption still starts a cycle")
 
+-- Pets: sending the pet and its abilities are steps, but never start a cycle.
+local petFight = Cycles.Split({ duration = 12, unit = "damage", damage = {},
+	casts = {
+		{ t = 0, name = "Pet Attack" }, cast(1, "Shadow Bolt"), { t = 2, name = "Firebolt", spell = 3110, pet = true },
+		cast(3, "Corruption"), { t = 5, name = "Pet Attack" }, { t = 6, name = "Firebolt", spell = 3110, pet = true },
+		cast(8, "Shadow Bolt"),
+	} }, "MAGE") -- MAGE: no upkeep list, so the first own spell (Shadow Bolt) marks cycles
+check(#petFight == 2 and petFight[2].steps[1].name == "Shadow Bolt", "pet steps don't start cycles; first own spell does")
+check(petFight[1].steps[3].pet == true, "pet flag kept on steps")
+check(Cycles.ResetSet("MAGE", { { name = "Pet Attack" }, { name = "Frostbolt" } })["frostbolt"], "Pet Attack isn't the fallback reset")
+
 -- Share: round trip.
 local rotation = segments[2]
 rotation.name, rotation.class, rotation.notes = "Shadow cycle", "WARLOCK", { "Refresh Corruption early." }
@@ -75,6 +86,12 @@ if back then
 	check(back.unit == "damage" and near(back.dps, 50), "score survives")
 	check(back.notes[1] == "Refresh Corruption early.", "notes survive")
 end
+local petBack = Share.Import(Share.Export({ name = "Pet", kind = "opener", length = 4, steps = {
+	{ at = 0, name = "Pet Attack" }, { at = 1.5, spell = 3110, name = "Firebolt", pet = true }, { at = 2, spell = 686, name = "Shadow Bolt" },
+} }))
+check(petBack and petBack.steps[1].name == "Pet Attack" and petBack.steps[1].spell == nil, "Pet Attack round trip (no spell)")
+check(petBack and petBack.steps[2].pet and petBack.steps[2].name == "Firebolt", "pet ability round trip")
+check(petBack and not petBack.steps[3].pet, "own spell isn't marked pet")
 check(Share.Import("hello") == nil, "text without the header is refused")
 check(Share.Import(Share.HEADER .. "\nname: x") == nil, "a rotation without steps is refused")
 check(Share.Import(Share.HEADER .. "\nprint('hi')") == nil, "unknown lines are refused")

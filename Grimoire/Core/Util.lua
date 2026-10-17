@@ -39,6 +39,8 @@ Grimoire.media = {
 	partyFrame = "Interface\\TargetingFrame\\UI-PartyFrame",
 	raidTargetIcons = "Interface\\TargetingFrame\\UI-RaidTargetingIcons",
 	auraBorder = "Interface\\Buttons\\UI-Debuff-Overlays",
+	petAttack = PET_ATTACK_TEXTURE or "Interface\\Icons\\Ability_GhoulFrenzy",
+	unknownIcon = 134400, -- the question-mark icon
 }
 
 function Grimoire.FormatAgo(timestamp)

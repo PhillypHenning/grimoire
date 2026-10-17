@@ -21,7 +21,7 @@ flowchart LR
 
 ```mermaid
 flowchart TD
-    Casts[UNIT_SPELLCAST_SUCCEEDED player<br/>+ casts up to 3 s before combat] --> Rec[Recorder]
+    Casts[UNIT_SPELLCAST_SUCCEEDED player + pet<br/>PET_ATTACK_START<br/>+ casts up to 3 s before combat] --> Rec[Recorder]
     UC[UNIT_COMBAT target] --> Rec
     HP[target health per mob] --> Rec
     Rec -- combat ends --> Fight[fight: casts + damage from<br/>the best source that gave data]
@@ -35,6 +35,7 @@ flowchart TD
 - **Cycles.** For a Warlock the upkeep spells are Corruption, Curse of Agony, Immolate, Siphon Life and Curse of Doom: re-casting one that's already in the current cycle starts the next cycle. Other classes have their own list; a class without one uses the fight's first spell.
 - **Score.** Damage in the segment divided by its length. Real damage (`dps`) always ranks above the last-resort source, percent of target health per second.
 - **Playback.** A matched note re-syncs the music to you, so a slow cast doesn't push every later note out of reach.
+- **Pets.** Sending your pet in (`PET_ATTACK_START`) is a "Pet Attack" step, judged like a spell. Abilities you have your pet use (`UNIT_SPELLCAST_SUCCEEDED` for `pet`) are pet steps: a smaller, lower row in the lane that lights up but never counts as missed or off script. Abilities the pet casts by itself (autocast on) are left out, or they'd flood the music. Neither kind ever starts a cycle. Pet damage is in every score, since both damage sources measure what the target takes.
 
 ## Code highlights
 

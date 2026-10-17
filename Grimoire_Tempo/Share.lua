@@ -10,10 +10,13 @@
 --   score: 140.2 damage
 --   note: Refresh Corruption when it has under 3 s left.
 --   0.0 172 Corruption
+--   0.0 0 Pet Attack
 --   1.6 686 Shadow Bolt
+--   2.1 3110 pet: Firebolt
 --
 -- Step lines are "<seconds from the start> <spell ID> <spell name>". Names are what the
--- playback matches on, so any rank of a spell counts.
+-- playback matches on, so any rank of a spell counts. "pet: " before the name marks an
+-- ability your pet cast; Pet Attack (sending the pet in) has no spell, so its ID is 0.
 
 local _, ns = ...
 local Share = {}
@@ -36,7 +39,7 @@ function Share.Export(rotation)
 		lines[#lines + 1] = "note: " .. note
 	end
 	for _, step in ipairs(rotation.steps) do
-		lines[#lines + 1] = ("%.1f %d %s"):format(step.at, step.spell or 0, step.name)
+		lines[#lines + 1] = ("%.1f %d %s%s"):format(step.at, step.spell or 0, step.pet and "pet: " or "", step.name)
 	end
 	return table.concat(lines, "\n")
 end
@@ -58,7 +61,11 @@ function Share.Import(text)
 			local key, value = line:match("^(%a+):%s*(.-)$")
 			local at, spell, name = line:match("^(%d+%.?%d*)%s+(%d+)%s+(.+)$")
 			if at then
-				rotation.steps[#rotation.steps + 1] = { at = tonumber(at), spell = tonumber(spell), name = Trim(name) }
+				name = Trim(name)
+				local petName = name:match("^pet:%s*(.+)$")
+				spell = tonumber(spell)
+				rotation.steps[#rotation.steps + 1] = { at = tonumber(at), spell = spell ~= 0 and spell or nil,
+					name = petName or name, pet = petName and true or nil }
 			elseif key == "name" or key == "class" then
 				rotation[key] = value
 			elseif key == "kind" then

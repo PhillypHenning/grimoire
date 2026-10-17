@@ -4,14 +4,18 @@
 -- Grimoire_Tempo.toc) and on the command line (scripts/tempo/test.lua).
 --
 --   fight = { duration, unit = "damage" | "health",   -- what the damage amounts measure
---             casts  = { { t, spell, name }, ... },   -- seconds from the fight's start
+--             casts  = { { t, spell, name, pet }, ... }, -- seconds from the fight's start
 --             damage = { { t, amount }, ... } }
---   segment / rotation = { kind = "opener" | "cycle", steps = { { at, spell, name } },
+--   segment / rotation = { kind = "opener" | "cycle", steps = { { at, spell, name, pet } },
 --                          length, damage, dps, unit, scored }
 --
 -- A cycle ends when an upkeep spell (a DoT, for a Warlock) that's already in it is cast
 -- again: that re-cast starts the next cycle. Scores are damage per second, so short and
 -- long cycles compare fairly.
+--
+-- Pets: sending the pet in is a step named Cycles.PET_ATTACK (no spell ID); abilities the
+-- pet casts are steps with pet = true. Neither ever starts a cycle. Pet damage is part of
+-- the score because the damage sources measure what the target takes.
 
 local _, ns = ...
 local Cycles = {}
@@ -28,6 +32,8 @@ Cycles.RESET_SPELLS = {
 	SHAMAN = { "Flame Shock" },
 }
 
+Cycles.PET_ATTACK = "Pet Attack"
+
 Cycles.MIN_CASTS = 3    -- shorter segments are shown but never become "best"
 Cycles.MIN_LENGTH = 3   -- seconds
 
@@ -38,14 +44,24 @@ function Cycles.Key(name)
 	return name and name:lower() or ""
 end
 
--- The class's upkeep spells; a class without any uses the fight's first spell instead.
+-- Your own casts: not the pet's abilities, not the command sending it in.
+function Cycles.IsOwnCast(cast)
+	return not cast.pet and cast.name ~= Cycles.PET_ATTACK
+end
+
+-- The class's upkeep spells; a class without any uses the fight's first own spell instead.
 function Cycles.ResetSet(class, casts)
 	local set = {}
 	for _, name in ipairs(Cycles.RESET_SPELLS[class] or {}) do
 		set[Cycles.Key(name)] = true
 	end
-	if next(set) == nil and casts[1] then
-		set[Cycles.Key(casts[1].name)] = true
+	if next(set) == nil then
+		for _, cast in ipairs(casts) do
+			if Cycles.IsOwnCast(cast) then
+				set[Cycles.Key(cast.name)] = true
+				break
+			end
+		end
 	end
 	return set
 end
@@ -57,7 +73,7 @@ function Cycles.Boundaries(casts, resetSet)
 		local key = Cycles.Key(cast.name)
 		if i == 1 then
 			starts[1] = 1
-		elseif resetSet[key] and seen[key] then
+		elseif resetSet[key] and seen[key] and Cycles.IsOwnCast(cast) then
 			starts[#starts + 1] = i
 			seen = {}
 		end
@@ -89,7 +105,7 @@ function Cycles.Split(fight, class)
 		local to = nextStart and casts[nextStart].t or math.max(fight.duration or 0, casts[last].t)
 		local steps = {}
 		for i = first, last do
-			steps[#steps + 1] = { at = casts[i].t - casts[first].t, spell = casts[i].spell, name = casts[i].name }
+			steps[#steps + 1] = { at = casts[i].t - casts[first].t, spell = casts[i].spell, name = casts[i].name, pet = casts[i].pet }
 		end
 		local length = to - from
 		local damage = Cycles.DamageBetween(fight.damage, from, to, nextStart == nil)
