@@ -1,18 +1,14 @@
-local ADDON_NAME = ...
+local _, ns = ...
 local Grimoire = Grimoire
+local M = ns.M
 
--- Tempo, milestone T1: the probe. Before scoring rotations we need to know what fight data
--- Forever gives an add-on: the combat log may be blocked (as in retail Midnight), and
--- damage or health values may be secret. /grim tempo probe lists the APIs this client has,
--- then records the next fight from every source that might work. Results go to
--- SavedVariables\Grimoire_Tempo.lua on /reload, where they can be read directly.
+-- The probe (plan milestone T1): lists the APIs this client has, then records the next
+-- fight from every source that might give damage data. The recorder already uses the
+-- best source it finds; the probe shows what each one actually gave, to tune the order.
+-- Results go to SavedVariables\Grimoire_Tempo.lua on /reload, where they can be read
+-- directly. It has its own event frame, so it never takes events from the recorder.
 
 local MAX_SAMPLES = 40   -- per source, so one long fight can't bloat saved data
-
-local M = Grimoire:NewModule("Tempo", {
-	addon = ADDON_NAME,
-	label = "Tempo",
-})
 
 -- Values are stored as plain text: secrets can't be compared, printed or saved.
 local function Describe(value)
@@ -87,8 +83,10 @@ end
 
 -- Recording ----------------------------------------------------------------------------
 
-function M:Add(source, line)
-	local fight = self.fight
+local probe = {}
+
+local function Add(source, line)
+	local fight = probe.fight
 	if not fight then return end
 	local list = fight.samples[source]
 	if not list then
@@ -101,109 +99,93 @@ function M:Add(source, line)
 	end
 end
 
-function M:OnSpellcast(event, unit, castGUID, spellID)
-	local name = SpellName(spellID)
-	self:Add(event, DescribeAll(unit, spellID) .. (name and (" " .. name) or ""))
+local function TargetHealth(label)
+	local percent = UnitHealthPercent and select(2, pcall(UnitHealthPercent, "target"))
+	Add(label, ("health %s / %s, percent %s"):format(
+		Describe(UnitHealth("target")), Describe(UnitHealthMax("target")), Describe(percent)))
 end
 
-function M:OnUnitCombat(event, unit, action, descriptor, amount, school)
-	self:Add(event, DescribeAll(unit, action, descriptor, amount, school))
-end
+local HANDLERS = {
+	UNIT_SPELLCAST_SENT = function(event, unit, _, _, spellID)
+		Add(event, DescribeAll(unit, spellID) .. (SpellName(spellID) and (" " .. SpellName(spellID)) or ""))
+	end,
+	UNIT_SPELLCAST_SUCCEEDED = function(event, unit, _, spellID)
+		Add(event, DescribeAll(unit, spellID) .. (SpellName(spellID) and (" " .. SpellName(spellID)) or ""))
+	end,
+	UNIT_COMBAT = function(event, unit, action, descriptor, amount, school)
+		Add(event, DescribeAll(unit, action, descriptor, amount, school))
+	end,
+	UNIT_HEALTH = function(event)
+		TargetHealth(event)
+	end,
+	COMBAT_LOG_EVENT_UNFILTERED = function(event)
+		local ok, _, subevent, _, sourceGUID, _, _, _, _, _, _, _, spellID, spellName, _, amount =
+			pcall(CombatLogGetCurrentEventInfo)
+		if not ok then
+			Add(event, "error reading event")
+		elseif Grimoire.IsSecret(sourceGUID) or sourceGUID ~= UnitGUID("player") then
+			probe.fight.counts.otherCombatLog = (probe.fight.counts.otherCombatLog or 0) + 1
+		else
+			Add(event, DescribeAll(subevent, spellID, spellName, amount))
+		end
+	end,
+}
 
-function M:OnTargetHealth(event, unit)
-	local percent = UnitHealthPercent and select(2, pcall(UnitHealthPercent, unit))
-	self:Add(event, ("health %s / %s, percent %s"):format(
-		Describe(UnitHealth(unit)), Describe(UnitHealthMax(unit)), Describe(percent)))
-end
-
-function M:OnCombatLog()
-	local ok, timestamp, subevent, _, sourceGUID, _, _, _, destGUID, _, _, _, spellID, spellName, _, amount =
-		pcall(CombatLogGetCurrentEventInfo)
-	if not ok then
-		self:Add("COMBAT_LOG_EVENT_UNFILTERED", "error reading event")
-		return
-	end
-	if Grimoire.IsSecret(sourceGUID) or sourceGUID ~= UnitGUID("player") then
-		-- Only count other units' events; keep samples for the player's own.
-		self.fight.counts.otherCombatLog = (self.fight.counts.otherCombatLog or 0) + 1
-		return
-	end
-	self:Add("COMBAT_LOG_EVENT_UNFILTERED", DescribeAll(subevent, spellID, spellName, amount))
-end
-
-function M:StartFight()
-	if not self.armed or self.fight then return end
-	self.fight = {
+function M:ProbeStart()
+	if not probe.armed or probe.fight then return end
+	probe.fight = {
 		start = GetTime(),
 		target = UnitExists("target") and Describe(UnitName("target")) or "none",
 		samples = {},
 		counts = {},
 	}
-	for _, event in ipairs({ "UNIT_SPELLCAST_SENT", "UNIT_SPELLCAST_SUCCEEDED" }) do
-		self:RegisterUnitEvent(event, "player", "OnSpellcast")
+	local frame = probe.frame
+	if not frame then
+		frame = CreateFrame("Frame")
+		frame:SetScript("OnEvent", function(_, event, ...) HANDLERS[event](event, ...) end)
+		probe.frame = frame
 	end
-	self:RegisterUnitEvent("UNIT_COMBAT", "target", "OnUnitCombat")
-	self:RegisterUnitEvent("UNIT_HEALTH", "target", "OnTargetHealth")
+	frame:RegisterUnitEvent("UNIT_SPELLCAST_SENT", "player")
+	frame:RegisterUnitEvent("UNIT_SPELLCAST_SUCCEEDED", "player")
+	frame:RegisterUnitEvent("UNIT_COMBAT", "target")
+	frame:RegisterUnitEvent("UNIT_HEALTH", "target")
 	-- Retail Midnight forbids add-ons this event; a refusal is itself a probe result.
-	local frame = self:GetEventFrame()
-	frame.handlers.COMBAT_LOG_EVENT_UNFILTERED = "OnCombatLog"
 	local ok, err = pcall(frame.RegisterEvent, frame, "COMBAT_LOG_EVENT_UNFILTERED")
-	self.fight.combatLog = ok and "registered" or ("refused: " .. Describe(err))
-	self:OnTargetHealth("UNIT_HEALTH (start)", "target")
-	self:Print("Recording this fight.")
+	probe.fight.combatLog = ok and "registered" or ("refused: " .. Describe(err))
+	TargetHealth("UNIT_HEALTH (start)")
+	self:Print("Probe: recording this fight.")
 end
 
-function M:StopFight()
-	local fight = self.fight
+function M:ProbeStop()
+	local fight = probe.fight
 	if not fight then return end
-	for _, event in ipairs({ "UNIT_SPELLCAST_SENT", "UNIT_SPELLCAST_SUCCEEDED", "UNIT_COMBAT",
-		"UNIT_HEALTH", "COMBAT_LOG_EVENT_UNFILTERED" }) do
-		self:UnregisterEvent(event)
-	end
-	self:OnTargetHealth("UNIT_HEALTH (end)", "target")
+	probe.frame:UnregisterAllEvents()
+	TargetHealth("UNIT_HEALTH (end)")
 	fight.duration = GetTime() - fight.start
 	fight.start = nil
 	fight.damageMeter = SampleDamageMeter()
-	self.fight, self.armed = nil, false
+	fight.recorder = {
+		combatLogAllowed = self.combatLogAllowed,
+		usedSource = self:GetCharacter().fights[1] and self:GetCharacter().fights[1].source or "none",
+	}
+	probe.fight, probe.armed = nil, false
 
 	local version, build = GetBuildInfo()
-	GrimoireTempoDB = GrimoireTempoDB or {}
-	GrimoireTempoDB.probe = {
+	self.store.probe = {
 		time = date("%Y-%m-%d %H:%M"),
 		build = version .. "." .. build,
 		inventory = Inventory(),
 		fight = fight,
 	}
-	self:Print(("Fight recorded (%.0f s). Combat log: %s. Casts seen: %d, damage events (UNIT_COMBAT): %d.")
+	self:Print(("Probe: fight recorded (%.0f s). Combat log: %s. Casts seen: %d, damage events (UNIT_COMBAT): %d.")
 		:format(fight.duration, fight.combatLog, fight.counts.UNIT_SPELLCAST_SUCCEEDED or 0, fight.counts.UNIT_COMBAT or 0))
 	self:Print("/reload to write it to SavedVariables\\Grimoire_Tempo.lua.")
 end
 
-function M:Arm()
-	if not self:IsEnabled() then
-		Grimoire:Print("Tempo is turned off.")
-		return
-	end
-	self.armed = true
-	self:RegisterEvent("PLAYER_REGEN_DISABLED", "StartFight")
-	self:RegisterEvent("PLAYER_REGEN_ENABLED", "StopFight")
+function M:ArmProbe()
+	probe.armed = true
 	self:Print("Probe ready: target a mob and fight it. Results save when combat ends.")
 	if InCombatLockdown() then
-		self:StartFight()
+		self:ProbeStart()
 	end
-end
-
-function M:OnInitialize()
-	Grimoire:RegisterCommand("tempo", "tempo probe - record the next fight to see what data this client gives", function(arg)
-		if (arg or ""):lower() == "probe" then
-			self:Arm()
-		else
-			Grimoire:Print("Usage: /grim tempo probe")
-		end
-	end)
-end
-
-function M:OnDisable()
-	self:StopFight()
-	self.armed = false
 end

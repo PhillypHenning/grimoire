@@ -1,8 +1,8 @@
 # Tempo: learn your best rotation and play it back
 
 > **Progress (2026-10-16, on the PC):**
-> - **T1 (probe):** code done. `Grimoire_Tempo` with `/grim tempo probe`. Waiting for Phil to fight one mob and `/reload`; then Claude reads `SavedVariables\Grimoire_Tempo.lua` and picks the damage source for T2.
-> - **T2–T5:** not started.
+> - **T1 (probe):** code done. `/grim tempo probe`. Waiting for Phil to fight one mob and `/reload`; then Claude reads `SavedVariables\Grimoire_Tempo.lua` and tunes the damage-source order.
+> - **T2–T5:** code done the same day (Phil: "go ahead with the plan"), without waiting for the probe: the recorder listens to every damage source at once and keeps the best that gave data. `Cycles.lua` and `Share.lua` are tested with `lua scripts/tempo/test.lua`. Waiting on in-game testing.
 
 ## Context
 Phil wants a component that watches his fights, works out which sequence of casts did the most damage, and plays that sequence back in later fights like sheet music, so he can repeat it or try variations. He wants it as a teaching aid.
@@ -33,22 +33,22 @@ A "combo" in Tempo is one **cycle**: the casts from putting your DoTs on to the 
 
 **Phil:** `/reload`, `/grim tempo probe`, fight one mob to the end with your usual rotation, `/reload`. Then tell Claude. No screenshots needed.
 
-### T2: recorder
+### T2: recorder (done, waiting on a test)
 Per character (ADR 0003): each fight saves casts with timestamps, damage over time from the source the probe picked, duration, and the target's name and level. Only the last N fights are kept (setting). Fights shorter than a few seconds are dropped.
 
-### T3: cycles and scoring
+### T3: cycles and scoring (done, waiting on a test)
 - Split each fight into an opener plus cycles. A cycle ends when a DoT you already applied is applied again. Each class has a short list of "cycle reset" spells, Warlock first.
 - Score each cycle by damage per second, so short and long cycles compare fairly.
-- Keep the best opener and the best cycle per character, plus the top few to compare.
+- Keep the best opener and the best cycle per character. (Built: every fight's segments can be opened in the window to compare; a "top few" list wasn't needed.)
 - A window lists past fights and cycles: spell icons in order, DPS, which one is best.
 
-### T4: playback lane
+### T4: playback lane (done, waiting on a test)
 - A music-staff style lane (classic look, ADR 0001), movable: upcoming spell icons scroll toward a "now" line at the pace they were cast.
 - Each cast you make is checked against the next note: on time, early, late or a different spell. Matches light up; misses show in red.
 - Modes: **Follow** (best rotation), **Pinned** (a rotation you chose), **Experiment** (no guide, records only, so a new idea can beat the best).
 - After the fight: a short summary (accuracy, DPS against the rotation's).
 
-### T5: teaching
+### T5: teaching (done, waiting on a test)
 - Export and import rotations as text (like Prophecy plans, ADR 0006), so one can be handed to another player.
 - A rotation can carry notes ("refresh Corruption when under 3 s").
 
