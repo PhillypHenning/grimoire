@@ -623,17 +623,65 @@ function M:PlaceBlizzardAuras()
 		self.lastAuraReport = report
 		self:Log("info", "%s", report)
 	end
+	if #buffs + #debuffs == 0 and UnitExists("target") then
+		self:DescribeBlizzardTargetFrame()
+	end
+end
+
+-- Temporary probe (2026-10-17): Forever's target frame keeps its aura icons neither in
+-- auraPools nor in TargetFrameBuffN/DebuffN. Logs, once per session, what it does have.
+local function DescribeFrame(frame, depth, lines)
+	for _, child in ipairs({ frame:GetChildren() }) do
+		if #lines >= 60 then return end
+		local keys = {}
+		for key, value in pairs(child) do
+			if type(key) == "string" and (type(value) == "table" or type(value) == "number") then
+				keys[#keys + 1] = key
+			end
+		end
+		table.sort(keys)
+		lines[#lines + 1] = ("%s%s %s shown=%s children=%d keys=%s"):format(("  "):rep(depth),
+			child:GetObjectType(), child:GetName() or child:GetDebugName() or "?", tostring(child:IsShown()),
+			child:GetNumChildren(), table.concat(keys, ",", 1, math.min(#keys, 12)))
+		if depth < 2 then
+			DescribeFrame(child, depth + 1, lines)
+		end
+	end
+end
+
+function M:DescribeBlizzardTargetFrame()
+	if self.describedTargetFrame then return end
+	self.describedTargetFrame = true
+	local fields = {}
+	for key, value in pairs(TargetFrame) do
+		if type(key) == "string" and (key:lower():find("aura") or key:lower():find("buff")) then
+			fields[#fields + 1] = ("%s=%s"):format(key, type(value))
+		end
+	end
+	table.sort(fields)
+	local globals = {}
+	for _, name in ipairs({ "TargetFrame_UpdateAuras", "TargetFrameBuff1", "TargetFrameDebuff1",
+		"TargetFrameBuffs", "TargetFrameDebuffs" }) do
+		globals[#globals + 1] = ("%s=%s"):format(name, type(_G[name]))
+	end
+	local lines = {}
+	pcall(DescribeFrame, TargetFrame, 0, lines)
+	self:Log("info", "Blizzard target frame: hooked %s; fields %s; globals %s; in combat %s\n%s",
+		table.concat(self.borrowHooks or {}, ","), table.concat(fields, " "), table.concat(globals, " "),
+		tostring(InCombatLockdown()), table.concat(lines, "\n"))
 end
 
 -- Makes Blizzard's target frame invisible and click-through but leaves it running.
 -- Returns false when its aura updates can't be hooked (then it's hidden as before).
 function M:BorrowBlizzardAuras()
 	local hooked = false
+	self.borrowHooks = {}
 	local function place() self:PlaceBlizzardAuras() end
 	for _, method in ipairs({ "UpdateAuras", "UpdateAuraPositions" }) do
 		if type(TargetFrame[method]) == "function" then
 			hooksecurefunc(TargetFrame, method, place)
 			hooked = true
+			self.borrowHooks[#self.borrowHooks + 1] = method
 		end
 	end
 	if type(_G.TargetFrame_UpdateAuras) == "function" then
@@ -641,6 +689,7 @@ function M:BorrowBlizzardAuras()
 			if frame == TargetFrame then place() end
 		end)
 		hooked = true
+		self.borrowHooks[#self.borrowHooks + 1] = "TargetFrame_UpdateAuras"
 	end
 	if not hooked then return false end
 
