@@ -33,6 +33,7 @@ flowchart TD
 - **Levels:** error, warn, info, debug. Each component's level is set in its menu (*Debug log ▸ Errors only / Normal / Everything*); *Debug ▸ Log everything* sets them all. Errors are always kept.
 - **Earlier sessions:** the saved log is loaded back and shown above "this session", so an error from before a `/reload` is still there.
 - **First error:** chat says once per session that an error was logged.
+- **Error count on the Grimoire button** (learned from BugSack): a red badge counts errors logged this session that the log hasn't shown yet; opening the log clears it (`Grimoire.errorCount` / `errorsSeen`, callback `ErrorCountChanged`).
 
 ## Code highlights
 

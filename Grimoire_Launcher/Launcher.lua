@@ -82,7 +82,29 @@ function M:ShowTooltip()
 	tooltip:AddLine("Left-click: menu", 1, 1, 1)
 	tooltip:AddLine(Grimoire.moversUnlocked and "Right-click: lock frames" or "Right-click: move frames", 1, 1, 1)
 	tooltip:AddLine("Drag: move this button", 1, 1, 1)
+	local errors = self:ErrorCount()
+	if errors > 0 then
+		tooltip:AddLine(("%d new Lua error%s: Debug ▸ Show log"):format(errors, errors == 1 and "" or "s"), 1, 0.25, 0.25)
+	end
 	tooltip:Show()
+end
+
+-- Errors logged this session that the Debug log hasn't shown yet (learned from BugSack:
+-- you notice errors without opening anything). Only while Debug is on, since that's where
+-- they're read.
+function M:ErrorCount()
+	local debug = Grimoire:GetModule("Debug")
+	if not (debug and debug:IsEnabled()) then return 0 end
+	return Grimoire:GetUnseenErrorCount()
+end
+
+function M:UpdateErrorBadge()
+	local errors = self:ErrorCount()
+	self.badge:SetShown(errors > 0)
+	self.badge.text:SetText(errors > 99 and "99+" or errors)
+	if GameTooltip:IsOwned(self.button) then
+		self:ShowTooltip()
+	end
 end
 
 function M:UpdateState()
@@ -104,6 +126,19 @@ function M:Build()
 	self.button = button
 	self.icon = button.icon
 	self:ApplyIcon()
+
+	-- Unseen error count: a small red badge on the button's top-right.
+	local badge = CreateFrame("Frame", nil, button)
+	badge:SetSize(18, 14)
+	badge:SetPoint("TOPRIGHT", 2, 2)
+	badge:SetFrameLevel(button:GetFrameLevel() + 5)
+	local bg = badge:CreateTexture(nil, "BACKGROUND")
+	bg:SetAllPoints()
+	bg:SetColorTexture(0.75, 0, 0, 0.9)
+	badge.text = badge:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+	badge.text:SetPoint("CENTER")
+	badge:Hide()
+	self.badge = badge
 
 	button:SetScript("OnDragStart", function(b)
 		b:StartMoving()
@@ -142,7 +177,11 @@ function M:OnEnable()
 	self:RegisterCallback("MoversUnlocked", "UpdateState")
 	self:RegisterCallback("MoversLocked", "UpdateState")
 	self:RegisterCallback("PositionsReset", "ResetPosition")
+	self:RegisterCallback("ErrorCountChanged", "UpdateErrorBadge")
+	self:RegisterCallback("ModuleEnabled", "UpdateErrorBadge") -- Debug turned on or off
+	self:RegisterCallback("ModuleDisabled", "UpdateErrorBadge")
 	self:UpdateState()
+	self:UpdateErrorBadge()
 end
 
 function M:OnDisable()

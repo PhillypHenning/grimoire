@@ -61,10 +61,37 @@ function Grimoire:Log(source, level, fmt, ...)
 		if #log > MAX_ENTRIES then
 			table.remove(log, 1)
 		end
+		if level == "error" then
+			self.errorCount = self.errorCount + 1
+			self:NotifyErrorCount()
+		end
 	end
 	if self.onLog then
 		pcall(self.onLog) -- the Debug window refreshes; never let that break logging
 	end
+end
+
+-- Errors logged this session, and how many of them the Debug log has shown. The Grimoire
+-- button shows the difference (learned from BugSack). "ErrorCountChanged" fires on the
+-- next frame, so a failing listener can't loop back into logging.
+Grimoire.errorCount, Grimoire.errorsSeen = 0, 0
+
+function Grimoire:NotifyErrorCount()
+	if self.errorNotifyQueued or not C_Timer then return end
+	self.errorNotifyQueued = true
+	C_Timer.After(0, function()
+		self.errorNotifyQueued = false
+		self:Fire("ErrorCountChanged")
+	end)
+end
+
+function Grimoire:MarkErrorsSeen()
+	self.errorsSeen = self.errorCount
+	self:NotifyErrorCount()
+end
+
+function Grimoire:GetUnseenErrorCount()
+	return self.errorCount - self.errorsSeen
 end
 
 -- Lua errors ---------------------------------------------------------------------------

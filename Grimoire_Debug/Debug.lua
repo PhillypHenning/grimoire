@@ -234,6 +234,7 @@ function M:ShowLog(source)
 	self.mode, self.filter = "log", source
 	self.window:Show()
 	self:UpdateWindow()
+	Grimoire:MarkErrorsSeen() -- clears the count on the Grimoire button
 end
 
 function M:ShowReport()
@@ -245,6 +246,7 @@ end
 
 function M:Clear()
 	wipe(Grimoire.log)
+	Grimoire:MarkErrorsSeen()
 	wipe(self.previous)
 	GrimoireDebugDB.log = {}
 	self:UpdateWindow()

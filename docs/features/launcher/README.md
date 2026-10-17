@@ -56,6 +56,7 @@ end
 
 ## Design decisions
 
+- **Error badge** (2026-10-16, learned from BugSack): while Debug is on, a red count on the button's corner shows Lua errors not yet seen in the Debug log; its tooltip says how to open it.
 - **Left-click is the menu** (your call). The menu is used more often than move mode, and it now covers everything the button did before.
 - **Bigger by default, and the same as every other button** (Phil, 2026-10-16: "all the buttons need to be larger and the same size"). The size is a shared Layout setting, default Large (44 px).
 - **Free-floating, not on the minimap** (your call). It uses the classic round-button art so it still looks like part of the game (ADR 0001).
