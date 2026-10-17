@@ -136,17 +136,26 @@ function M:UpdateAll()
 end
 
 -- Out-of-range members fade, like Blizzard's. This is the member's own alpha; the
--- mover's alpha (idle dimming) stays with core.
+-- mover's alpha (idle dimming) stays with core. Forever can answer the range check with
+-- secret booleans (seen 2026-10-17); those can't be tested, only handed to a widget.
 function M:UpdateRange()
 	for _, button in ipairs(self.members) do
 		local alpha = 1
 		if UnitExists(button.unit) and UnitInRange then
 			local inRange, checked = UnitInRange(button.unit)
-			if checked and not inRange then
+			if Grimoire.AnySecret(inRange, checked) then
+				if not (button.SetAlphaFromBoolean
+					and pcall(button.SetAlphaFromBoolean, button, inRange, 1, OUT_OF_RANGE_ALPHA)) then
+					button:SetAlpha(1)
+				end
+				alpha = nil
+			elseif checked and not inRange then
 				alpha = OUT_OF_RANGE_ALPHA
 			end
 		end
-		button:SetAlpha(alpha)
+		if alpha then
+			button:SetAlpha(alpha)
+		end
 	end
 end
 

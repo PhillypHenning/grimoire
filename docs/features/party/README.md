@@ -52,7 +52,7 @@ self:RegisterMover(holder, "Party", { "TOPLEFT", "UIParent", "TOPLEFT", 20, -160
 - **Classic art** ([ADR 0001](../../adr/0001-prefer-classic-style-ui.md)): Blizzard's `UI-PartyFrame` texture with the portrait and bars in its slots, and names in class colour ([ADR 0003](../../adr/0003-show-character-and-class-color.md)).
 - **One mover, fixed slots** (Phil's request): nothing can be dragged apart. Size and spacing are settings instead.
 - **Hidden in raids by default**, until Grimoire has raid frames (backlog).
-- **Out-of-range fading** sets the member's own alpha; the frame's idle dimming (core) is separate and off by default.
+- **Out-of-range fading** sets the member's own alpha; the frame's idle dimming (core) is separate and off by default. Forever can return the range check as secret booleans (seen 2026-10-17); those go to `SetAlphaFromBoolean` untested, and where that call doesn't exist the member stays fully visible.
 - **Blizzard's party frames are hidden** ([ADR 0004](../../adr/0004-components-replace-blizzard-ui.md)). Their party-pet frames are children and go with them; Grimoire has no party-pet frames yet.
 
 ## Combat & secret-value constraints
