@@ -22,7 +22,6 @@ flowchart LR
 ```mermaid
 flowchart TD
     Casts[UNIT_SPELLCAST_SUCCEEDED player<br/>+ casts up to 3 s before combat] --> Rec[Recorder]
-    CL[combat log, if allowed] --> Rec
     UC[UNIT_COMBAT target] --> Rec
     HP[target health per mob] --> Rec
     Rec -- combat ends --> Fight[fight: casts + damage from<br/>the best source that gave data]
@@ -45,7 +44,7 @@ flowchart TD
 
 **The pull counts** ([`Recorder.lua`](../../../Grimoire_Tempo/Recorder.lua)). Combat starts when the first spell lands, after it was cast, so casts from the last 3 s before combat are kept and the music starts at the first of them.
 
-**Damage sources tried at once.** The combat log, `UNIT_COMBAT` and target health all record; the fight keeps the best one that gave data and remembers which (`fight.source`, shown in the window). Secret values are skipped, never compared.
+**Damage sources tried at once.** `UNIT_COMBAT` and target health both record; the fight keeps the best one that gave data and remembers which (`fight.source`, shown in the window). Secret values are skipped, never compared.
 
 **The probe** ([`Probe.lua`](../../../Grimoire_Tempo/Probe.lua)). `/grim tempo probe` records one fight from every source on its own event frame and saves what each gave (secrets as `<secret>`), plus the client's `C_DamageMeter` and `C_CombatLog` functions.
 
@@ -53,7 +52,7 @@ flowchart TD
 
 - **Casts, not keystrokes.** Add-ons can't record key presses; casts are what a rotation is made of, whether from keybinds, clicks or macros.
 - **Guide only.** Tempo never casts anything (the game wouldn't allow it).
-- **Your damage only** when the combat log is available (pet damage left out: it doesn't depend on your rotation). The fallbacks count everyone's damage to your target, so group fights score less precisely.
+- **No combat log.** Forever blocks `COMBAT_LOG_EVENT_UNFILTERED` for add-ons: registering it brought up "Grimoire_Tempo has been blocked from an action only available to the Blizzard UI" (2026-10-16), which `pcall` can't catch. DBM skips it on Forever too. So damage is what your target takes, from anyone: solo fights score exactly, group fights less precisely.
 - **Classic look** (ADR 0001): the lane is a classic bordered box with five staff lines and a gold "now" line.
 - **Per character** (ADR 0003): fights and bests are saved per character; the window names the character. Imported rotations are account-wide.
 - **Text sharing** like Prophecy plans (ADR 0006): readable lines, nothing in them is run.
@@ -81,5 +80,5 @@ _None yet._
 ## Open questions / roadmap
 
 - Which damage source this client really gives: settled by the probe; the order may change.
-- DoT damage that lands after a cycle ends counts toward the next one. With the combat log, damage could be credited to the spell that caused it instead.
+- DoT damage that lands after a cycle ends counts toward the next one.
 - Classes without DoTs get a crude cycle rule (first spell repeated); better rules later.

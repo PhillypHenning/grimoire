@@ -15,8 +15,9 @@ A "combo" in Tempo is one **cycle**: the casts from putting your DoTs on to the 
 
 ## What the client allows (to confirm with the probe)
 - **Keystrokes can't be recorded**, and don't need to be: Tempo records **casts** (`UNIT_SPELLCAST_SUCCEEDED` for the player). That covers keybinds, clicks and macros alike.
+- **The combat log is blocked** (confirmed 2026-10-16: registering it raised the "blocked from an action only available to the Blizzard UI" pop-up; DBM also skips it on Forever). Tempo no longer registers it.
 - **Damage numbers are the unknown.** Details ships a "no combat log" parser, which suggests Forever blocks `COMBAT_LOG_EVENT_UNFILTERED` for add-ons, as retail Midnight does. Candidate sources, best first:
-  1. the combat log (exact damage per spell, if allowed);
+  1. ~~the combat log~~ (blocked);
   2. `C_DamageMeter` (Blizzard's built-in meter, if present);
   3. `UNIT_COMBAT` on the target (damage taken, not split by source);
   4. the target's health dropping (works even when values are secret if percentages aren't; doesn't tell your damage from others').
@@ -27,7 +28,6 @@ A "combo" in Tempo is one **cycle**: the casts from putting your DoTs on to the 
 ### T1: probe (done, waiting on a test)
 `/grim tempo probe` arms a recorder for the next fight. It saves:
 - which APIs exist (`CombatLogGetCurrentEventInfo`, `C_DamageMeter` and its functions, `C_CombatLog`, `UnitHealthPercent`, …);
-- whether the combat log could be registered, and samples of the player's events;
 - the player's casts, `UNIT_COMBAT` on the target, and target health, each marked `<secret>` where the value is secret;
 - the result of every `C_DamageMeter.Get*` function after the fight.
 

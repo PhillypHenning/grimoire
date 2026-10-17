@@ -4,11 +4,13 @@ local M = ns.M
 local Cycles = ns.Cycles
 
 -- The recorder (plan milestone T2). Casts come from UNIT_SPELLCAST_SUCCEEDED, so keybinds,
--- clicks and macros all count. Damage comes from whichever source this client allows,
--- all listened to at once and the best one kept per fight:
---   combatLog   your own damage, exact (if add-ons may read the combat log)
+-- clicks and macros all count. Damage comes from whichever source gives data, both
+-- listened to at once and the better one kept per fight:
 --   unitCombat  damage your target takes (anyone's), from UNIT_COMBAT
 --   health      percent of your target's health lost; the last resort
+-- The combat log is off limits: Forever blocks it for add-ons (an "action only available
+-- to the Blizzard UI" pop-up, seen 2026-10-16; DBM skips it on Forever too), and the
+-- block can't be caught with pcall, so Tempo never registers it.
 -- Secret values are skipped, never compared: a source that only gives secrets ends up
 -- empty and the next one is used.
 --
@@ -22,9 +24,9 @@ local BUCKET = 0.5         -- damage is summed into half-second buckets to keep 
 local MAX_CASTS = 400
 local COLLAPSE = { [75] = true, [5019] = true } -- Auto Shot, Shoot (wand): one note per run
 
-local SOURCES = { "combatLog", "unitCombat", "health" }
-local SOURCE_UNIT = { combatLog = "damage", unitCombat = "damage", health = "health" }
-M.SOURCE_LABELS = { combatLog = "combat log", unitCombat = "damage taken", health = "target health" }
+local SOURCES = { "unitCombat", "health" }
+local SOURCE_UNIT = { unitCombat = "damage", health = "health" }
+M.SOURCE_LABELS = { unitCombat = "damage taken", health = "target health" }
 
 local function SpellName(spellID)
 	if C_Spell and C_Spell.GetSpellName then return C_Spell.GetSpellName(spellID) end
@@ -66,22 +68,6 @@ local function AddDamage(rec, source, amount)
 		last.amount = last.amount + amount
 	else
 		list[#list + 1] = { time = t, amount = amount }
-	end
-end
-
-function M:OnCombatLog()
-	local rec = self.recording
-	if not rec then return end
-	local _, subevent, _, sourceGUID, _, _, _, _, _, _, _, arg12, _, _, arg15 = CombatLogGetCurrentEventInfo()
-	if Grimoire.AnySecret(subevent, sourceGUID) or sourceGUID ~= self.playerGUID or not subevent then return end
-	local amount
-	if subevent == "SWING_DAMAGE" then
-		amount = arg12
-	elseif subevent:find("_DAMAGE$") then -- SPELL_, SPELL_PERIODIC_, RANGE_
-		amount = arg15
-	end
-	if type(amount) == "number" and not Grimoire.IsSecret(amount) and amount > 0 then
-		AddDamage(rec, "combatLog", amount)
 	end
 end
 
@@ -129,13 +115,6 @@ function M:EnableRecorder()
 	self:RegisterUnitEvent("UNIT_COMBAT", "target", "OnTargetCombat")
 	self:RegisterUnitEvent("UNIT_HEALTH", "target", "OnTargetHealth")
 	self:RegisterEvent("PLAYER_TARGET_CHANGED", "OnTargetHealth")
-	-- Retail Midnight forbids add-ons the combat log. After one refusal it isn't asked again
-	-- this session (no repeated errors); otherwise it's registered on every enable.
-	if self.combatLogAllowed ~= false then
-		local frame = self:GetEventFrame()
-		frame.handlers.COMBAT_LOG_EVENT_UNFILTERED = "OnCombatLog"
-		self.combatLogAllowed = pcall(frame.RegisterEvent, frame, "COMBAT_LOG_EVENT_UNFILTERED") and true or false
-	end
 end
 
 local function TargetName()
@@ -157,7 +136,7 @@ function M:StartRecording()
 		target = TargetName(),
 		casts = casts,
 		health = {},
-		sources = { combatLog = {}, unitCombat = {}, health = {} },
+		sources = { unitCombat = {}, health = {} },
 	}
 	self:OnTargetHealth()
 end

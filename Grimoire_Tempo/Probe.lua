@@ -5,6 +5,7 @@ local M = ns.M
 -- The probe (plan milestone T1): lists the APIs this client has, then records the next
 -- fight from every source that might give damage data. The recorder already uses the
 -- best source it finds; the probe shows what each one actually gave, to tune the order.
+-- The combat log isn't probed: registering it is blocked on Forever (see Recorder.lua).
 -- Results go to SavedVariables\Grimoire_Tempo.lua on /reload, where they can be read
 -- directly. It has its own event frame, so it never takes events from the recorder.
 
@@ -118,17 +119,6 @@ local HANDLERS = {
 	UNIT_HEALTH = function(event)
 		TargetHealth(event)
 	end,
-	COMBAT_LOG_EVENT_UNFILTERED = function(event)
-		local ok, _, subevent, _, sourceGUID, _, _, _, _, _, _, _, spellID, spellName, _, amount =
-			pcall(CombatLogGetCurrentEventInfo)
-		if not ok then
-			Add(event, "error reading event")
-		elseif Grimoire.IsSecret(sourceGUID) or sourceGUID ~= UnitGUID("player") then
-			probe.fight.counts.otherCombatLog = (probe.fight.counts.otherCombatLog or 0) + 1
-		else
-			Add(event, DescribeAll(subevent, spellID, spellName, amount))
-		end
-	end,
 }
 
 function M:ProbeStart()
@@ -149,9 +139,6 @@ function M:ProbeStart()
 	frame:RegisterUnitEvent("UNIT_SPELLCAST_SUCCEEDED", "player")
 	frame:RegisterUnitEvent("UNIT_COMBAT", "target")
 	frame:RegisterUnitEvent("UNIT_HEALTH", "target")
-	-- Retail Midnight forbids add-ons this event; a refusal is itself a probe result.
-	local ok, err = pcall(frame.RegisterEvent, frame, "COMBAT_LOG_EVENT_UNFILTERED")
-	probe.fight.combatLog = ok and "registered" or ("refused: " .. Describe(err))
 	TargetHealth("UNIT_HEALTH (start)")
 	self:Print("Probe: recording this fight.")
 end
@@ -165,7 +152,6 @@ function M:ProbeStop()
 	fight.start = nil
 	fight.damageMeter = SampleDamageMeter()
 	fight.recorder = {
-		combatLogAllowed = self.combatLogAllowed,
 		usedSource = self:GetCharacter().fights[1] and self:GetCharacter().fights[1].source or "none",
 	}
 	probe.fight, probe.armed = nil, false
@@ -177,8 +163,8 @@ function M:ProbeStop()
 		inventory = Inventory(),
 		fight = fight,
 	}
-	self:Print(("Probe: fight recorded (%.0f s). Combat log: %s. Casts seen: %d, damage events (UNIT_COMBAT): %d.")
-		:format(fight.duration, fight.combatLog, fight.counts.UNIT_SPELLCAST_SUCCEEDED or 0, fight.counts.UNIT_COMBAT or 0))
+	self:Print(("Probe: fight recorded (%.0f s). Casts seen: %d, damage events (UNIT_COMBAT): %d.")
+		:format(fight.duration, fight.counts.UNIT_SPELLCAST_SUCCEEDED or 0, fight.counts.UNIT_COMBAT or 0))
 	self:Print("/reload to write it to SavedVariables\\Grimoire_Tempo.lua.")
 end
 
