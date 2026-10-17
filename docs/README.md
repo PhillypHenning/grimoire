@@ -47,6 +47,7 @@ Plans: [Troll Warlock, 1 to 30](prophecy/plans/troll-warlock-1-30.prophecy) (con
 | [0006](adr/0006-prophecy-plans-are-pasted-text.md) | Prophecy plans are pasted text, stored in saved variables | Accepted |
 | [0007](adr/0007-hide-blizzard-frames-in-place.md) | Hide Blizzard frames in place, without reparenting (supersedes part of 0004) | Accepted |
 | [0008](adr/0008-borrow-blizzard-target-auras.md) | Borrow Blizzard's target aura icons (amends 0007 for the target frame) | Accepted |
+| [0009](adr/0009-move-blizzard-target-aura-container.md) | Move Blizzard's target aura container, not its icons (supersedes part of 0008) | Accepted |
 
 Number new ADRs sequentially and never edit an accepted one's decision. Supersede it with a new ADR instead.
 
