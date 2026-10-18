@@ -193,7 +193,7 @@ Code that more than one component needs lives in core, so components never depen
 | `Homunculus.SetUnitValueText(text, unit, kind, current, max, showValue, showPercent)` | `Core/UnitFrames.lua` | "84 - 84%", "84" or "84%". With secret values the % comes from the client (`UnitHealthPercent` / `UnitPowerPercent`, scaled to 100) where it has them; otherwise the raw value |
 | `Homunculus.CreateStatusBar` / `UpdateUnitBar` / `SetUnitRightClickMenu` / `UnitLevelText` / `BindingLabel` | `Core/UnitFrames.lua` | Pieces for frames holding several units in one mover (party, target): bars with Dead/Ghost/Offline, the unit menu, difficulty-coloured level, short keybind labels |
 | `Homunculus:GetAddOnButtonMenu()` / `GetAddOnButtons()` | `Core/AddOnButtons.lua` | Other add-ons' minimap buttons (LibDBIcon/LDB via `LibStub`, plus loose minimap buttons) as menu entries: Open, Options, Show on minimap; hidden ones saved in `profile.addonButtons` |
-| `Homunculus.CreateRoundButton(name, parent?)` | `Core/Widgets.lua` | Minimap-style round button (Homunculus button, Notes button); set `button.icon` |
+| `Homunculus.CreateRoundButton(name, parent?)` | `Core/Widgets.lua` | Minimap-style round button (Homunculus button, Grimoire button); set `button.icon` |
 | `Homunculus.CreateScrollArea(parent, name, child?)` | `Core/Widgets.lua` | Scroll frame with scrollbar |
 | `Homunculus.CreateDisplaySlot` / `SetDisplaySlotItem` | `Core/Widgets.lua` | Read-only item slot (tooltip, shift-click link) for cached items |
 | `Homunculus.GetBagIDs` / `GetBankIDs` / `ReadContainer` | `Core/Containers.lua` | Inventory reading, including both bank-bag and bank-tab layouts |

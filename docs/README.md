@@ -18,7 +18,7 @@ Each component is its own add-on and can be switched on or off in the in-game Ad
 | [Bags](features/bags/README.md) | `Homunculus_Bags` | Tested in game (window, new-item glow) |
 | [Bank](features/bank/README.md) | `Homunculus_Bank` | Scaffolded, untested in game |
 | [Auctions](features/auctions/README.md) | `Homunculus_Auctions` | Scaffolded, untested in game |
-| [Notes](features/notes/README.md) | `Homunculus_Notes` | Scaffolded, untested in game |
+| [Grimoire](features/grimoire/README.md) | `Homunculus_Grimoire` | Notes with locations, item and quest links; untested in game |
 | [Launcher](features/launcher/README.md) | `Homunculus_Launcher` | Scaffolded, untested in game |
 | [Tweaks](features/tweaks/README.md) | `Homunculus_Tweaks` | Scaffolded, untested in game |
 | [Prophecy](features/prophecy/README.md) | `Homunculus_Prophecy` | Scaffolded, untested in game (phase 5a: import, viewer, step panel) |

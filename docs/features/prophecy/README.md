@@ -88,7 +88,7 @@ return Parser
 - **Its own saved variables** (`HomunculusProphecyDB`), not `HomunculusDB`: plans are tens of kilobytes of text, and they're account-wide.
 - **Progress names the character** ([ADR 0003](../../adr/0003-show-character-and-class-color.md)): the viewer's top right reads "<class-coloured name>: 34 / 207 steps".
 - **Classic look** ([ADR 0001](../../adr/0001-prefer-classic-style-ui.md)): dialog windows, tooltip-style panels, Blizzard checkboxes and fonts. Quests are gold (the quest-title colour), other names blue, and coordinates grey.
-- **Two-click confirm** for *Reset progress* and *Delete plan*, like Notes, instead of a StaticPopup (taint).
+- **Two-click confirm** for *Reset progress* and *Delete plan*, like the Grimoire, instead of a StaticPopup (taint).
 - **"Make this the current step"** skips every unhandled step before it and moves on from earlier gates. Done steps stay done, and you can undo any of it per step.
 - **The panel shows only what you can act on.** It's a mover (*Prophecy steps*). It hides when you have no plan, except in move mode.
 

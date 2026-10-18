@@ -20,6 +20,16 @@ if (-not (Test-Path $addOnsDir)) {
 }
 
 $repo = Split-Path $PSScriptRoot -Parent
+
+# Links left behind by a renamed add-on (Homunculus_Notes -> Homunculus_Grimoire) point
+# at folders that no longer exist. Directory.Delete removes only the link itself.
+Get-ChildItem -Path $addOnsDir -Directory -Filter "Homunculus*" | ForEach-Object {
+    if ($_.LinkType -eq "Junction" -and -not (Test-Path (Join-Path $repo $_.Name))) {
+        [IO.Directory]::Delete($_.FullName, $false)
+        Write-Host "Removed stale link $($_.Name)"
+    }
+}
+
 Get-ChildItem -Path $repo -Directory -Filter "Homunculus*" | ForEach-Object {
     $target = Join-Path $addOnsDir $_.Name
     if (Test-Path $target) {

@@ -1,10 +1,10 @@
 ## Interface: 16001
-## Title: |cff8788eeHomunculus|r Notes
-## Notes: Account-wide notes.
+## Title: |cff8788eeHomunculus|r Grimoire
+## Notes: Account-wide notebook: notes with locations, item and quest links.
 ## Author: Phil Henning
 ## Version: @project-version@
 ## RequiredDeps: Homunculus
 ## Group: Homunculus
 ## Category: Homunculus
 
-Notes.lua
+Grimoire.lua

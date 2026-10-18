@@ -15,7 +15,7 @@ Homunculus_Auras/          Makes the default buff frame movable, groupable and s
 Homunculus_Bags/           Combined bag window with search and sort
 Homunculus_Bank/           Bank snapshot + viewer
 Homunculus_Auctions/       Auction snapshot + viewer
-Homunculus_Notes/          Account-wide notes, with an optional floating button
+Homunculus_Grimoire/       Grimoire: account-wide notes with locations, item and quest links; optional floating button
 Homunculus_Launcher/       Movable Homunculus button: left-click menu, right-click move mode
 Homunculus_Tweaks/         Game settings Blizzard's menu lacks (graphics CVars); /hom cvars dump
 Homunculus_Prophecy/       Levelling plans pasted in from outside the game: plan viewer, step panel; /prophecy
@@ -73,7 +73,7 @@ function M:OnDisable() end         -- events + callbacks are released automatica
 
 ## Slash commands
 
-`/homunculus` (or `/hom`; the old `/grim` still works) lists all commands. Core: `menu`, `unlock`, `lock`, `reset [frame]`, `modules`, `enable <module>`, `disable <module>`, `profile [name]`. Components add their own: `bags`, `bank`, `auctions [shopping]`, `notes`, `icon`, `cvars`, `tempo [probe|import]`, `emotes`, `debug [report]`, `prophecy [import]` (also `/prophecy`).
+`/homunculus` (or `/hom`; the old `/grim` still works) lists all commands. Core: `menu`, `unlock`, `lock`, `reset [frame]`, `modules`, `enable <module>`, `disable <module>`, `profile [name]`. Components add their own: `bags`, `bank`, `auctions [shopping]`, `grimoire` (or `notes`), `icon`, `cvars`, `tempo [probe|import]`, `emotes`, `debug [report]`, `prophecy [import]` (also `/prophecy`).
 
 ## Dev setup (Windows)
 

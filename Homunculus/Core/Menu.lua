@@ -269,7 +269,7 @@ function Homunculus:GetMainMenu()
 		ProfileChoice("Dim after", "idleSeconds", { { 1, "1 second" }, { 1.5, "1.5 seconds" }, { 3, "3 seconds" } },
 			function() self:NotifyAllMoverActivity() end, "How long a frame waits, unused, before it dims."),
 		ProfileChoice("Button size", "buttonSize", { { 31, "Small" }, { 38, "Medium" }, { 44, "Large" }, { 52, "Huge" } },
-			function() self:ApplyRoundButtonSize() end, "The size of every round Homunculus button (Homunculus, Notes, Tempo, Prophecy)."),
+			function() self:ApplyRoundButtonSize() end, "The size of every round Homunculus button (Homunculus, Grimoire, Tempo, Prophecy)."),
 		{ text = "Reset all positions", tooltip = "Put every Homunculus frame and window back where it started.", func = function() self:ResetAllPositions() end },
 		{ text = "Export layout", tooltip = "Your frame positions, groups, dimming, button size and component settings as text to copy (learned from Shadowed Unit Frames).", func = function() self:ShowLayoutExport() end },
 		{ text = "Import layout", tooltip = "Paste a layout to replace this profile's. Needs /reload.", func = function() self:ShowLayoutImport() end },

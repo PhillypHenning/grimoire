@@ -43,7 +43,7 @@ else
 end
 ```
 
-**One size for every round button** ([`Homunculus/Core/Widgets.lua`](../../../Homunculus/Core/Widgets.lua)). The Homunculus, Notes, Tempo and Prophecy buttons all take *Layout ▸ Button size* (profile `buttonSize`). The art is resized rather than the button scaled, so saved positions don't move. The launcher used to have its own `scale`; a position saved at that scale is converted once to screen units:
+**One size for every round button** ([`Homunculus/Core/Widgets.lua`](../../../Homunculus/Core/Widgets.lua)). The Homunculus, Grimoire, Tempo and Prophecy buttons all take *Layout ▸ Button size* (profile `buttonSize`). The art is resized rather than the button scaled, so saved positions don't move. The launcher used to have its own `scale`; a position saved at that scale is converted once to screen units:
 
 ```lua
 local savedScale = self.db.positionScale or self.db.scale
