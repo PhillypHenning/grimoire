@@ -2,7 +2,8 @@ local ADDON_NAME = ...
 local Grimoire = Grimoire
 
 -- Party frames: up to four members in one mover, "Party". Each member is Blizzard's
--- classic party frame look (ring portrait, health and mana bars) on a secure unit
+-- classic party frame look (ring portrait, health and mana bars), or a portrait bar
+-- (3D model behind the health, Core/UnitFrames.lua), on a secure unit
 -- button: left-click targets, right-click opens the unit menu. The members are
 -- children laid out inside the mover, not movers themselves, so they move as one and
 -- can't be split up. Each portrait shows the key bound to "Target Party Member N".
@@ -13,6 +14,7 @@ local Grimoire = Grimoire
 
 local MEMBERS = 4
 local MEMBER_WIDTH, MEMBER_HEIGHT = 128, 53
+local BAR_PORTRAIT_SIZE = 40 -- the "Portrait bar" style's size (Grimoire.PortraitBarSize)
 local SPACING = { normal = 10, compact = 2 }
 local OUT_OF_RANGE_ALPHA = 0.55
 local RANGE_CHECK_SECONDS = 0.5
@@ -21,6 +23,7 @@ local M = Grimoire:NewModule("Party", {
 	addon = ADDON_NAME,
 	label = "Party frames",
 	defaults = {
+		style = "classic",
 		scale = 1,
 		showText = false,
 		spacing = "normal",
@@ -28,6 +31,9 @@ local M = Grimoire:NewModule("Party", {
 		hideBlizzard = true,
 	},
 	options = {
+		{ type = "choice", key = "style", label = "Style", tooltip = "Blizzard's classic party frames, or wide bars with each member's 3D model behind the health.", values = {
+			{ "classic", "Classic" }, { "bar", "Portrait bar" },
+		} },
 		{ type = "choice", key = "scale", label = "Size", tooltip = "How large the party frames are.", values = {
 			{ 0.9, "Small" }, { 1, "Normal" }, { 1.2, "Large" }, { 1.4, "Huge" },
 		} },
@@ -63,6 +69,11 @@ local function CreateMember(self, index)
 	button:SetScript("OnLeave", GameTooltip_Hide)
 	button.unit, button.index = unit, index
 
+	-- The "Portrait bar" style; the classic parts below hide while it shows.
+	button.bar = Grimoire.CreatePortraitBar(button)
+	button.bar:SetAllPoints()
+	button.bar.level:Hide() -- the binding badge sits there instead
+
 	-- Portrait under the ring, bars in the art's slots, the art on top.
 	button.portrait = button:CreateTexture(nil, "BACKGROUND")
 	button.portrait:SetSize(37, 37)
@@ -75,11 +86,12 @@ local function CreateMember(self, index)
 
 	local art = CreateFrame("Frame", nil, button)
 	art:SetAllPoints()
-	art:SetFrameLevel(button.health:GetFrameLevel() + 2)
+	art:SetFrameLevel(button.bar.text:GetFrameLevel() + 1)
 	local border = art:CreateTexture(nil, "ARTWORK")
 	border:SetTexture(media.partyFrame)
 	border:SetSize(128, 64)
 	border:SetPoint("TOPLEFT", 0, -2)
+	button.border = border
 
 	button.name = art:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
 	button.name:SetPoint("BOTTOMLEFT", button.health, "TOPLEFT", 0, 2)
@@ -94,7 +106,6 @@ local function CreateMember(self, index)
 
 	-- Keybinding badge (Phil's request): the key that targets this member.
 	button.binding = art:CreateFontString(nil, "OVERLAY", Grimoire.Font("NumberFontNormalSmall", "NumberFontNormal"))
-	button.binding:SetPoint("BOTTOM", button.portrait, "BOTTOM", 0, 1)
 	button.binding:SetTextColor(1, 1, 1)
 
 	return button
@@ -103,15 +114,21 @@ end
 function M:UpdateMember(button)
 	local unit = button.unit
 	local exists = UnitExists(unit)
+	local name
 	if exists then
 		local _, class = UnitClass(unit)
-		button.name:SetText(Grimoire.ClassColorText(UnitName(unit) or "", class))
+		name = Grimoire.ClassColorText(UnitName(unit) or "", class)
 		SetPortraitTexture(button.portrait, unit)
 		button.portrait:SetDesaturated(not UnitIsConnected(unit))
 	else
 		-- Move-mode placeholder.
-		button.name:SetText(PARTY and (PARTY .. " " .. button.index) or ("Party " .. button.index))
+		name = PARTY and (PARTY .. " " .. button.index) or ("Party " .. button.index)
 		button.portrait:SetTexture(nil)
+	end
+	button.name:SetText(name)
+	button.bar.name:SetText(name)
+	if self.db.style == "bar" then
+		Grimoire.SetPortraitBarModel(button.bar, unit)
 	end
 	local isLeader = exists and UnitIsGroupLeader and UnitIsGroupLeader(unit)
 	button.leader:SetShown(isLeader and true or false)
@@ -120,6 +137,10 @@ function M:UpdateMember(button)
 end
 
 function M:UpdateBars(button)
+	if self.db.style == "bar" then
+		Grimoire.UpdatePortraitBar(button.bar, button.unit, self.db.showText)
+		return
+	end
 	Grimoire.UpdateUnitBar(button.health, button.unit, "health", self.db.showText)
 	Grimoire.UpdateUnitBar(button.power, button.unit, "power", self.db.showText)
 end
@@ -163,13 +184,33 @@ end
 
 function M:ApplyLayout()
 	local db = self.db
-	local step = MEMBER_HEIGHT + SPACING[db.spacing]
+	local isBar = db.style == "bar"
+	local width, height = MEMBER_WIDTH, MEMBER_HEIGHT
+	local powerHeight
+	if isBar then
+		width, height, powerHeight = Grimoire.PortraitBarSize(BAR_PORTRAIT_SIZE)
+	end
+	local step = height + SPACING[db.spacing]
 	for i, button in ipairs(self.members) do
+		button:SetSize(width, height)
 		button:SetScale(db.scale)
 		button:ClearAllPoints()
 		button:SetPoint("TOPLEFT", self.holder, "TOPLEFT", 0, -(i - 1) * step)
+		button.bar:SetShown(isBar)
+		if powerHeight then
+			button.bar.power:SetHeight(powerHeight)
+		end
+		for _, part in ipairs({ button.portrait, button.health, button.power, button.border, button.name }) do
+			part:SetShown(not isBar)
+		end
+		button.binding:ClearAllPoints()
+		if isBar then
+			button.binding:SetPoint("LEFT", button.bar.health, "LEFT", 3, 0)
+		else
+			button.binding:SetPoint("BOTTOM", button.portrait, "BOTTOM", 0, 1)
+		end
 	end
-	self.holder:SetSize(MEMBER_WIDTH * db.scale, (MEMBERS * step - SPACING[db.spacing]) * db.scale)
+	self.holder:SetSize(width * db.scale, (MEMBERS * step - SPACING[db.spacing]) * db.scale)
 end
 
 -- Members show while their unit exists (secure unit watch, works in combat); in move

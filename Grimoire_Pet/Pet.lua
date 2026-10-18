@@ -17,12 +17,14 @@ local PetFrame = Grimoire:NewUnitPortrait("PetFrame", {
 	blizzardDropDown = "PetFrameDropDown",
 	blizzardLabel = "pet frame",
 	clickHelp = { "Left-click: target", "Right-click: pet options" },
+	mirror = true,
 	-- Under the player frame, left of the pet bars.
 	defaultPosition = { "TOPRIGHT", "UIParent", "CENTER", -118, -250 },
 	options = {
 		Grimoire.UnitPortraitStyleOption(),
 		{ type = "choice", key = "size", label = "Size", tooltip = "How large the pet frame is.", values = { { 36, "Small" }, { 48, "Medium" }, { 64, "Large" } } },
 		{ type = "toggle", key = "showName", label = "Show name", tooltip = "Show your pet's name above its frame." },
+		{ type = "toggle", key = "showText", label = "Show values on bar", tooltip = "Portrait bar style: show your pet's health as a number and percentage." },
 		{ type = "toggle", key = "hideBlizzard", label = "Hide Blizzard pet frame", tooltip = "Hide the game's own pet frame; Grimoire's replaces it.", reload = true },
 	},
 })
@@ -40,6 +42,7 @@ Grimoire:NewUnitBar("PetHealth", {
 	label = "Pet health",
 	kind = "health",
 	unit = "pet",
+	portrait = "PetFrame",
 	defaults = { width = 150, height = 12, showText = true },
 	defaultPosition = { "TOPLEFT", "UIParent", "CENTER", -114, -250 },
 	widths = { 120, 150, 180, 220 },
@@ -51,6 +54,7 @@ Grimoire:NewUnitBar("PetPower", {
 	label = "Pet power",
 	kind = "power",
 	unit = "pet",
+	portrait = "PetFrame",
 	defaults = { width = 150, height = 8, showText = false, manaColor = { r = 0, g = 0, b = 1 } },
 	defaultPosition = { "TOPLEFT", "UIParent", "CENTER", -114, -270 },
 	widths = { 120, 150, 180, 220 },

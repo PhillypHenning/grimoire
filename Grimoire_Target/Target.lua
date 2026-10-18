@@ -4,7 +4,9 @@ local Grimoire = Grimoire
 -- Target frame in Grimoire's own style, matching the player frame (Phil, 2026-10-13):
 -- bordered health and power bars, the name above them in the target's reaction colour,
 -- and a square portrait box (animated 3D model or classic 2D) with the level in its
--- corner, mirrored so it faces the player frame. Below: the target's auras. Beside it:
+-- corner, mirrored so it faces the player frame. Or, in the "Portrait bar" style, one
+-- wide bar with the 3D model behind the health (Core/UnitFrames.lua). Below: the
+-- target's auras. Beside it:
 -- a compact target of target. All of it is one mover, "Target", so the parts move as
 -- one and can't be split up.
 --   Left-click   target (the usual unit-frame click)
@@ -203,6 +205,12 @@ function M:Build()
 	button.debuffs:SetSize(BAR_WIDTH + INSET * 2, 1)
 	button.buffButtons, button.debuffButtons = {}, {}
 
+	-- The "Portrait bar" style: one wide bar with the model behind the health, in place
+	-- of the name, bars and portrait box.
+	button.bar = Grimoire.CreatePortraitBar(button)
+	button.bar:SetPoint("TOPLEFT")
+	button.overlay = overlay
+
 	self:BuildTargetOfTarget()
 	self:ApplyLayout()
 	-- Mirrors the player frame's default spot: right of the screen centre, bars level.
@@ -230,18 +238,55 @@ function M:BuildTargetOfTarget()
 end
 
 function M:ApplyLayout()
-	local size = self.db.size
-	local box = self.button.box
-	box:SetSize(size + INSET * 2, size + INSET * 2)
-	local width = BAR_WIDTH + INSET * 2 + GAP + size + INSET * 2
-	local height = math.max(NAME_HEIGHT + size + INSET * 2,
-		NAME_HEIGHT + HEALTH_HEIGHT + POWER_HEIGHT + INSET * 4 + GAP)
+	local size, button = self.db.size, self.button
+	local box, pb = button.box, button.bar
+	local isBar = self.db.style == "bar"
+	local width, height, totOffset
+	if isBar then
+		local powerHeight
+		width, height, powerHeight = Grimoire.PortraitBarSize(size)
+		pb:SetSize(width, height)
+		pb.power:SetHeight(powerHeight)
+		totOffset = 0
+	else
+		box:SetSize(size + INSET * 2, size + INSET * 2)
+		width = BAR_WIDTH + INSET * 2 + GAP + size + INSET * 2
+		height = math.max(NAME_HEIGHT + size + INSET * 2,
+			NAME_HEIGHT + HEALTH_HEIGHT + POWER_HEIGHT + INSET * 4 + GAP)
+		totOffset = -NAME_HEIGHT
+	end
 	self.holder:SetSize(width, height)
 	self.tot:ClearAllPoints()
-	self.tot:SetPoint("TOPLEFT", self.holder, "TOPRIGHT", GAP * 2, -NAME_HEIGHT)
-	local animated = self.db.style == "animated"
-	self.button.model:SetShown(animated)
-	self.button.portrait:SetShown(not animated)
+	self.tot:SetPoint("TOPLEFT", self.holder, "TOPRIGHT", GAP * 2, totOffset)
+
+	pb:SetShown(isBar)
+	for _, part in ipairs({ button.name, button.health, button.power, box }) do
+		part:SetShown(not isBar)
+	end
+	button.model:SetShown(self.db.style == "animated")
+	button.portrait:SetShown(self.db.style == "classic")
+
+	-- Icons and auras follow whichever look is showing.
+	local iconParent = isBar and pb.text or button.overlay
+	button.raidIcon:SetParent(iconParent)
+	button.pvp:SetParent(iconParent)
+	button.raidIcon:ClearAllPoints()
+	button.raidIcon:SetPoint("CENTER", isBar and pb or box, "TOP", 0, 0)
+	button.pvp:ClearAllPoints()
+	if isBar then
+		button.pvp:SetPoint("BOTTOMLEFT", pb, "BOTTOMRIGHT", -7, -7)
+	else
+		button.pvp:SetPoint("BOTTOMRIGHT", box, "BOTTOMLEFT", 7, -7)
+	end
+	button.debuffs:ClearAllPoints()
+	button.debuffs:SetPoint("TOPLEFT", isBar and pb or button.power, "BOTTOMLEFT", 0, -GAP - 1)
+	local auraWidth = isBar and width or BAR_WIDTH + INSET * 2
+	button.buffs:SetWidth(auraWidth)
+	button.debuffs:SetWidth(auraWidth)
+	if self.comboMoved then
+		ComboFrame:ClearAllPoints()
+		ComboFrame:SetPoint("BOTTOMRIGHT", isBar and pb or box, "TOPRIGHT", 0, 2)
+	end
 end
 
 -- Display -----------------------------------------------------------------------------------
@@ -252,6 +297,10 @@ local CLASSIFICATION = {
 
 function M:UpdatePortrait()
 	local button = self.button
+	if self.db.style == "bar" then
+		Grimoire.SetPortraitBarModel(button.bar, "target")
+		return
+	end
 	if not UnitExists("target") then
 		button.portrait:SetTexture(nil)
 		return
@@ -264,13 +313,23 @@ function M:UpdatePortrait()
 	end
 end
 
+-- Name and level go on both looks' text, so a style switch needs no refresh.
+local function SetNameAndLevel(button, name, r, g, b, level, levelColor)
+	for _, text in ipairs({ button.name, button.bar.name }) do
+		text:SetText(name)
+		if r then text:SetTextColor(r, g, b) end
+	end
+	for _, text in ipairs({ button.level, button.bar.level }) do
+		text:SetText(level)
+		if levelColor then text:SetTextColor(levelColor.r, levelColor.g, levelColor.b) end
+	end
+end
+
 function M:UpdateTarget()
 	local button, unit = self.button, "target"
 	if not UnitExists(unit) then
 		-- Move-mode placeholder.
-		button.name:SetText(TARGET or "Target")
-		button.name:SetTextColor(0.6, 0.6, 0.6)
-		button.level:SetText("")
+		SetNameAndLevel(button, TARGET or "Target", 0.6, 0.6, 0.6, "")
 		button.raidIcon:Hide()
 		button.pvp:Hide()
 		self:UpdatePortrait()
@@ -281,20 +340,18 @@ function M:UpdateTarget()
 
 	local name = UnitName(unit) or ""
 	local tag = CLASSIFICATION[UnitClassification(unit)]
-	button.name:SetText(tag and ("%s |cffffd100(%s)|r"):format(name, tag) or name)
+	local r, g, b
 	if UnitIsPlayer(unit) then
 		local _, class = UnitClass(unit)
 		local color = Grimoire.GetClassColor(class)
 		if color then
-			button.name:SetTextColor(color.r, color.g, color.b)
+			r, g, b = color.r, color.g, color.b
 		end
 	else
-		button.name:SetTextColor(UnitSelectionColor(unit))
+		r, g, b = UnitSelectionColor(unit)
 	end
-
 	local levelText, color = Grimoire.UnitLevelText(unit)
-	button.level:SetText(levelText)
-	button.level:SetTextColor(color.r, color.g, color.b)
+	SetNameAndLevel(button, tag and ("%s |cffffd100(%s)|r"):format(name, tag) or name, r, g, b, levelText, color)
 
 	self:UpdatePortrait()
 	self:UpdateRaidIcon()
@@ -306,11 +363,18 @@ end
 
 function M:UpdateBars()
 	local button = self.button
-	Grimoire.UpdateUnitBar(button.health.bar, "target", "health", self.db.showText)
-	Grimoire.UpdateUnitBar(button.power.bar, "target", "power", self.db.showText)
+	local health
+	if self.db.style == "bar" then
+		Grimoire.UpdatePortraitBar(button.bar, "target", self.db.showText)
+		health = button.bar.health
+	else
+		Grimoire.UpdateUnitBar(button.health.bar, "target", "health", self.db.showText)
+		Grimoire.UpdateUnitBar(button.power.bar, "target", "power", self.db.showText)
+		health = button.health.bar
+	end
 	-- Tagged by someone else: grey, like Blizzard's.
 	if UnitExists("target") and UnitIsTapDenied and UnitIsTapDenied("target") then
-		button.health.bar:SetStatusBarColor(0.5, 0.5, 0.5)
+		health:SetStatusBarColor(0.5, 0.5, 0.5)
 	end
 end
 
@@ -656,8 +720,8 @@ function M:HideBlizzard()
 	self.blizzardHidden = true
 	if ComboFrame and ComboFrame:GetParent() == TargetFrame then
 		ComboFrame:SetParent(self.button)
-		ComboFrame:ClearAllPoints()
-		ComboFrame:SetPoint("BOTTOMRIGHT", self.button.box, "TOPRIGHT", 0, 2)
+		self.comboMoved = true
+		self:ApplyLayout() -- anchors it
 	end
 	if not self:BorrowBlizzardAuras() then
 		Grimoire:HideBlizzardFrame(TargetFrame)

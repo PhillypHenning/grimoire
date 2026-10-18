@@ -67,7 +67,8 @@ entries[#entries + 1] = { text = ADDONS or "Add-ons", children = Grimoire:GetAdd
 
 - **Left-click is a menu, not "target yourself"** (your call). F1 still targets you. Right-click stays Blizzard's player menu.
 - **Animated by default** (your call). A 3D model can't be clipped to a circle, so the frame is a square with the classic tooltip border, matching the bars. *Classic (2D)* shows the flat portrait in the same box.
-- **Emotes only on the 3D portrait,** and they can be turned off.
+- **Portrait bar style** (Phil's pick from a screenshot, 2026-10-17): one wide bar with the 3D model behind a see-through health fill, a thin mana strip under it, and your name, level and health ("687 - 32%") on it. Mirrored: the value is on the left, the level on the right. It shows health and mana itself, so the separate [Health and Power bars](../player-bars/README.md) hide while it's on. It keeps the classic border and bar texture ([ADR 0001](../../adr/0001-prefer-classic-style-ui.md)); only the layout is new, and it's a choice, not the default. The same style exists on the pet, target and party frames.
+- **Emotes only on the 3D portrait** (animated or Portrait bar), and they can be turned off.
 - **Blizzard's player frame is hidden by default** ([ADR 0004](../../adr/0004-components-replace-blizzard-ui.md)). Turning *Hide Blizzard player frame* off needs a `/reload`.
 - **Classic look** ([ADR 0001](../../adr/0001-prefer-classic-style-ui.md)): Blizzard's status icons (`UI-StateIcon`, leader crown, PvP badges), fonts and border.
 
@@ -83,9 +84,10 @@ Stored in `GrimoireDB.profiles[<profile>].modules.PlayerFrame`. In the menu: **C
 
 | Key | Default | Menu choices | Description |
 | --- | --- | --- | --- |
-| `style` | `animated` | Animated (3D) / Classic (2D) | Portrait type |
-| `size` | 64 | Small 48 / Medium 64 / Large 80 | Portrait size |
-| `showName` | true | toggle | Name above the portrait, in class colour |
+| `style` | `animated` | Animated (3D) / Classic (2D) / Portrait bar | Portrait type |
+| `size` | 64 | Small 48 / Medium 64 / Large 80 | Portrait size (a Portrait bar is four times as wide) |
+| `showName` | true | toggle | Name above the portrait (on the bar in the Portrait bar style), in class colour |
+| `showText` | true | toggle | Portrait bar style: health value and % on the bar |
 | `emotes` | true | toggle | Cheer, laugh/cry, wave |
 | `hideBlizzard` | true | toggle (needs `/reload` to turn off) | Hide Blizzard's player frame |
 

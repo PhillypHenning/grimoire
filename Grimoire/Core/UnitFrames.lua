@@ -5,8 +5,11 @@ local Grimoire = Grimoire
 -- so they share the code without depending on each other (ADR 0002).
 --
 --   Grimoire:NewUnitBar(name, opts)       a movable health or power bar
---   Grimoire:NewUnitPortrait(name, opts)  a movable portrait: animated 3D model or
---                                         classic 2D, name and level
+--   Grimoire:NewUnitPortrait(name, opts)  a movable portrait: animated 3D model,
+--                                         classic 2D, or a portrait bar (the model
+--                                         behind health and power); name and level
+--   Grimoire.CreatePortraitBar(parent)    the portrait bar as a widget, for frames
+--                                         that hold several units (target, party)
 --
 -- Frames for a unit that comes and goes (the pet) hide while it doesn't exist, except
 -- in move mode so they can be placed.
@@ -108,9 +111,15 @@ function Bar:SetValues(current, max)
 	end
 end
 
+-- In its portrait's "Portrait bar" style the portrait shows health and power itself.
+function Bar:IsCoveredByPortrait()
+	local portrait = self.portrait and Grimoire:GetModule(self.portrait)
+	return portrait ~= nil and portrait:IsEnabled() and portrait.db.style == "bar"
+end
+
 -- Shown while the unit exists, and always in move mode.
 function Bar:UpdateVisibility()
-	self.frame:SetShown(UnitExists(self.unit) or Grimoire.moversUnlocked)
+	self.frame:SetShown((UnitExists(self.unit) or Grimoire.moversUnlocked) and not self:IsCoveredByPortrait())
 end
 
 -- The pet was summoned, dismissed or swapped.
@@ -132,6 +141,11 @@ function Bar:OnEnable()
 		self:RegisterUnitEvent("UNIT_PET", "player", "OnUnitChanged")
 		self:RegisterCallback("MoversUnlocked", "UpdateVisibility")
 		self:RegisterCallback("MoversLocked", "UpdateVisibility")
+	end
+	if self.portrait then
+		self:RegisterCallback("UnitPortraitStyleChanged", "UpdateVisibility")
+		self:RegisterCallback("ModuleEnabled", "UpdateVisibility")
+		self:RegisterCallback("ModuleDisabled", "UpdateVisibility")
 	end
 	self:Update()
 end
@@ -199,7 +213,8 @@ function PowerBar:Update()
 end
 
 -- opts: addon, label, kind ("health" or "power"), unit, defaults (width, height,
--- showText; manaColor for power), defaultPosition, widths and heights (menu choices).
+-- showText; manaColor for power), defaultPosition, widths and heights (menu choices),
+-- portrait (the portrait module whose "Portrait bar" style replaces this bar).
 function Grimoire:NewUnitBar(name, opts)
 	local module = self:NewModule(name, {
 		addon = opts.addon,
@@ -212,7 +227,7 @@ function Grimoire:NewUnitBar(name, opts)
 		},
 	})
 	Mix(module, Bar, opts.kind == "power" and PowerBar or HealthBar)
-	module.unit, module.defaultPosition = opts.unit, opts.defaultPosition
+	module.unit, module.defaultPosition, module.portrait = opts.unit, opts.defaultPosition, opts.portrait
 	return module
 end
 
@@ -253,10 +268,15 @@ function Portrait:Build()
 	portrait:SetPoint("BOTTOMRIGHT", -inset, inset)
 	self.portrait = portrait
 
+	-- The "Portrait bar" style: the same model behind a health fill (the frame draws
+	-- the border).
+	self.bar = Grimoire.CreatePortraitBar(frame, { model = model, mirror = self.mirror, backdrop = false })
+	self.bar:SetAllPoints()
+
 	-- Text and icons sit on a frame above the model, which draws over its parent.
 	local overlay = CreateFrame("Frame", nil, frame)
 	overlay:SetAllPoints()
-	overlay:SetFrameLevel(model:GetFrameLevel() + 2)
+	overlay:SetFrameLevel(self.bar.text:GetFrameLevel() + 1)
 	self.overlay = overlay
 
 	self.nameText = overlay:CreateFontString(nil, "OVERLAY", self.nameFont)
@@ -272,25 +292,45 @@ function Portrait:Build()
 	self:ApplySettings()
 	self:RegisterMover(frame, self.label, self.defaultPosition, {
 		dim = true,
-		isBusy = function() return Grimoire:InCombat() and UnitExists(self.unit) end,
+		-- Bright in combat, and in the bar style while health isn't full.
+		isBusy = function()
+			return UnitExists(self.unit) and (Grimoire:InCombat() or (self.db.style == "bar" and self.barBusy))
+		end,
 	})
 end
 
 function Portrait:ApplySettings()
 	if not self.frame then return end
 	local db = self.db
-	local box = db.size + Grimoire.media.classicInset * 2
+	local inset = Grimoire.media.classicInset
+	local style = db.style
+	local isBar = style == "bar"
+	local width, height, powerHeight = Grimoire.PortraitBarSize(db.size)
+	if not isBar then
+		width, height = db.size + inset * 2, db.size + inset * 2
+	end
 	Grimoire:RunOutOfCombat(function()
-		self.frame:SetSize(box, box)
+		self.frame:SetSize(width, height)
 	end)
-	local animated = db.style == "animated"
-	self.model:SetShown(animated)
-	self.portrait:SetShown(not animated)
-	self.nameText:SetShown(db.showName)
-	self:UpdatePortrait()
+	self.bar.power:SetHeight(powerHeight)
+	self.bar:SetShown(isBar)
+	if isBar then
+		Grimoire.AttachPortraitBarModel(self.bar)
+	else
+		self.model:ClearAllPoints()
+		self.model:SetPoint("TOPLEFT", inset, -inset)
+		self.model:SetPoint("BOTTOMRIGHT", -inset, inset)
+	end
+	self.model:SetShown(style ~= "classic")
+	self.portrait:SetShown(style == "classic")
+	self.nameText:SetShown(db.showName and not isBar)
+	self.levelText:SetShown(not isBar)
+	self.bar.name:SetShown(db.showName)
+	self:UpdateAll()
 	if db.hideBlizzard then
 		self:HideBlizzard()
 	end
+	Grimoire:Fire("UnitPortraitStyleChanged", self.name)
 end
 
 -- ADR 0004: hide the Blizzard frame this portrait replaces.
@@ -309,18 +349,27 @@ end
 
 function Portrait:UpdatePortrait()
 	if not UnitExists(self.unit) then return end
-	if self.db.style == "animated" then
+	if self.db.style == "classic" then
+		SetPortraitTexture(self.portrait, self.unit)
+	else
 		self.model:SetUnit(self.unit)
 		self.model:SetPortraitZoom(1)
 		self.emoting = nil
-	else
-		SetPortraitTexture(self.portrait, self.unit)
 	end
 	Grimoire:NotifyMoverActivity(self.name)
 end
 
+-- Health and power on the "Portrait bar" style.
+function Portrait:UpdateBar()
+	if not self.frame or self.db.style ~= "bar" then return end
+	self.barBusy = Grimoire.UpdatePortraitBar(self.bar, self.unit, self.db.showText)
+	Grimoire:NotifyMoverActivity(self.name)
+end
+
 function Portrait:UpdateName()
-	self.nameText:SetText(self:FormatName(UnitName(self.unit) or ""))
+	local text = self:FormatName(UnitName(self.unit) or "")
+	self.nameText:SetText(text)
+	self.bar.name:SetText(text)
 end
 
 function Portrait:FormatName(name)
@@ -328,11 +377,14 @@ function Portrait:FormatName(name)
 end
 
 function Portrait:UpdateLevel(level)
-	self.levelText:SetText(level or UnitLevel(self.unit))
+	level = level or UnitLevel(self.unit)
+	self.levelText:SetText(level)
+	self.bar.level:SetText(level)
 end
 
 function Portrait:UpdateAll()
 	self:UpdatePortrait()
+	self:UpdateBar()
 	self:UpdateName()
 	self:UpdateLevel()
 	if self.UpdateExtras then
@@ -375,6 +427,10 @@ function Portrait:OnEnable()
 		self:RegisterUnitEvent("UNIT_MODEL_CHANGED", self.unit, "UpdatePortrait")
 		self:RegisterUnitEvent("UNIT_NAME_UPDATE", self.unit, "UpdateName")
 		self:RegisterUnitEvent("UNIT_LEVEL", self.unit, function() self:UpdateLevel() end)
+		for _, event in ipairs({ "UNIT_HEALTH", "UNIT_HEALTH_FREQUENT", "UNIT_MAXHEALTH",
+			"UNIT_POWER_FREQUENT", "UNIT_MAXPOWER", "UNIT_DISPLAYPOWER", "UNIT_CONNECTION" }) do
+			self:RegisterUnitEvent(event, self.unit, "UpdateBar")
+		end
 		if self.unit ~= "player" then
 			self:RegisterCallback("MoversUnlocked", "OnMoveMode")
 			self:RegisterCallback("MoversLocked", "OnMoveMode")
@@ -401,18 +457,19 @@ end
 
 -- The "Portrait" style choice, for a portrait module's options.
 function Grimoire.UnitPortraitStyleOption()
-	return { type = "choice", key = "style", label = "Portrait", tooltip = "Animated 3D model, or the classic flat picture.", values = {
-		{ "animated", "Animated (3D)" }, { "classic", "Classic (2D)" },
+	return { type = "choice", key = "style", label = "Portrait", tooltip = "Animated 3D model, the classic flat picture, or a wide bar with the 3D model behind the health.", values = {
+		{ "animated", "Animated (3D)" }, { "classic", "Classic (2D)" }, { "bar", "Portrait bar" },
 	} }
 end
 
 -- opts: addon, label, unit, size (default), options (menu), defaultPosition,
 -- nameFont, clickHelp (tooltip lines), blizzardFrame / blizzardDropDown /
--- blizzardLabel (the Blizzard frame it replaces), extraDefaults (merged into defaults).
+-- blizzardLabel (the Blizzard frame it replaces), extraDefaults (merged into defaults),
+-- mirror (Portrait bar style: value on the left, level on the right).
 -- Modules may add BuildExtras, UpdateExtras, RegisterUnitEvents, FormatName and
 -- BeforeHideBlizzard.
 function Grimoire:NewUnitPortrait(name, opts)
-	local defaults = { style = "animated", size = opts.size, showName = true, hideBlizzard = true }
+	local defaults = { style = "animated", size = opts.size, showName = true, showText = true, hideBlizzard = true }
 	for key, value in pairs(opts.extraDefaults or {}) do
 		defaults[key] = value
 	end
@@ -428,6 +485,7 @@ function Grimoire:NewUnitPortrait(name, opts)
 	module.clickHelp = opts.clickHelp or {}
 	module.blizzardFrame, module.blizzardDropDown = opts.blizzardFrame, opts.blizzardDropDown
 	module.blizzardLabel = opts.blizzardLabel
+	module.mirror = opts.mirror
 	return module
 end
 
@@ -469,6 +527,17 @@ function Grimoire.UnitPowerColor(unit, manaColor)
 	return (PowerBarColor and PowerBarColor[token]) or manaColor
 end
 
+-- "Offline", "Ghost" or "Dead", or nil.
+local function UnitState(unit)
+	if not UnitIsConnected(unit) then
+		return PLAYER_OFFLINE or "Offline"
+	elseif UnitIsGhost(unit) then
+		return "Ghost"
+	elseif UnitIsDead(unit) then
+		return DEAD or "Dead"
+	end
+end
+
 -- Fills a bar from a unit's health or power. Empty when the unit doesn't exist; grey
 -- with "Dead", "Ghost" or "Offline" when that applies.
 ---@param kind "health"|"power"
@@ -487,14 +556,7 @@ function Grimoire.UpdateUnitBar(bar, unit, kind, showText, manaColor)
 		current, max = UnitPower(unit, powerType), UnitPowerMax(unit, powerType)
 		color = Grimoire.UnitPowerColor(unit, manaColor)
 	end
-	local state
-	if not UnitIsConnected(unit) then
-		state = PLAYER_OFFLINE or "Offline"
-	elseif UnitIsGhost(unit) then
-		state = "Ghost"
-	elseif UnitIsDead(unit) then
-		state = DEAD or "Dead"
-	end
+	local state = UnitState(unit)
 	if state then
 		color = GREY
 	end
@@ -510,6 +572,130 @@ function Grimoire.UpdateUnitBar(bar, unit, kind, showText, manaColor)
 	else
 		bar.text:SetFormattedText("%d%%", max > 0 and math.floor(current / max * 100) or 0)
 	end
+end
+
+-- Portrait bar ----------------------------------------------------------------------------------
+-- Phil's pick from a screenshot (2026-10-17): the unit's 3D model is the health bar's
+-- background and the health fill is a see-through colour over it, so more of the face
+-- shows as health drops. A thin power strip runs underneath; level, name and value sit
+-- on the bar. Used by the player, pet, target and party frames' "Portrait bar" style.
+
+local PORTRAIT_BAR_FILL_ALPHA = 0.55
+
+-- A portrait bar's outer width and height, and its power strip's height, from a frame's
+-- Size choice (the portrait edge: 48, 64, 80): four portraits wide.
+function Grimoire.PortraitBarSize(size)
+	local inset = Grimoire.media.classicInset
+	local health, power = math.floor(size * 0.6), math.max(4, math.floor(size / 10))
+	return size * 4 + inset * 2, health + power + 1 + inset * 2, power
+end
+
+-- opts.model:    an existing PlayerModel to use (a portrait module's own, so its emotes
+--                still play); otherwise one is made.
+-- opts.mirror:   value on the left and level on the right (the player's side).
+-- opts.backdrop: false when the parent already draws the classic border.
+-- Size it with Grimoire.PortraitBarSize (pb.power:SetHeight takes the strip height).
+function Grimoire.CreatePortraitBar(parent, opts)
+	opts = opts or {}
+	local inset = Grimoire.media.classicInset
+	local pb = CreateFrame("Frame", nil, parent, "BackdropTemplate")
+	if opts.backdrop ~= false then
+		Grimoire.ApplyClassicBackdrop(pb)
+	end
+	local base = pb:GetFrameLevel()
+
+	pb.power = Grimoire.CreateStatusBar(pb, 1, 4)
+	pb.power:SetPoint("BOTTOMLEFT", inset, inset)
+	pb.power:SetPoint("BOTTOMRIGHT", -inset, inset)
+	pb.power.text:Hide()
+	pb.health = Grimoire.CreateStatusBar(pb, 1, 1)
+	pb.health:ClearAllPoints()
+	pb.health:SetPoint("TOPLEFT", inset, -inset)
+	pb.health:SetPoint("BOTTOMRIGHT", pb.power, "TOPRIGHT", 0, 1)
+	pb.health.text:Hide()
+	pb.health:GetStatusBarTexture():SetAlpha(PORTRAIT_BAR_FILL_ALPHA)
+
+	local model = opts.model
+	if not model then
+		model = CreateFrame("PlayerModel", nil, pb)
+		model:SetScript("OnShow", function()
+			if pb.unit then Grimoire.SetPortraitBarModel(pb, pb.unit) end
+		end)
+	end
+	pb.model = model
+	Grimoire.AttachPortraitBarModel(pb)
+	pb.health:SetFrameLevel(base + 2)
+	pb.power:SetFrameLevel(base + 2)
+
+	-- Text above the fill; the model draws over everything at or below its level.
+	local text = CreateFrame("Frame", nil, pb)
+	text:SetAllPoints(pb.health)
+	text:SetFrameLevel(base + 3)
+	pb.text = text
+	pb.name = text:CreateFontString(nil, "OVERLAY", Grimoire.Font("GameFontNormalOutline", "GameFontNormal"))
+	pb.name:SetPoint("CENTER")
+	pb.name:SetWordWrap(false)
+	pb.value = text:CreateFontString(nil, "OVERLAY", Grimoire.Font("TextStatusBarText"))
+	pb.level = text:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+	Grimoire.MakeBold(pb.level)
+	local valueSide, levelSide = "RIGHT", "LEFT"
+	if opts.mirror then
+		valueSide, levelSide = "LEFT", "RIGHT"
+	end
+	local function Pad(side) return side == "LEFT" and 3 or -3 end
+	pb.value:SetPoint(valueSide, Pad(valueSide), 0)
+	pb.level:SetPoint(levelSide, Pad(levelSide), 0)
+	return pb
+end
+
+-- Puts the model behind the health fill. A portrait module calls this again when it
+-- switches to the bar style, since its model is shared with the square portrait.
+function Grimoire.AttachPortraitBarModel(pb)
+	local model = pb.model
+	model:ClearAllPoints()
+	model:SetAllPoints(pb.health)
+	model:SetFrameLevel(pb:GetFrameLevel() + 1)
+end
+
+function Grimoire.SetPortraitBarModel(pb, unit)
+	pb.unit = unit
+	if UnitExists(unit) then
+		pb.model:SetUnit(unit)
+		pb.model:SetPortraitZoom(1)
+	else
+		pb.model:ClearModel()
+	end
+end
+
+local function ShortNumber(value)
+	if value >= 10000 and AbbreviateLargeNumbers then
+		return AbbreviateLargeNumbers(value)
+	end
+	return tostring(value)
+end
+
+-- Fills a portrait bar's health, power and value ("84 - 84%", or "Dead"). Returns true
+-- while it should stay bright: the unit isn't at full health, or the values are secret.
+function Grimoire.UpdatePortraitBar(pb, unit, showText, manaColor)
+	Grimoire.UpdateUnitBar(pb.health, unit, "health", false, manaColor)
+	Grimoire.UpdateUnitBar(pb.power, unit, "power", false, manaColor)
+	if not UnitExists(unit) then
+		pb.value:SetText("")
+		return false
+	end
+	local current, max = UnitHealth(unit), UnitHealthMax(unit)
+	local secret = Grimoire.AnySecret(current, max)
+	local state = UnitState(unit)
+	if state then
+		pb.value:SetText(state)
+	elseif not showText then
+		pb.value:SetText("")
+	elseif secret then
+		pb.value:SetText(current)
+	else
+		pb.value:SetFormattedText("%s - %d%%", ShortNumber(current), max > 0 and math.floor(current / max * 100) or 0)
+	end
+	return secret or current < max
 end
 
 -- Level text colour against the player's level, like Blizzard's target frame.

@@ -10,6 +10,7 @@ Grimoire:NewUnitBar("Health", {
 	label = HEALTH or "Health",
 	kind = "health",
 	unit = "player",
+	portrait = "PlayerFrame",
 	defaults = { width = 220, height = 16, showText = true },
 	defaultPosition = { "CENTER", "UIParent", "CENTER", 0, -180 },
 	widths = { 180, 220, 260, 300 },
@@ -21,6 +22,7 @@ Grimoire:NewUnitBar("Power", {
 	label = "Power (mana)",
 	kind = "power",
 	unit = "player",
+	portrait = "PlayerFrame",
 	defaults = { width = 220, height = 12, showText = true, manaColor = { r = 0, g = 0, b = 1 } }, -- classic mana blue
 	defaultPosition = { "CENTER", "UIParent", "CENTER", 0, -204 },
 	widths = { 180, 220, 260, 300 },

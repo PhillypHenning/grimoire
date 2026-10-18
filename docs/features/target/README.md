@@ -58,6 +58,7 @@ flowchart TD
 - **Mirrored layout**: portrait on the right, facing the player frame. Default position: right of the screen centre, level with the player frame's.
 - **Target auras included** (needed for a Warlock): hiding Blizzard's target frame would otherwise lose your DoTs.
 - **Grimoire's own target of target**: Blizzard's is inside its target frame and goes with it.
+- **Portrait bar style** (Phil's pick from a screenshot, 2026-10-17): one wide bar with the target's 3D model behind a see-through health fill, a thin power strip, and level, name and value ("84 - 84%") on it. Auras, raid icon, PvP badge, combo points and target of target move with it. Classic border and bar texture kept ([ADR 0001](../../adr/0001-prefer-classic-style-ui.md)); it's a choice, not the default.
 - **Tagged mobs** (tapped by someone else) get a grey health bar.
 - **Hidden in place** ([ADR 0007](../../adr/0007-hide-blizzard-frames-in-place.md)): Blizzard's frame isn't reparented, so Edit Mode stays untainted.
 - **Blizzard's aura container is borrowed** ([ADR 0008](../../adr/0008-borrow-blizzard-target-auras.md), [ADR 0009](../../adr/0009-move-blizzard-target-aura-container.md), Phil's choice, 2026-10-17): in combat Forever refuses every aura API to add-on code ("Auras cannot be accessed when secret while tainted by 'Grimoire_Target'"), and Blizzard's aura icons are forbidden frames. Moving the whole container is the one thing left. Trade-off: buffs and debuffs are one block under the bars, in Blizzard's order and its debuffs-larger rule; Phil's buffs-above layout only applies to Grimoire's own icons. Blizzard's Edit Mode "Buffs on top" setting for the target frame decides which come first.
@@ -73,8 +74,8 @@ Stored in `GrimoireDB.profiles[<profile>].modules.Target`. In the menu: **Compon
 
 | Key | Default | Menu choices | Description |
 | --- | --- | --- | --- |
-| `style` | `animated` | Animated (3D) / Classic (2D) | Portrait type |
-| `size` | 64 | Small 48 / Medium 64 / Large 80 | Portrait size |
+| `style` | `animated` | Animated (3D) / Classic (2D) / Portrait bar | Portrait type, or the one-bar Portrait bar look |
+| `size` | 64 | Small 48 / Medium 64 / Large 80 | Portrait size (a Portrait bar is four times as wide) |
 | `showText` | true | toggle | Values on the bars |
 | `showAuras` | true | toggle | Target's buffs and debuffs under the frame (Blizzard's container); Grimoire's own icons put buffs above |
 | `showTargetOfTarget` | true | toggle | The target-of-target frame |
@@ -88,4 +89,3 @@ _TODO: add to `screenshots/`. Suggested: an elite with your DoTs, target of targ
 
 - Show health as a percentage when the client hides the real value (retail's percentage API, if Forever has it).
 - Cast bar on the target frame.
-- Restyle the party frames the same way?

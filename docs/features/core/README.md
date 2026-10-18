@@ -169,6 +169,7 @@ flowchart LR
 | `CombatStart` / `CombatEnd` | — | Entering / leaving combat |
 | `MoversUnlocked` / `MoversLocked` | — | `/grimoire unlock` / `lock` (or combat auto-lock) |
 | `ModuleEnabled` / `ModuleDisabled` | `name` | Module state changes |
+| `UnitPortraitStyleChanged` | `name` | A unit portrait module (player, pet frame) applied its settings; its bars check whether the Portrait bar style covers them |
 | `MoverGroupsChanged` | — | Movers were grouped, ungrouped or selection cleared |
 | `PositionsReset` | — | Layout ▸ Reset all positions (frames that aren't movers, like the launcher, reset themselves) |
 | `BankScanned` | — | `Grimoire_Bank` saved a new snapshot |
@@ -187,7 +188,8 @@ Code that more than one component needs lives in core, so components never depen
 | `Grimoire:RegisterMover` / `Module:RegisterMover` / `NotifyMoverActivity` | `Core/Movers.lua`, `Core/Modules.lua` | Move mode, groups, idle dimming (see above); the module version records the key for the menu |
 | `Grimoire:HideBlizzardFrame(frame)` | `Core/Util.lua` | Hide a default frame a component replaces, in place: events off (with its child frames), unit watch stopped, secure state driver keeps it hidden; never reparented ([ADR 0007](../../adr/0007-hide-blizzard-frames-in-place.md)). `/reload` after disabling restores it |
 | `Grimoire.CreateStatusBar` / `UpdateUnitBar` / `SetUnitRightClickMenu` / `UnitLevelText` / `BindingLabel` | `Core/UnitFrames.lua` | Pieces for frames holding several units in one mover (party, target): bars with Dead/Ghost/Offline, the unit menu, difficulty-coloured level, short keybind labels |
-| `Grimoire:NewUnitBar(name, opts)` / `NewUnitPortrait(name, opts)` | `Core/UnitFrames.lua` | Health/power bar and portrait modules for any unit (player, pet); hide without the unit, except in move mode |
+| `Grimoire:NewUnitBar(name, opts)` / `NewUnitPortrait(name, opts)` | `Core/UnitFrames.lua` | Health/power bar and portrait modules for any unit (player, pet); hide without the unit, except in move mode. A bar with `portrait = <module>` hides while that portrait uses the Portrait bar style |
+| `Grimoire.CreatePortraitBar` / `PortraitBarSize` / `SetPortraitBarModel` / `UpdatePortraitBar` | `Core/UnitFrames.lua` | The Portrait bar style: the unit's 3D model behind a see-through health fill, a thin power strip, name, level and value ("84 - 84%") on the bar. Player, pet, target and party frames |
 | `Grimoire.CreateStatusBar` / `UpdateUnitBar` / `SetUnitRightClickMenu` / `UnitLevelText` / `BindingLabel` | `Core/UnitFrames.lua` | Pieces for frames holding several units in one mover (party, target): bars with Dead/Ghost/Offline, the unit menu, difficulty-coloured level, short keybind labels |
 | `Grimoire:GetAddOnButtonMenu()` / `GetAddOnButtons()` | `Core/AddOnButtons.lua` | Other add-ons' minimap buttons (LibDBIcon/LDB via `LibStub`, plus loose minimap buttons) as menu entries: Open, Options, Show on minimap; hidden ones saved in `profile.addonButtons` |
 | `Grimoire.CreateRoundButton(name, parent?)` | `Core/Widgets.lua` | Minimap-style round button (Grimoire button, Notes button); set `button.icon` |

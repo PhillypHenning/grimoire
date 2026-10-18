@@ -59,6 +59,7 @@ end
 - **Health 16px, power 12px**, in the classic player frame's order.
 - **Dim when idle is on by default** for both, but a bar only dims when it's full, out of combat and unchanged for the idle time. You want them bright whenever they matter.
 - **Blizzard's player frame is replaced** by the [player frame](../player-frame/README.md) (portrait, name, level, menus), which hides it. The bars are its health and mana.
+- **Hidden under the Portrait bar style:** when the player frame uses it, health and mana are on the frame itself, so these bars hide (and come back when the style changes or the frame is turned off).
 
 ## Combat & secret-value constraints
 

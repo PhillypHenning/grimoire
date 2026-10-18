@@ -50,6 +50,7 @@ self:RegisterMover(holder, "Party", { "TOPLEFT", "UIParent", "TOPLEFT", 20, -160
 ## Design decisions
 
 - **Classic art** ([ADR 0001](../../adr/0001-prefer-classic-style-ui.md)): Blizzard's `UI-PartyFrame` texture with the portrait and bars in its slots, and names in class colour ([ADR 0003](../../adr/0003-show-character-and-class-color.md)).
+- **Portrait bar style** (Phil, 2026-10-17): the same look as the player, pet and target frames' Portrait bar, one 168×37 bar per member (before scaling) with their 3D model behind the health. The keybind badge sits on the bar's left end. Classic is still the default.
 - **One mover, fixed slots** (Phil's request): nothing can be dragged apart. Size and spacing are settings instead.
 - **Hidden in raids by default**, until Grimoire has raid frames (backlog).
 - **Out-of-range fading** sets the member's own alpha; the frame's idle dimming (core) is separate and off by default. Forever can return the range check as secret booleans (seen 2026-10-17); those go to `SetAlphaFromBoolean` untested, and where that call doesn't exist the member stays fully visible.
@@ -66,6 +67,7 @@ Stored in `GrimoireDB.profiles[<profile>].modules.Party`. In the menu: **Compone
 
 | Key | Default | Menu choices | Description |
 | --- | --- | --- | --- |
+| `style` | `classic` | Classic / Portrait bar | Blizzard's party art, or a wide bar per member with their 3D model behind the health |
 | `scale` | 1 | Small 0.9 / Normal 1 / Large 1.2 / Huge 1.4 | Member size |
 | `spacing` | `normal` | Compact / Normal | Gap between members |
 | `showText` | false | toggle | % on the bars |
