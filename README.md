@@ -77,7 +77,7 @@ function M:OnDisable() end         -- events + callbacks are released automatica
 
 ## Dev setup (Windows)
 
-1. Clone this repo anywhere, e.g. `C:\dev\grimoire`.
+1. Clone this repo anywhere, e.g. `C:\dev\homunculus`.
 2. Link it into the game (no admin needed):
    ```powershell
    .\scripts\link-addons.ps1 -GameDir "C:\Program Files (x86)\World of Warcraft\_forever_"
