@@ -64,7 +64,7 @@ Module names are unchanged from when these lived in Grimoire Player, so saved se
 | `style` | `animated` | Animated (3D) / Classic (2D) / Portrait bar | Portrait type; the Portrait bar shows health and power itself, so the pet bars hide while it's on |
 | `size` | 48 | Small 36 / Medium 48 / Large 64 | Portrait size (a Portrait bar is four times as wide) |
 | `showName` | true | toggle | Pet name above the portrait (on the bar in the Portrait bar style) |
-| `showText` | true | toggle | Portrait bar style: health value and % on the bar |
+| `showText` | true | toggle | Portrait bar style: health value on the bar, and the % in place of the name once hurt |
 | `hideBlizzard` | true | toggle (needs `/reload` to turn off) | Hide Blizzard's pet frame |
 
 `.modules.PetHealth` / `.PetPower`:

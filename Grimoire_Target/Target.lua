@@ -30,6 +30,7 @@ local M = Grimoire:NewModule("Target", {
 		style = "animated",
 		size = 64,
 		showText = true,
+		showValue = true,
 		showAuras = true,
 		showTargetOfTarget = true,
 		hideBlizzard = true,
@@ -37,7 +38,8 @@ local M = Grimoire:NewModule("Target", {
 	options = {
 		Grimoire.UnitPortraitStyleOption(),
 		{ type = "choice", key = "size", label = "Size", tooltip = "How large the target frame is.", values = { { 48, "Small" }, { 64, "Medium" }, { 80, "Large" } } },
-		{ type = "toggle", key = "showText", label = "Show values on bars", tooltip = "Show the target's health and power numbers on its bars." },
+		{ type = "toggle", key = "showText", label = "Show %", tooltip = "Show the target's health and power as percentages. Portrait bar: the % replaces the name once the target is hurt." },
+		{ type = "toggle", key = "showValue", label = "Show value", tooltip = "Show the target's health and power as numbers." },
 		{ type = "toggle", key = "showAuras", label = "Show buffs and debuffs", tooltip = "Show your target's buffs above its frame and its debuffs under it; your own debuffs are larger." },
 		{ type = "toggle", key = "showTargetOfTarget", label = "Show target of target", tooltip = "A small frame showing who your target is targeting." },
 		{ type = "toggle", key = "hideBlizzard", label = "Hide Blizzard target frame", tooltip = "Hide the game's own target frame; Grimoire's replaces it.", reload = true },
@@ -365,11 +367,11 @@ function M:UpdateBars()
 	local button = self.button
 	local health
 	if self.db.style == "bar" then
-		Grimoire.UpdatePortraitBar(button.bar, "target", self.db.showText)
+		Grimoire.UpdatePortraitBar(button.bar, "target", self.db.showText, nil, self.db.showValue)
 		health = button.bar.health
 	else
-		Grimoire.UpdateUnitBar(button.health.bar, "target", "health", self.db.showText)
-		Grimoire.UpdateUnitBar(button.power.bar, "target", "power", self.db.showText)
+		Grimoire.UpdateUnitBar(button.health.bar, "target", "health", self.db.showText, nil, self.db.showValue)
+		Grimoire.UpdateUnitBar(button.power.bar, "target", "power", self.db.showText, nil, self.db.showValue)
 		health = button.health.bar
 	end
 	-- Tagged by someone else: grey, like Blizzard's.
@@ -697,7 +699,7 @@ end
 
 function M:ApplySettings(key)
 	if not self.holder then return end
-	if key == "showText" then
+	if key == "showText" or key == "showValue" then
 		self:UpdateBars()
 		return
 	elseif key == "showAuras" then

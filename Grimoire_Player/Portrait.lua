@@ -29,7 +29,7 @@ local Player = Grimoire:NewUnitPortrait("PlayerFrame", {
 		Grimoire.UnitPortraitStyleOption(),
 		{ type = "choice", key = "size", label = "Size", tooltip = "How large the player frame is.", values = { { 48, "Small" }, { 64, "Medium" }, { 80, "Large" } } },
 		{ type = "toggle", key = "showName", label = "Show name", tooltip = "Show your name above the frame." },
-		{ type = "toggle", key = "showText", label = "Show values on bar", tooltip = "Portrait bar style: show your health as a number and percentage." },
+		{ type = "toggle", key = "showText", label = "Show values on bar", tooltip = "Portrait bar style: show your health as a number, and as a % in place of your name once hurt." },
 		{ type = "toggle", key = "emotes", label = "Emotes (level up, death, party)", tooltip = "The portrait cheers on level-up, reacts to dying, and waves when someone joins." },
 		{ type = "toggle", key = "hideBlizzard", label = "Hide Blizzard player frame", tooltip = "Hide the game's own player frame; Grimoire's replaces it.", reload = true },
 	},

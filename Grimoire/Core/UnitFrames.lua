@@ -92,14 +92,7 @@ function Bar:SetValues(current, max)
 	bar:SetValue(current)
 
 	local secret = Grimoire.AnySecret(current, max)
-	if not self.db.showText then
-		bar.text:SetText("")
-	elseif secret then
-		-- Can't divide secrets into a percentage; let the widget render the raw value.
-		bar.text:SetText(current)
-	else
-		bar.text:SetFormattedText("%d%%", max > 0 and math.floor(current / max * 100) or 0)
-	end
+	Grimoire.SetUnitValueText(bar.text, self.unit, self.kind, current, max, false, self.db.showText)
 
 	-- Secrets can't be compared, so a secret update always counts as a change.
 	if secret then
@@ -228,6 +221,7 @@ function Grimoire:NewUnitBar(name, opts)
 	})
 	Mix(module, Bar, opts.kind == "power" and PowerBar or HealthBar)
 	module.unit, module.defaultPosition, module.portrait = opts.unit, opts.defaultPosition, opts.portrait
+	module.kind = opts.kind == "power" and "power" or "health"
 	return module
 end
 
@@ -362,7 +356,7 @@ end
 -- Health and power on the "Portrait bar" style.
 function Portrait:UpdateBar()
 	if not self.frame or self.db.style ~= "bar" then return end
-	self.barBusy = Grimoire.UpdatePortraitBar(self.bar, self.unit, self.db.showText)
+	self.barBusy = Grimoire.UpdatePortraitBar(self.bar, self.unit, self.db.showText, nil, self.db.showText)
 	Grimoire:NotifyMoverActivity(self.name)
 end
 
@@ -538,10 +532,64 @@ local function UnitState(unit)
 	end
 end
 
+local function ShortNumber(value)
+	if value >= 10000 and AbbreviateLargeNumbers then
+		return AbbreviateLargeNumbers(value)
+	end
+	return tostring(value)
+end
+
+-- The client's own percentage (0-100) for when the real values are secret: retail's
+-- UnitHealthPercent / UnitPowerPercent. It's secret too, so only a widget can show it.
+-- Returns ok, percent.
+local function SecretPercent(unit, kind)
+	local fn = kind == "power" and UnitPowerPercent or UnitHealthPercent
+	local curve = CurveConstants and CurveConstants.ScaleTo100
+	if not (fn and curve) then return false end
+	if kind == "power" then
+		return pcall(fn, unit, UnitPowerType(unit), false, curve)
+	end
+	return pcall(fn, unit, false, curve)
+end
+
+-- A bar's text: "84 - 84%", "84", "84%" or nothing. Secret values go straight to the
+-- font string, which may format them; without a percentage from the client, the raw
+-- value is all that can be shown.
+function Grimoire.SetUnitValueText(text, unit, kind, current, max, showValue, showPercent)
+	if not (showValue or showPercent) then
+		text:SetText("")
+		return
+	end
+	if not Grimoire.AnySecret(current, max) then
+		local percent = max > 0 and math.floor(current / max * 100) or 0
+		if showValue and showPercent then
+			text:SetFormattedText("%s - %d%%", ShortNumber(current), percent)
+		elseif showValue then
+			text:SetText(ShortNumber(current))
+		else
+			text:SetFormattedText("%d%%", percent)
+		end
+		return
+	end
+	if showPercent then
+		local ok, percent = SecretPercent(unit, kind)
+		if ok then
+			if showValue then
+				ok = pcall(text.SetFormattedText, text, "%s - %.0f%%", current, percent)
+			else
+				ok = pcall(text.SetFormattedText, text, "%.0f%%", percent)
+			end
+			if ok then return end
+		end
+	end
+	text:SetText(current)
+end
+
 -- Fills a bar from a unit's health or power. Empty when the unit doesn't exist; grey
--- with "Dead", "Ghost" or "Offline" when that applies.
+-- with "Dead", "Ghost" or "Offline" when that applies. showPercent and showValue pick
+-- the text ("84 - 84%").
 ---@param kind "health"|"power"
-function Grimoire.UpdateUnitBar(bar, unit, kind, showText, manaColor)
+function Grimoire.UpdateUnitBar(bar, unit, kind, showPercent, manaColor, showValue)
 	if not UnitExists(unit) then
 		bar:SetMinMaxValues(0, 1)
 		bar:SetValue(0)
@@ -565,12 +613,8 @@ function Grimoire.UpdateUnitBar(bar, unit, kind, showText, manaColor)
 	bar:SetValue(current)
 	if state and kind == "health" then
 		bar.text:SetText(state)
-	elseif not showText then
-		bar.text:SetText("")
-	elseif Grimoire.AnySecret(current, max) then
-		bar.text:SetText(current)
 	else
-		bar.text:SetFormattedText("%d%%", max > 0 and math.floor(current / max * 100) or 0)
+		Grimoire.SetUnitValueText(bar.text, unit, kind, current, max, showValue, showPercent)
 	end
 end
 
@@ -635,6 +679,8 @@ function Grimoire.CreatePortraitBar(parent, opts)
 	pb.name = text:CreateFontString(nil, "OVERLAY", Grimoire.Font("GameFontNormalOutline", "GameFontNormal"))
 	pb.name:SetPoint("CENTER")
 	pb.name:SetWordWrap(false)
+	pb.percent = text:CreateFontString(nil, "OVERLAY", Grimoire.Font("GameFontHighlightOutline", "GameFontHighlight"))
+	pb.percent:SetPoint("CENTER")
 	pb.value = text:CreateFontString(nil, "OVERLAY", Grimoire.Font("TextStatusBarText"))
 	pb.level = text:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
 	Grimoire.MakeBold(pb.level)
@@ -667,33 +713,74 @@ function Grimoire.SetPortraitBarModel(pb, unit)
 	end
 end
 
-local function ShortNumber(value)
-	if value >= 10000 and AbbreviateLargeNumbers then
-		return AbbreviateLargeNumbers(value)
-	end
-	return tostring(value)
+-- Step curves over the client's 0-1 health: 1 only at full health, or only below it.
+local fullCurve, hurtCurve
+
+local function StepCurve(atFull)
+	local curve = C_CurveUtil.CreateCurve()
+	curve:SetType(Enum.LuaCurveType.Step)
+	curve:AddPoint(0, atFull and 0 or 1)
+	curve:AddPoint(1, atFull and 1 or 0)
+	return curve
 end
 
--- Fills a portrait bar's health, power and value ("84 - 84%", or "Dead"). Returns true
--- while it should stay bright: the unit isn't at full health, or the values are secret.
-function Grimoire.UpdatePortraitBar(pb, unit, showText, manaColor)
+-- Secret health can't be compared, so the name/percent swap is done by the client:
+-- each text's alpha comes from a step curve over the health. False when this client
+-- can't (no curve API).
+local function SwapNameBySecret(pb, unit)
+	if not (UnitHealthPercent and C_CurveUtil and C_CurveUtil.CreateCurve and Enum and Enum.LuaCurveType) then
+		return false
+	end
+	return (pcall(function()
+		fullCurve = fullCurve or StepCurve(true)
+		hurtCurve = hurtCurve or StepCurve(false)
+		local ok, percent = SecretPercent(unit, "health")
+		assert(ok, "no percentage")
+		pb.percent:SetFormattedText("%.0f%%", percent)
+		pb.name:SetAlpha(UnitHealthPercent(unit, false, fullCurve))
+		pb.percent:SetAlpha(UnitHealthPercent(unit, false, hurtCurve))
+	end))
+end
+
+local function ShowName(pb)
+	pb.name:SetAlpha(1)
+	pb.percent:SetText("")
+end
+
+-- Fills a portrait bar's health and power. The centre shows the name at full health
+-- and the percentage once hurt (showPercent), or "Dead"; the side shows the value
+-- (showValue). Returns true while it should stay bright: the unit isn't at full
+-- health, or the values are secret.
+function Grimoire.UpdatePortraitBar(pb, unit, showPercent, manaColor, showValue)
 	Grimoire.UpdateUnitBar(pb.health, unit, "health", false, manaColor)
 	Grimoire.UpdateUnitBar(pb.power, unit, "power", false, manaColor)
 	if not UnitExists(unit) then
 		pb.value:SetText("")
+		ShowName(pb)
 		return false
 	end
 	local current, max = UnitHealth(unit), UnitHealthMax(unit)
 	local secret = Grimoire.AnySecret(current, max)
 	local state = UnitState(unit)
 	if state then
-		pb.value:SetText(state)
-	elseif not showText then
 		pb.value:SetText("")
-	elseif secret then
-		pb.value:SetText(current)
-	else
-		pb.value:SetFormattedText("%s - %d%%", ShortNumber(current), max > 0 and math.floor(current / max * 100) or 0)
+		pb.percent:SetText(state)
+		pb.percent:SetAlpha(1)
+		pb.name:SetAlpha(0)
+		return true
+	end
+	Grimoire.SetUnitValueText(pb.value, unit, "health", current, max, showValue, false)
+	if not showPercent then
+		ShowName(pb)
+	elseif not secret then
+		local hurt = current < max
+		Grimoire.SetUnitValueText(pb.percent, unit, "health", current, max, false, true)
+		pb.percent:SetAlpha(hurt and 1 or 0)
+		pb.name:SetAlpha(hurt and 0 or 1)
+	elseif not SwapNameBySecret(pb, unit) then
+		-- Can't tell full from hurt: keep the name, and the % goes beside the value.
+		ShowName(pb)
+		Grimoire.SetUnitValueText(pb.value, unit, "health", current, max, showValue, true)
 	end
 	return secret or current < max
 end
