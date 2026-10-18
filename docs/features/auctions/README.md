@@ -1,20 +1,20 @@
 # Auctions
 
-- **Add-on:** `Grimoire_Auctions`
+- **Add-on:** `Homunculus_Auctions`
 - **Module:** `Auctions`
 - **Status:** Scaffolded, untested in game
-- **Opened from:** the *Auctions* button in [Bags](../bags/README.md), the [Grimoire menu](../menu/README.md) (*Open ▸ Auctions*), or `/grim auctions`
+- **Opened from:** the *Auctions* button in [Bags](../bags/README.md), the [Homunculus menu](../menu/README.md) (*Open ▸ Auctions*), or `/hom auctions`
 
 ## Summary
 
-See your active auctions, on any of your characters, from anywhere: what's listed, price, time left, and what's sold. Each time you visit an auctioneer, Grimoire saves that character's auction list. A class-colored character picker switches between characters ([ADR 0003](../../adr/0003-show-character-and-class-color.md)).
+See your active auctions, on any of your characters, from anywhere: what's listed, price, time left, and what's sold. Each time you visit an auctioneer, Homunculus saves that character's auction list. A class-colored character picker switches between characters ([ADR 0003](../../adr/0003-show-character-and-class-color.md)).
 
 ## What it solves
 
 ```mermaid
 flowchart LR
     Q["Did my auctions sell? When do they expire?"] --> D["Default: go back to the auction house<br/>or wait for mail"]
-    Q --> G["Grimoire: open the Auctions viewer anywhere"]
+    Q --> G["Homunculus: open the Auctions viewer anywhere"]
 ```
 
 ## How it works
@@ -22,8 +22,8 @@ flowchart LR
 ```mermaid
 sequenceDiagram
     participant AH as Auction house
-    participant A as Grimoire Auctions
-    participant DB as GrimoireDB.global.characters[you].auctions
+    participant A as Homunculus Auctions
+    participant DB as HomunculusDB.global.characters[you].auctions
     AH->>A: PLAYER_INTERACTION_MANAGER_FRAME_SHOW (Auctioneer)
     A->>AH: QueryOwnedAuctions (modern) / GetOwnerAuctionItems (legacy)
     AH->>A: OWNED_AUCTIONS_UPDATED / AUCTION_OWNED_LIST_UPDATE
@@ -33,7 +33,7 @@ sequenceDiagram
 
 ## Code highlights
 
-**Two auction APIs** ([`Auctions.lua`](../../../Grimoire_Auctions/Auctions.lua)). The Mainline client has `C_AuctionHouse`, and the classic-style owner list may exist instead. Both are supported, and only events this client knows are registered:
+**Two auction APIs** ([`Auctions.lua`](../../../Homunculus_Auctions/Auctions.lua)). The Mainline client has `C_AuctionHouse`, and the classic-style owner list may exist instead. Both are supported, and only events this client knows are registered:
 
 ```lua
 local list = HasModernAPI() and ReadModern(now) or ReadLegacy()
@@ -73,9 +73,9 @@ flowchart LR
 
 ## Prices and shopping lists (2026-10-16, learned from Auctionator)
 
-- **Scan prices** (button in the Auctions window, at the auction house; [`Prices.lua`](../../../Grimoire_Auctions/Prices.lua)): reads every auction and saves the lowest buyout per item, per unit, per realm, with the time (`GrimoireAuctionsDB.prices`). Modern client: `C_AuctionHouse.ReplicateItems`; legacy: `QueryAuctionItems(..., getAll)`. Results are read 500 per frame so a big scan doesn't freeze the game; the Debug log records which API ran. A full scan is allowed every 15 minutes, so it's a button, not automatic.
+- **Scan prices** (button in the Auctions window, at the auction house; [`Prices.lua`](../../../Homunculus_Auctions/Prices.lua)): reads every auction and saves the lowest buyout per item, per unit, per realm, with the time (`HomunculusAuctionsDB.prices`). Modern client: `C_AuctionHouse.ReplicateItems`; legacy: `QueryAuctionItems(..., getAll)`. Results are read 500 per frame so a big scan doesn't freeze the game; the Debug log records which API ran. A full scan is allowed every 15 minutes, so it's a button, not automatic.
 - **Price tooltips** (setting `priceTooltips`, on): item tooltips show "Auction  <price> (<age>)".
-- **Shopping lists** (*Shopping lists* button or `/grim auctions shopping`; [`Shopping.lua`](../../../Grimoire_Auctions/Shopping.lua)): named lists of item names (type a name or shift-click an item into the box). At the auction house, *Search* looks each up in turn (`SendBrowseQuery`, or `QueryAuctionItems` with an exact name) and shows the cheapest price per unit, how many are listed, and when. Prices found are saved for tooltips too.
+- **Shopping lists** (*Shopping lists* button or `/hom auctions shopping`; [`Shopping.lua`](../../../Homunculus_Auctions/Shopping.lua)): named lists of item names (type a name or shift-click an item into the box). At the auction house, *Search* looks each up in turn (`SendBrowseQuery`, or `QueryAuctionItems` with an exact name) and shows the cheapest price per unit, how many are listed, and when. Prices found are saved for tooltips too.
 
 ## Combat & secret-value constraints
 

@@ -3,7 +3,7 @@
   Syntax-checks every .lua file and checks each .toc's file list against the disk.
 
 .DESCRIPTION
-  Runs `luac -p` on every .lua file in the Grimoire* folders. Then, for each .toc,
+  Runs `luac -p` on every .lua file in the Homunculus* folders. Then, for each .toc,
   reports files it lists that don't exist, and .lua/.xml files on disk that no .toc
   loads. It also flags a file-level local used above its declaration (that compiles
   as a nil global). Exits 1 if anything is wrong.
@@ -26,7 +26,7 @@ if (-not (Test-Path $luac)) {
 }
 
 $failed = $false
-$addons = Get-ChildItem -Path $repo -Directory -Filter "Grimoire*"
+$addons = Get-ChildItem -Path $repo -Directory -Filter "Homunculus*"
 
 $scripts = Get-ChildItem -Path (Join-Path $repo "scripts") -Recurse -Filter "*.lua"
 foreach ($file in @($addons | Get-ChildItem -Recurse -Filter "*.lua") + @($scripts)) {
@@ -37,7 +37,7 @@ foreach ($file in @($addons | Get-ChildItem -Recurse -Filter "*.lua") + @($scrip
 # A file-level local used above its declaration compiles as a global, which is nil at
 # run time (seen 2026-10-16: Bags hooked Button_OnEnter before defining it, and the bag
 # window broke). Flag a global read on a line above the `local` of the same name. Reads
-# on the declaration line itself (`local Grimoire = Grimoire`, `local GetCVar = ... or
+# on the declaration line itself (`local Homunculus = Homunculus`, `local GetCVar = ... or
 # GetCVar`) are intended and not flagged.
 foreach ($file in $addons | Get-ChildItem -Recurse -Filter "*.lua") {
     $lines = @(Get-Content $file.FullName)

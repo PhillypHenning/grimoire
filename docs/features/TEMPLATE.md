@@ -1,6 +1,6 @@
 # <Feature name>
 
-- **Add-on:** `Grimoire_<Name>`
+- **Add-on:** `Homunculus_<Name>`
 - **Module(s):** `<ModuleName>`
 - **Status:** Planned | Scaffolded | Tested | Released
 - **Replaces:** <third-party add-ons this makes unnecessary>
@@ -15,7 +15,7 @@ What's missing or painful in the default UI, plus a diagram.
 
 ```mermaid
 flowchart LR
-    A[Problem] --> B[Grimoire feature] --> C[Outcome]
+    A[Problem] --> B[Homunculus feature] --> C[Outcome]
 ```
 
 ## How it works
@@ -24,7 +24,7 @@ Events in, widgets out. A diagram is preferred.
 
 ## Code highlights
 
-Short excerpts with links to the source (`Grimoire_<Name>/File.lua`). Explain *why*, not just *what*.
+Short excerpts with links to the source (`Homunculus_<Name>/File.lua`). Explain *why*, not just *what*.
 
 ## Design decisions
 

@@ -3,7 +3,7 @@
 -- Exits 1 on the first failure.
 
 local here = arg[0]:match("^(.*)[/\\]") or "."
-local Serialize = dofile(here .. "/../../Grimoire/Core/Serialize.lua")
+local Serialize = dofile(here .. "/../../Homunculus/Core/Serialize.lua")
 
 local failures = 0
 local function check(cond, message)

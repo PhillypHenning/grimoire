@@ -1,13 +1,13 @@
 # Target frame
 
-- **Add-on:** `Grimoire_Target` ([`Target.lua`](../../../Grimoire_Target/Target.lua))
+- **Add-on:** `Homunculus_Target` ([`Target.lua`](../../../Homunculus_Target/Target.lua))
 - **Module:** `Target`
 - **Status:** Scaffolded, untested in game (redesigned 2026-10-13 to match the player frame)
 - **Replaces:** Blizzard's target frame and target-of-target frame; unit-frame add-ons' target frame
 
 ## Summary
 
-Your target in Grimoire's own style, matching the player frame:
+Your target in Homunculus's own style, matching the player frame:
 - The name above the bars, in the target's reaction colour (class colour for players), with "(Elite)", "(Rare)" or "(Boss)" after it.
 - Bordered health and power bars.
 - A square portrait box, animated 3D by default or classic 2D, with the level in its corner coloured by difficulty ("??" for skull level), plus the raid marker and PvP badge.
@@ -18,17 +18,17 @@ It's mirrored (bars left, portrait right), so it faces your player frame. Below 
 
 ```mermaid
 flowchart LR
-    B[Blizzard target frame:<br/>a different style from the rest of Grimoire] ==> G[One movable Target frame<br/>in the player frame's style, with DoTs and target of target]
+    B[Blizzard target frame:<br/>a different style from the rest of Homunculus] ==> G[One movable Target frame<br/>in the player frame's style, with DoTs and target of target]
 ```
 
 ## How it works
 
 ```mermaid
 flowchart TD
-    subgraph Mover["GrimoireTargetFrame (one mover)"]
+    subgraph Mover["HomunculusTargetFrame (one mover)"]
         T["target: SecureUnitButton<br/>name · health/power boxes · portrait box (model or 2D) · level"]
         A[Blizzard's aura container under the bars<br/>buffs and debuffs, scaled to 24 px]
-        Own[Grimoire's own icons, only if Blizzard's frame is shown:<br/>buffs above the name 20 px, debuffs below 24 / 30 px]
+        Own[Homunculus's own icons, only if Blizzard's frame is shown:<br/>buffs above the name 20 px, debuffs below 24 / 30 px]
         ToT[targettarget: SecureUnitButton<br/>name + health box]
     end
     PTC[PLAYER_TARGET_CHANGED] --> RA[RefreshAll]
@@ -40,11 +40,11 @@ flowchart TD
 
 ## Code highlights
 
-**Events before Blizzard** ([`Target.lua`](../../../Grimoire_Target/Target.lua)). `OnEnable` registers every event first and hides Blizzard's frame last. On Forever, hiding Blizzard's frame once hit a forbidden call, and because it ran first, the frame never registered its events and stayed on its "Target" placeholder.
+**Events before Blizzard** ([`Target.lua`](../../../Homunculus_Target/Target.lua)). `OnEnable` registers every event first and hides Blizzard's frame last. On Forever, hiding Blizzard's frame once hit a forbidden call, and because it ran first, the frame never registered its events and stayed on its "Target" placeholder.
 
-**Same pieces as the player frame**: bars in classic bordered boxes, the portrait in a `PlayerModel` (or `SetPortraitTexture`), and the shared helpers `UpdateUnitBar`, `UnitLevelText`, `SetUnitRightClickMenu` from [`Core/UnitFrames.lua`](../../../Grimoire/Core/UnitFrames.lua).
+**Same pieces as the player frame**: bars in classic bordered boxes, the portrait in a `PlayerModel` (or `SetPortraitTexture`), and the shared helpers `UpdateUnitBar`, `UnitLevelText`, `SetUnitRightClickMenu` from [`Core/UnitFrames.lua`](../../../Homunculus/Core/UnitFrames.lua).
 
-**Blizzard's aura container, moved** (`BorrowBlizzardAuras`, `PinAuraContainer`). Blizzard's target frame on Forever draws auras in `TargetFrame:GetAuraContainer()`, whose icons are forbidden frames (`ForbiddenTargetFrameBuffButtonTemplate` / `ForbiddenTargetFrameDebuffButtonTemplate`): add-ons can't list, move or resize them. The container itself is ordinary, so it's reparented under Grimoire's bars, anchored there, and scaled so Blizzard's 17 px icons draw at 24 px. Hooks on its `SetPoint` and `SetParent` pin it back whenever Blizzard re-anchors it. The target frame stays running at alpha 0 (held there by a hook) with the mouse off.
+**Blizzard's aura container, moved** (`BorrowBlizzardAuras`, `PinAuraContainer`). Blizzard's target frame on Forever draws auras in `TargetFrame:GetAuraContainer()`, whose icons are forbidden frames (`ForbiddenTargetFrameBuffButtonTemplate` / `ForbiddenTargetFrameDebuffButtonTemplate`): add-ons can't list, move or resize them. The container itself is ordinary, so it's reparented under Homunculus's bars, anchored there, and scaled so Blizzard's 17 px icons draw at 24 px. Hooks on its `SetPoint` and `SetParent` pin it back whenever Blizzard re-anchors it. The target frame stays running at alpha 0 (held there by a hook) with the mouse off.
 
 **Auras are display only.** Plain buttons with icon, stack count, debuff-type border and a cooldown swipe; hovering shows the aura's tooltip. Buffs sit above the name in 20 px rows that grow upward; debuffs sit under the bars in 24 px rows that grow downward, and debuffs you or your pet cast are 30 px (Phil, 2026-10-17: enemy debuffs were hard to see). Rows are as wide as the bars.
 
@@ -54,14 +54,14 @@ flowchart TD
 
 ## Design decisions
 
-- **Grimoire style, not Blizzard's classic art** (Phil, 2026-10-13): the first version used Blizzard's classic target texture, which looked too much like the stock frame. It now shares the player frame's look.
+- **Homunculus style, not Blizzard's classic art** (Phil, 2026-10-13): the first version used Blizzard's classic target texture, which looked too much like the stock frame. It now shares the player frame's look.
 - **Mirrored layout**: portrait on the right, facing the player frame. Default position: right of the screen centre, level with the player frame's.
 - **Target auras included** (needed for a Warlock): hiding Blizzard's target frame would otherwise lose your DoTs.
-- **Grimoire's own target of target**: Blizzard's is inside its target frame and goes with it.
+- **Homunculus's own target of target**: Blizzard's is inside its target frame and goes with it.
 - **Portrait bar style** (Phil's pick from a screenshot, 2026-10-17): one wide bar with the target's 3D model behind a see-through health fill, a thin power strip, and level, name and value on it. The name gives way to the health % once the target is hurt (Phil, 2026-10-17). Auras, raid icon, PvP badge, combo points and target of target move with it. Classic border and bar texture kept ([ADR 0001](../../adr/0001-prefer-classic-style-ui.md)); it's a choice, not the default.
 - **Tagged mobs** (tapped by someone else) get a grey health bar.
 - **Hidden in place** ([ADR 0007](../../adr/0007-hide-blizzard-frames-in-place.md)): Blizzard's frame isn't reparented, so Edit Mode stays untainted.
-- **Blizzard's aura container is borrowed** ([ADR 0008](../../adr/0008-borrow-blizzard-target-auras.md), [ADR 0009](../../adr/0009-move-blizzard-target-aura-container.md), Phil's choice, 2026-10-17): in combat Forever refuses every aura API to add-on code ("Auras cannot be accessed when secret while tainted by 'Grimoire_Target'"), and Blizzard's aura icons are forbidden frames. Moving the whole container is the one thing left. Trade-off: buffs and debuffs are one block under the bars, in Blizzard's order and its debuffs-larger rule; Phil's buffs-above layout only applies to Grimoire's own icons. Blizzard's Edit Mode "Buffs on top" setting for the target frame decides which come first.
+- **Blizzard's aura container is borrowed** ([ADR 0008](../../adr/0008-borrow-blizzard-target-auras.md), [ADR 0009](../../adr/0009-move-blizzard-target-aura-container.md), Phil's choice, 2026-10-17): in combat Forever refuses every aura API to add-on code ("Auras cannot be accessed when secret while tainted by 'Homunculus_Target'"), and Blizzard's aura icons are forbidden frames. Moving the whole container is the one thing left. Trade-off: buffs and debuffs are one block under the bars, in Blizzard's order and its debuffs-larger rule; Phil's buffs-above layout only applies to Homunculus's own icons. Blizzard's Edit Mode "Buffs on top" setting for the target frame decides which come first.
 
 ## Combat & secret-value constraints
 
@@ -70,7 +70,7 @@ flowchart TD
 
 ## Settings
 
-Stored in `GrimoireDB.profiles[<profile>].modules.Target`. In the menu: **Components ▸ Target**.
+Stored in `HomunculusDB.profiles[<profile>].modules.Target`. In the menu: **Components ▸ Target**.
 
 | Key | Default | Menu choices | Description |
 | --- | --- | --- | --- |
@@ -78,7 +78,7 @@ Stored in `GrimoireDB.profiles[<profile>].modules.Target`. In the menu: **Compon
 | `size` | 64 | Small 48 / Medium 64 / Large 80 | Portrait size (a Portrait bar is four times as wide) |
 | `showText` | true | toggle | Show %: health and power as percentages. Portrait bar: the % replaces the name once the target is hurt |
 | `showValue` | true | toggle | Show value: health and power as numbers |
-| `showAuras` | true | toggle | Target's buffs and debuffs under the frame (Blizzard's container); Grimoire's own icons put buffs above |
+| `showAuras` | true | toggle | Target's buffs and debuffs under the frame (Blizzard's container); Homunculus's own icons put buffs above |
 | `showTargetOfTarget` | true | toggle | The target-of-target frame |
 | `hideBlizzard` | true | toggle (needs `/reload` to turn off) | Hide Blizzard's target frame |
 

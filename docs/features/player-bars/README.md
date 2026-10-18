@@ -1,13 +1,13 @@
 # Player bars
 
-- **Add-on:** `Grimoire_Player`
-- **Modules:** `Health`, `Power` (built on core's unit bars, [`Core/UnitFrames.lua`](../../../Grimoire/Core/UnitFrames.lua))
+- **Add-on:** `Homunculus_Player`
+- **Modules:** `Health`, `Power` (built on core's unit bars, [`Core/UnitFrames.lua`](../../../Homunculus/Core/UnitFrames.lua))
 - **Status:** Scaffolded, untested in game
 - **Replaces:** Player health/mana bar add-ons
 
 ## Summary
 
-A health bar and a power bar (mana, or rage/energy for other classes), each its own movable frame. Your pet's bars are in [Grimoire Pet](../pet/README.md). Put them under your character, group them so they move together, and let them dim when nothing's changing.
+A health bar and a power bar (mana, or rage/energy for other classes), each its own movable frame. Your pet's bars are in [Homunculus Pet](../pet/README.md). Put them under your character, group them so they move together, and let them dim when nothing's changing.
 
 ## What it solves
 
@@ -24,19 +24,19 @@ flowchart LR
     P[UNIT_POWER_FREQUENT / UNIT_MAXPOWER] --> PU[Power:Update]
     DP[UNIT_DISPLAYPOWER<br/>druid forms] --> PC[recolor] --> PU
     HU & PU --> SV[SetValues: StatusBar + %]
-    SV -- value changed --> N[Grimoire:NotifyMoverActivity] --> Dim[core idle dimming]
+    SV -- value changed --> N[Homunculus:NotifyMoverActivity] --> Dim[core idle dimming]
 ```
 
 ## Code highlights
 
-**Built on core's unit bars** ([`Bars.lua`](../../../Grimoire_Player/Bars.lua)). Each bar is one `Grimoire:NewUnitBar` call: a kind (`health` or `power`), a unit and its defaults. [Grimoire Pet](../pet/README.md) builds its bars the same way. They are separate modules, so each can be toggled (`/grim disable Power`) and moved on its own.
+**Built on core's unit bars** ([`Bars.lua`](../../../Homunculus_Player/Bars.lua)). Each bar is one `Homunculus:NewUnitBar` call: a kind (`health` or `power`), a unit and its defaults. [Homunculus Pet](../pet/README.md) builds its bars the same way. They are separate modules, so each can be toggled (`/hom disable Power`) and moved on its own.
 
 **Activity only on real changes.** A bar that's regenerating reports activity every tick and stays bright; a full bar stops reporting and dims after the idle time (1.5s by default):
 
 ```lua
 elseif current ~= self.lastCurrent or max ~= self.lastMax then
     self.lastCurrent, self.lastMax = current, max
-    Grimoire:NotifyMoverActivity(self.name)
+    Homunculus:NotifyMoverActivity(self.name)
 end
 ```
 
@@ -44,7 +44,7 @@ end
 
 ```lua
 function Bar:IsBusy()
-    if Grimoire:InCombat() or not self.lastCurrent then
+    if Homunculus:InCombat() or not self.lastCurrent then
         return true -- in combat, or the value is secret
     end
     return self.lastCurrent < self.lastMax
@@ -67,7 +67,7 @@ If combat makes values opaque, the bar still fills, the raw value shows instead 
 
 ## Settings
 
-Stored in `GrimoireDB.profiles[<profile>].modules.Health` / `.Power`. In the menu: **Components ▸ Player ▸ Health / Power (mana)**. Position, group and dimming are mover settings (see [Core](../core/README.md)).
+Stored in `HomunculusDB.profiles[<profile>].modules.Health` / `.Power`. In the menu: **Components ▸ Player ▸ Health / Power (mana)**. Position, group and dimming are mover settings (see [Core](../core/README.md)).
 
 | Key | Default | Menu choices | Description |
 | --- | --- | --- | --- |

@@ -1,0 +1,10 @@
+## Interface: 16001
+## Title: |cff8788eeHomunculus|r Emotes
+## Notes: An emote wheel: hold its key (Key Bindings, Homunculus), point at an emote, let go. /hom emotes
+## Author: Phil Henning
+## Version: @project-version@
+## RequiredDeps: Homunculus
+## Group: Homunculus
+## Category: Homunculus
+
+EmoteWheel.lua

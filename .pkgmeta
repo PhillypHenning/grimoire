@@ -1,25 +1,25 @@
 # BigWigs packager config: builds one zip containing every add-on folder.
-package-as: Grimoire
+package-as: Homunculus
 
 move-folders:
-  Grimoire/Grimoire: Grimoire
-  Grimoire/Grimoire_Player: Grimoire_Player
-  Grimoire/Grimoire_Pet: Grimoire_Pet
-  Grimoire/Grimoire_Party: Grimoire_Party
-  Grimoire/Grimoire_Target: Grimoire_Target
-  Grimoire/Grimoire_Warlock: Grimoire_Warlock
-  Grimoire/Grimoire_Auras: Grimoire_Auras
-  Grimoire/Grimoire_Bags: Grimoire_Bags
-  Grimoire/Grimoire_Bank: Grimoire_Bank
-  Grimoire/Grimoire_Auctions: Grimoire_Auctions
-  Grimoire/Grimoire_Notes: Grimoire_Notes
-  Grimoire/Grimoire_Launcher: Grimoire_Launcher
-  Grimoire/Grimoire_Tweaks: Grimoire_Tweaks
-  Grimoire/Grimoire_Prophecy: Grimoire_Prophecy
-  Grimoire/Grimoire_Tempo: Grimoire_Tempo
-  Grimoire/Grimoire_Emotes: Grimoire_Emotes
-  Grimoire/Grimoire_Debug: Grimoire_Debug
-  Grimoire/Grimoire_Map: Grimoire_Map
+  Homunculus/Homunculus: Homunculus
+  Homunculus/Homunculus_Player: Homunculus_Player
+  Homunculus/Homunculus_Pet: Homunculus_Pet
+  Homunculus/Homunculus_Party: Homunculus_Party
+  Homunculus/Homunculus_Target: Homunculus_Target
+  Homunculus/Homunculus_Warlock: Homunculus_Warlock
+  Homunculus/Homunculus_Auras: Homunculus_Auras
+  Homunculus/Homunculus_Bags: Homunculus_Bags
+  Homunculus/Homunculus_Bank: Homunculus_Bank
+  Homunculus/Homunculus_Auctions: Homunculus_Auctions
+  Homunculus/Homunculus_Notes: Homunculus_Notes
+  Homunculus/Homunculus_Launcher: Homunculus_Launcher
+  Homunculus/Homunculus_Tweaks: Homunculus_Tweaks
+  Homunculus/Homunculus_Prophecy: Homunculus_Prophecy
+  Homunculus/Homunculus_Tempo: Homunculus_Tempo
+  Homunculus/Homunculus_Emotes: Homunculus_Emotes
+  Homunculus/Homunculus_Debug: Homunculus_Debug
+  Homunculus/Homunculus_Map: Homunculus_Map
 
 ignore:
   - scripts

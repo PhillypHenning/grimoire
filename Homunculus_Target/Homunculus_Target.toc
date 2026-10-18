@@ -1,0 +1,10 @@
+## Interface: 16001
+## Title: |cff8788eeHomunculus|r Target
+## Notes: Classic target frame with debuffs, buffs and target of target, in one movable frame. Replaces Blizzard's target frame.
+## Author: Phil Henning
+## Version: @project-version@
+## RequiredDeps: Homunculus
+## Group: Homunculus
+## Category: Homunculus
+
+Target.lua

@@ -1,11 +1,11 @@
--- Wraps a Prophecy plan file in Lua so Grimoire_Prophecy ships it (ADR 0006's
+-- Wraps a Prophecy plan file in Lua so Homunculus_Prophecy ships it (ADR 0006's
 -- fallback: plans too large to paste). The plan is checked first; a plan with errors
 -- isn't bundled.
---   lua scripts/prophecy/bundle.lua <plan.prophecy> <Grimoire_Prophecy/Plans/name.lua>
--- Add a new output file to Grimoire_Prophecy.toc, then restart the game.
+--   lua scripts/prophecy/bundle.lua <plan.prophecy> <Homunculus_Prophecy/Plans/name.lua>
+-- Add a new output file to Homunculus_Prophecy.toc, then restart the game.
 
 local here = arg[0]:match("^(.*)[/\\]") or "."
-local Parser = dofile(here .. "/../../Grimoire_Prophecy/Parser.lua")
+local Parser = dofile(here .. "/../../Homunculus_Prophecy/Parser.lua")
 
 local input, output = arg[1], arg[2]
 if not (input and output) then

@@ -1,6 +1,6 @@
 # Warlock resources
 
-- **Add-on:** `Grimoire_Warlock` (LoadOnDemand, Warlocks only)
+- **Add-on:** `Homunculus_Warlock` (LoadOnDemand, Warlocks only)
 - **Module:** `WarlockResources`
 - **Status:** Scaffolded, untested in game
 - **Replaces:** Soul shard counters
@@ -25,12 +25,12 @@ flowchart LR
     E1[BAG_UPDATE_DELAYED] --> US[UpdateShards]
     E2[PLAYER_ENTERING_WORLD] --> US
     US --> W[count text, icon grey at 0]
-    US -- count changed --> N[Grimoire:NotifyMoverActivity] --> Dim[core idle dimming]
+    US -- count changed --> N[Homunculus:NotifyMoverActivity] --> Dim[core idle dimming]
 ```
 
 ## Code highlights
 
-**Shards are counted from bags** ([`Resources.lua`](../../../Grimoire_Warlock/Resources.lua)). `BAG_UPDATE_DELAYED` fires once after a batch of bag changes:
+**Shards are counted from bags** ([`Resources.lua`](../../../Homunculus_Warlock/Resources.lua)). `BAG_UPDATE_DELAYED` fires once after a batch of bag changes:
 
 ```lua
 local SOUL_SHARD_ITEM = 6265
@@ -42,7 +42,7 @@ local count = C_Item.GetItemCount(SOUL_SHARD_ITEM)
 ```lua
 if count ~= self.lastCount then
     self.lastCount = count
-    Grimoire:NotifyMoverActivity("WarlockResources")
+    Homunculus:NotifyMoverActivity("WarlockResources")
 end
 ```
 
@@ -58,7 +58,7 @@ Bag counts probably aren't secret, but if one is, the icon stays lit and the upd
 
 ## Settings
 
-Stored in `GrimoireDB.profiles[<profile>].modules.WarlockResources`. In the menu: **Components ▸ Warlock**. Position, group and dimming are mover settings (see [Core](../core/README.md)).
+Stored in `HomunculusDB.profiles[<profile>].modules.WarlockResources`. In the menu: **Components ▸ Warlock**. Position, group and dimming are mover settings (see [Core](../core/README.md)).
 
 | Key | Default | Menu choices | Description |
 | --- | --- | --- | --- |

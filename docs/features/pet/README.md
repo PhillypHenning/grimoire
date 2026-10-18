@@ -1,7 +1,7 @@
 # Pet
 
-- **Add-on:** `Grimoire_Pet` ([`Pet.lua`](../../../Grimoire_Pet/Pet.lua))
-- **Modules:** `PetFrame`, `PetHealth`, `PetPower` (built on core's unit frames, [`Core/UnitFrames.lua`](../../../Grimoire/Core/UnitFrames.lua))
+- **Add-on:** `Homunculus_Pet` ([`Pet.lua`](../../../Homunculus_Pet/Pet.lua))
+- **Modules:** `PetFrame`, `PetHealth`, `PetPower` (built on core's unit frames, [`Core/UnitFrames.lua`](../../../Homunculus/Core/UnitFrames.lua))
 - **Status:** Scaffolded, untested in game
 - **Replaces:** Blizzard's pet frame; unit-frame add-ons' pet frame
 
@@ -13,7 +13,7 @@ Your pet's frame, a size smaller than the [player frame](../player-frame/README.
 
 ```mermaid
 flowchart LR
-    B[Blizzard pet frame:<br/>stuck under the player frame] ==> G[Grimoire Pet: portrait and bars,<br/>each movable, shown only with a pet]
+    B[Blizzard pet frame:<br/>stuck under the player frame] ==> G[Homunculus Pet: portrait and bars,<br/>each movable, shown only with a pet]
 ```
 
 ## How it works
@@ -30,7 +30,7 @@ flowchart TD
 
 ## Code highlights
 
-**Three modules, no new frame code** ([`Pet.lua`](../../../Grimoire_Pet/Pet.lua)). The portrait and bars come from core's unit frame toolkit, the same one [Grimoire Player](../player-frame/README.md) uses. The pet only adds what's different, like left-click targeting:
+**Three modules, no new frame code** ([`Pet.lua`](../../../Homunculus_Pet/Pet.lua)). The portrait and bars come from core's unit frame toolkit, the same one [Homunculus Player](../player-frame/README.md) uses. The pet only adds what's different, like left-click targeting:
 
 ```lua
 function PetFrame:BuildExtras()
@@ -42,7 +42,7 @@ end
 
 ## Design decisions
 
-- **Its own component** (your call), split from Grimoire Player: turn it off in the AddOns list if you play a class without a pet, or would rather keep Blizzard's ([ADR 0002](../../adr/0002-every-component-is-a-toggleable-addon.md)).
+- **Its own component** (your call), split from Homunculus Player: turn it off in the AddOns list if you play a class without a pet, or would rather keep Blizzard's ([ADR 0002](../../adr/0002-every-component-is-a-toggleable-addon.md)).
 - **Shared code lives in core** (`Core/UnitFrames.lua`), so Player and Pet share it without depending on each other.
 - **Left-click targets** the pet, the usual unit-frame behaviour.
 - **No pet emotes.** Creature models don't have the player emote animations. Your own portrait waves when your pet appears.
@@ -55,9 +55,9 @@ end
 
 ## Settings
 
-Module names are unchanged from when these lived in Grimoire Player, so saved settings and positions carry over. In the menu: **Components ▸ Pet**.
+Module names are unchanged from when these lived in Homunculus Player, so saved settings and positions carry over. In the menu: **Components ▸ Pet**.
 
-`GrimoireDB.profiles[<profile>].modules.PetFrame`:
+`HomunculusDB.profiles[<profile>].modules.PetFrame`:
 
 | Key | Default | Menu choices | Description |
 | --- | --- | --- | --- |

@@ -1,0 +1,16 @@
+## Interface: 16001
+## Title: |cff8788eeHomunculus|r Tempo
+## Notes: Learns your best rotation (opener and cycle) from your fights; browse, save and share them. /hom tempo
+## Author: Phil Henning
+## Version: @project-version@
+## RequiredDeps: Homunculus
+## SavedVariables: HomunculusTempoDB
+## Group: Homunculus
+## Category: Homunculus
+
+Cycles.lua
+Share.lua
+Tempo.lua
+Recorder.lua
+Window.lua
+Probe.lua

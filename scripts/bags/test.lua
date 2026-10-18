@@ -3,7 +3,7 @@
 -- Exits 1 on the first failure.
 
 local here = arg[0]:match("^(.*)[/\\]") or "."
-local Search = dofile(here .. "/../../Grimoire_Bags/Search.lua")
+local Search = dofile(here .. "/../../Homunculus_Bags/Search.lua")
 
 local failures = 0
 local function check(cond, message)

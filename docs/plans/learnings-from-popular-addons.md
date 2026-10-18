@@ -3,10 +3,10 @@
 > **Progress (2026-10-16, on the PC):** plan written; work in order L1 → L7, each pushed for testing as it lands. L1–L7 done; all waiting on in-game testing.
 
 ## Context
-Phil asked what the most popular related add-ons do that Grimoire should learn from, then picked (2026-10-16): layout sharing, a better bag search, Prophecy waypoints, an error count, setting tooltips, a shared item-data layer, and, last, an Auctionator-style expansion of Auctions. Only these; nothing else from the review.
+Phil asked what the most popular related add-ons do that Homunculus should learn from, then picked (2026-10-16): layout sharing, a better bag search, Prophecy waypoints, an error count, setting tooltips, a shared item-data layer, and, last, an Auctionator-style expansion of Auctions. Only these; nothing else from the review.
 
-## L1: error count on the Grimoire button (from BugSack)
-- While errors have been logged this session and the Debug log hasn't been opened since, the Grimoire button shows a small red count.
+## L1: error count on the Homunculus button (from BugSack)
+- While errors have been logged this session and the Debug log hasn't been opened since, the Homunculus button shows a small red count.
 - Opening the Debug log clears it. Needs Debug enabled (found with `GetModule`).
 
 ## L2: tooltips on settings (from Leatrix Plus)
@@ -23,7 +23,7 @@ Phil asked what the most popular related add-ons do that Grimoire should learn f
 
 ## L5: shared item-data layer (from Syndicator)
 - Core records each character's bag contents (counts by item) on bag changes; the bank snapshot the Bank component already saves is read too.
-- `Grimoire:GetItemCounts(itemID)` → per character: bags, bank.
+- `Homunculus:GetItemCounts(itemID)` → per character: bags, bank.
 - Item tooltips show which characters own it ("Manflesh: 3 (bags 2, bank 1)"), class-coloured (ADR 0003). A Bags setting turns it off.
 
 ## L6: bag search and icon info (from Baganator)

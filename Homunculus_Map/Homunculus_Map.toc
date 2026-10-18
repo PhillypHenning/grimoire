@@ -1,0 +1,13 @@
+## Interface: 16001
+## Title: |cff8788eeHomunculus|r Map
+## Notes: Your hearthstone on the world map, and flight times on the flight map.
+## Author: Phil Henning
+## Version: @project-version@
+## RequiredDeps: Homunculus
+## SavedVariables: HomunculusMapDB
+## Group: Homunculus
+## Category: Homunculus
+
+Map.lua
+Hearth.lua
+Flights.lua

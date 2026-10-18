@@ -1,0 +1,10 @@
+## Interface: 16001
+## Title: |cff8788eeHomunculus|r Party
+## Notes: Classic party frames in one movable frame, each portrait showing its target keybinding. Replaces Blizzard's party frames.
+## Author: Phil Henning
+## Version: @project-version@
+## RequiredDeps: Homunculus
+## Group: Homunculus
+## Category: Homunculus
+
+Party.lua

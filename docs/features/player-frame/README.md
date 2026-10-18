@@ -1,21 +1,21 @@
 # Player frame
 
-- **Add-on:** `Grimoire_Player` ([`Portrait.lua`](../../../Grimoire_Player/Portrait.lua))
-- **Module:** `PlayerFrame` (built on core's unit portrait, [`Core/UnitFrames.lua`](../../../Grimoire/Core/UnitFrames.lua))
+- **Add-on:** `Homunculus_Player` ([`Portrait.lua`](../../../Homunculus_Player/Portrait.lua))
+- **Module:** `PlayerFrame` (built on core's unit portrait, [`Core/UnitFrames.lua`](../../../Homunculus/Core/UnitFrames.lua))
 - **Status:** Scaffolded, untested in game
 - **Replaces:** Blizzard's player frame (portrait, name, level, health and mana bars); unit-frame add-ons' player frame
 
 ## Summary
 
-A movable portrait of your character, animated in 3D by default, with your name in class colour, your level, and status icons (resting, in combat, group leader, PvP). It cheers when you level up, laughs or cries when you die, and waves when someone joins your party or your pet appears. Left-click it for a menu of every game panel (Character Info through Game Menu) plus the Grimoire menu; right-click for Blizzard's player menu. Blizzard's player frame is hidden ([ADR 0004](../../adr/0004-components-replace-blizzard-ui.md)); health and mana are the separate [Health/Power bars](../player-bars/README.md).
+A movable portrait of your character, animated in 3D by default, with your name in class colour, your level, and status icons (resting, in combat, group leader, PvP). It cheers when you level up, laughs or cries when you die, and waves when someone joins your party or your pet appears. Left-click it for a menu of every game panel (Character Info through Game Menu) plus the Homunculus menu; right-click for Blizzard's player menu. Blizzard's player frame is hidden ([ADR 0004](../../adr/0004-components-replace-blizzard-ui.md)); health and mana are the separate [Health/Power bars](../player-bars/README.md).
 
-Your pet has its own component, [Grimoire Pet](../pet/README.md).
+Your pet has its own component, [Homunculus Pet](../pet/README.md).
 
 ## What it solves
 
 ```mermaid
 flowchart LR
-    B[Blizzard player frame:<br/>fixed top-left] ==> G[Grimoire: a movable portrait<br/>beside the movable bars]
+    B[Blizzard player frame:<br/>fixed top-left] ==> G[Homunculus: a movable portrait<br/>beside the movable bars]
     M[Micro menu buttons<br/>bottom-right] ==> C[Same panels from<br/>a left-click on your portrait]
 ```
 
@@ -23,11 +23,11 @@ flowchart LR
 
 ```mermaid
 flowchart TD
-    subgraph Frame[GrimoirePlayerFrame: SecureUnitButton, unit = player]
+    subgraph Frame[HomunculusPlayerFrame: SecureUnitButton, unit = player]
         Model[PlayerModel, 3D] -.or.- Tex[SetPortraitTexture, 2D]
         Overlay[name · level · rest/combat · leader · PvP]
     end
-    L[Left-click] --> Hook[OnClick hook] --> Menu["OpenMenu: micro-menu panels + Grimoire ▸"]
+    L[Left-click] --> Hook[OnClick hook] --> Menu["OpenMenu: micro-menu panels + Homunculus ▸"]
     R[Right-click] --> Secure["type2 = togglemenu<br/>(or menu → PlayerFrameDropDown)"]
     LU[PLAYER_LEVEL_UP] --> Cheer[cheer]
     PD[PLAYER_DEAD] --> LC[laugh or cry]
@@ -38,30 +38,30 @@ flowchart TD
 
 ## Code highlights
 
-**A secure button with an insecure left-click** ([`Portrait.lua`](../../../Grimoire_Player/Portrait.lua)). Right-click goes through Blizzard's secure unit menu, so it works in combat. Left-click has no secure action; a hook opens Grimoire's menu:
+**A secure button with an insecure left-click** ([`Portrait.lua`](../../../Homunculus_Player/Portrait.lua)). Right-click goes through Blizzard's secure unit menu, so it works in combat. Left-click has no secure action; a hook opens Homunculus's menu:
 
 ```lua
 frame:SetAttribute("type2", "togglemenu")
 frame:HookScript("OnClick", function(b, mouseButton)
     if mouseButton == "LeftButton" then
-        Grimoire.OpenMenu(b, self:GetClickMenu())
+        Homunculus.OpenMenu(b, self:GetClickMenu())
     end
 end)
 ```
 
-**The click menu follows the micro menu.** The entries are the micro buttons the client actually has, found at runtime in their on-screen order (`MICRO_BUTTONS`, else the `MicroMenu` container), so Forever's own buttons (Legacy, Shop, its Group Finder) appear without being listed in Grimoire. Labels come from each button's tooltip ("Character Info (C)" → "Character Info"). Known panels open through their toggle function; anything else, or a toggle the client lacks, clicks the button itself. An entry only shows while its button is shown (so Talents appears at level 10), and it checks `IsShown`, not `IsVisible`, so the menu keeps working after the micro menu itself is hidden.
+**The click menu follows the micro menu.** The entries are the micro buttons the client actually has, found at runtime in their on-screen order (`MICRO_BUTTONS`, else the `MicroMenu` container), so Forever's own buttons (Legacy, Shop, its Group Finder) appear without being listed in Homunculus. Labels come from each button's tooltip ("Character Info (C)" → "Character Info"). Known panels open through their toggle function; anything else, or a toggle the client lacks, clicks the button itself. An entry only shows while its button is shown (so Talents appears at level 10), and it checks `IsShown`, not `IsVisible`, so the menu keeps working after the micro menu itself is hidden.
 
-**Add-ons ▸: other add-ons' minimap buttons** ([`Core/AddOnButtons.lua`](../../../Grimoire/Core/AddOnButtons.lua), Phil's request). Every add-on with a minimap button gets an entry with **Open** (its left-click), **Options** (its right-click) and **✓ Show on minimap**, plus **Hide all minimap buttons** at the end. Buttons are found at runtime: LibDBIcon / LibDataBroker launchers through `LibStub` (no dependency), and any other named button on the minimap. Hidden buttons are saved per profile in `profile.addonButtons` and re-hidden after login and whenever LibDBIcon creates a button.
+**Add-ons ▸: other add-ons' minimap buttons** ([`Core/AddOnButtons.lua`](../../../Homunculus/Core/AddOnButtons.lua), Phil's request). Every add-on with a minimap button gets an entry with **Open** (its left-click), **Options** (its right-click) and **✓ Show on minimap**, plus **Hide all minimap buttons** at the end. Buttons are found at runtime: LibDBIcon / LibDataBroker launchers through `LibStub` (no dependency), and any other named button on the minimap. Hidden buttons are saved per profile in `profile.addonButtons` and re-hidden after login and whenever LibDBIcon creates a button.
 
 ```lua
-entries[#entries + 1] = { text = ADDONS or "Add-ons", children = Grimoire:GetAddOnButtonMenu() }
+entries[#entries + 1] = { text = ADDONS or "Add-ons", children = Homunculus:GetAddOnButtonMenu() }
 ```
 
-**Built on core's unit portrait.** `Grimoire:NewUnitPortrait` (in [`Core/UnitFrames.lua`](../../../Grimoire/Core/UnitFrames.lua)) builds the secure button, 3D model or 2D texture, name, level, size and style settings, and hiding the Blizzard frame. This module adds the click menu, status icons and emotes. [Grimoire Pet](../pet/README.md) uses the same base.
+**Built on core's unit portrait.** `Homunculus:NewUnitPortrait` (in [`Core/UnitFrames.lua`](../../../Homunculus/Core/UnitFrames.lua)) builds the secure button, 3D model or 2D texture, name, level, size and style settings, and hiding the Blizzard frame. This module adds the click menu, status icons and emotes. [Homunculus Pet](../pet/README.md) uses the same base.
 
 **Emotes are model animations.** `PlayerModel:SetAnimation` with the emote animation IDs: wave 67, cheer 68, laugh 70, cry 77. The model returns to standing on `OnAnimFinished`, or after 3 seconds on clients without it.
 
-**Blizzard's player frame is hidden in place** ([ADR 0007](../../adr/0007-hide-blizzard-frames-in-place.md)): its events and its bars' events are switched off and a secure state driver keeps it hidden, but it's never reparented. Forever runs the retail UI, and reparenting an Edit Mode frame tainted Edit Mode (`TargetUnit()` blocked) and broke Blizzard's secret-value code. Frames inside it go with it: Blizzard's pet frame is replaced by [Grimoire Pet](../pet/README.md), so keep that on while this frame hides Blizzard's.
+**Blizzard's player frame is hidden in place** ([ADR 0007](../../adr/0007-hide-blizzard-frames-in-place.md)): its events and its bars' events are switched off and a secure state driver keeps it hidden, but it's never reparented. Forever runs the retail UI, and reparenting an Edit Mode frame tainted Edit Mode (`TargetUnit()` blocked) and broke Blizzard's secret-value code. Frames inside it go with it: Blizzard's pet frame is replaced by [Homunculus Pet](../pet/README.md), so keep that on while this frame hides Blizzard's.
 
 ## Design decisions
 
@@ -80,7 +80,7 @@ entries[#entries + 1] = { text = ADDONS or "Add-ons", children = Grimoire:GetAdd
 
 ## Settings
 
-Stored in `GrimoireDB.profiles[<profile>].modules.PlayerFrame`. In the menu: **Components ▸ Player ▸ Player frame**.
+Stored in `HomunculusDB.profiles[<profile>].modules.PlayerFrame`. In the menu: **Components ▸ Player ▸ Player frame**.
 
 | Key | Default | Menu choices | Description |
 | --- | --- | --- | --- |
@@ -91,7 +91,7 @@ Stored in `GrimoireDB.profiles[<profile>].modules.PlayerFrame`. In the menu: **C
 | `emotes` | true | toggle | Cheer, laugh/cry, wave |
 | `hideBlizzard` | true | toggle (needs `/reload` to turn off) | Hide Blizzard's player frame |
 
-Minimap buttons: `GrimoireDB.profiles[<profile>].addonButtons` = `{ hidden = { ["ldb:Questie"] = true, … }, hideAll = false }`, changed from **Add-ons ▸** in the click menu.
+Minimap buttons: `HomunculusDB.profiles[<profile>].addonButtons` = `{ hidden = { ["ldb:Questie"] = true, … }, hideAll = false }`, changed from **Add-ons ▸** in the click menu.
 
 ## Screenshots
 

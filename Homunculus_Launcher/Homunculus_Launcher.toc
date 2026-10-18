@@ -1,0 +1,10 @@
+## Interface: 16001
+## Title: |cff8788eeHomunculus|r Launcher
+## Notes: A movable Homunculus button: click to move frames, right-click for a menu.
+## Author: Phil Henning
+## Version: @project-version@
+## RequiredDeps: Homunculus
+## Group: Homunculus
+## Category: Homunculus
+
+Launcher.lua

@@ -1,0 +1,12 @@
+## Interface: 16001
+## Title: |cff8788eeHomunculus|r Warlock
+## Notes: Warlock resources (soul shard count) for Homunculus.
+## Author: Phil Henning
+## Version: @project-version@
+## RequiredDeps: Homunculus
+## Group: Homunculus
+## Category: Homunculus
+## LoadOnDemand: 1
+## X-Homunculus-Class: WARLOCK
+
+Resources.lua

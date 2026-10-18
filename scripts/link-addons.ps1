@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-  Links every Grimoire* add-on folder in this repo into the game's AddOns folder.
+  Links every Homunculus* add-on folder in this repo into the game's AddOns folder.
 
 .DESCRIPTION
   Uses directory junctions (no admin rights needed), so edits in the repo show up
@@ -20,7 +20,7 @@ if (-not (Test-Path $addOnsDir)) {
 }
 
 $repo = Split-Path $PSScriptRoot -Parent
-Get-ChildItem -Path $repo -Directory -Filter "Grimoire*" | ForEach-Object {
+Get-ChildItem -Path $repo -Directory -Filter "Homunculus*" | ForEach-Object {
     $target = Join-Path $addOnsDir $_.Name
     if (Test-Path $target) {
         Write-Warning "$target already exists, skipping."

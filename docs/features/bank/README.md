@@ -1,20 +1,20 @@
 # Bank
 
-- **Add-on:** `Grimoire_Bank`
+- **Add-on:** `Homunculus_Bank`
 - **Module:** `Bank`
 - **Status:** Scaffolded, untested in game
-- **Opened from:** the *Bank* button in [Bags](../bags/README.md), the [Grimoire menu](../menu/README.md) (*Open ▸ Bank*), or `/grim bank`
+- **Opened from:** the *Bank* button in [Bags](../bags/README.md), the [Homunculus menu](../menu/README.md) (*Open ▸ Bank*), or `/hom bank`
 
 ## Summary
 
-Check what's in your bank, or any of your characters' banks, from anywhere. Each time you talk to a banker, Grimoire saves a snapshot of that character's bank. The viewer has a character picker showing names in class colors ([ADR 0003](../../adr/0003-show-character-and-class-color.md)), plus when the snapshot was taken.
+Check what's in your bank, or any of your characters' banks, from anywhere. Each time you talk to a banker, Homunculus saves a snapshot of that character's bank. The viewer has a character picker showing names in class colors ([ADR 0003](../../adr/0003-show-character-and-class-color.md)), plus when the snapshot was taken.
 
 ## What it solves
 
 ```mermaid
 flowchart LR
     Q["Do I have 10 Runecloth in the bank?"] --> D["Default: travel to a city and open the bank"]
-    Q --> G["Grimoire: open the Bank viewer anywhere"]
+    Q --> G["Homunculus: open the Bank viewer anywhere"]
 ```
 
 ## How it works
@@ -22,8 +22,8 @@ flowchart LR
 ```mermaid
 sequenceDiagram
     participant Banker
-    participant Bank as Grimoire Bank
-    participant DB as GrimoireDB.global.characters[you].bank
+    participant Bank as Homunculus Bank
+    participant DB as HomunculusDB.global.characters[you].bank
     Banker->>Bank: PLAYER_INTERACTION_MANAGER_FRAME_SHOW (Banker)
     Bank->>DB: Scan() → snapshot + timestamp
     loop while at bank
@@ -36,7 +36,7 @@ sequenceDiagram
 
 ## Code highlights
 
-**Supports both bank layouts** ([`Grimoire/Core/Containers.lua`](../../../Grimoire/Core/Containers.lua)). Recent Mainline clients use bank *tabs*; classic used a bank container plus bank bags:
+**Supports both bank layouts** ([`Homunculus/Core/Containers.lua`](../../../Homunculus/Core/Containers.lua)). Recent Mainline clients use bank *tabs*; classic used a bank container plus bank bags:
 
 ```lua
 if Enum.BagIndex.CharacterBankTab_1 then -- tabs
@@ -48,10 +48,10 @@ else
 **Snapshots live in core's account-wide DB**, keyed by character, so turning the add-on off never deletes them ([ADR 0002](../../adr/0002-every-component-is-a-toggleable-addon.md)):
 
 ```lua
-Grimoire:GetCharacterStore().bank = { scannedAt = time(), containers = containers }
+Homunculus:GetCharacterStore().bank = { scannedAt = time(), containers = containers }
 ```
 
-**Read-only slots** (`Grimoire.CreateDisplaySlot`) show tooltips and support shift-click linking without pretending the items can be used.
+**Read-only slots** (`Homunculus.CreateDisplaySlot`) show tooltips and support shift-click linking without pretending the items can be used.
 
 ## Design decisions
 

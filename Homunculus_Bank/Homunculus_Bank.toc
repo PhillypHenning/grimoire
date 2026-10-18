@@ -1,0 +1,10 @@
+## Interface: 16001
+## Title: |cff8788eeHomunculus|r Bank
+## Notes: Saves your bank when you visit a banker and lets you view it anywhere.
+## Author: Phil Henning
+## Version: @project-version@
+## RequiredDeps: Homunculus
+## Group: Homunculus
+## Category: Homunculus
+
+Bank.lua

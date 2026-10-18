@@ -1,7 +1,7 @@
 # Tempo: learn your best rotation and play it back
 
 > **Progress (2026-10-16, on the PC):**
-> - **T1 (probe):** code done. `/grim tempo probe`. Waiting for Phil to fight one mob and `/reload`; then Claude reads `SavedVariables\Grimoire_Tempo.lua` and tunes the damage-source order.
+> - **T1 (probe):** code done. `/hom tempo probe`. Waiting for Phil to fight one mob and `/reload`; then Claude reads `SavedVariables\Homunculus_Tempo.lua` and tunes the damage-source order.
 > - **T2–T5:** code done the same day (Phil: "go ahead with the plan"), without waiting for the probe: the recorder listens to every damage source at once and keeps the best that gave data. `Cycles.lua` and `Share.lua` are tested with `lua scripts/tempo/test.lua`. Waiting on in-game testing.
 > - **Changed 2026-10-16 (Phil):** the T4 playback lane was dropped ("it's fun but it might just be better to capture rotations in the menu"); Tempo got a floating button; pins became "Save". T1 probe run twice; the damage-meter part of the probe is optional and not run yet.
 
@@ -27,12 +27,12 @@ A "combo" in Tempo is one **cycle**: the casts from putting your DoTs on to the 
 ## Milestones
 
 ### T1: probe (done, waiting on a test)
-`/grim tempo probe` arms a recorder for the next fight. It saves:
+`/hom tempo probe` arms a recorder for the next fight. It saves:
 - which APIs exist (`CombatLogGetCurrentEventInfo`, `C_DamageMeter` and its functions, `C_CombatLog`, `UnitHealthPercent`, …);
 - the player's casts, `UNIT_COMBAT` on the target, and target health, each marked `<secret>` where the value is secret;
 - the result of every `C_DamageMeter.Get*` function after the fight.
 
-**Phil:** `/reload`, `/grim tempo probe`, fight one mob to the end with your usual rotation, `/reload`. Then tell Claude. No screenshots needed.
+**Phil:** `/reload`, `/hom tempo probe`, fight one mob to the end with your usual rotation, `/reload`. Then tell Claude. No screenshots needed.
 
 ### T2: recorder (done, waiting on a test)
 Per character (ADR 0003): each fight saves casts with timestamps, damage over time from the source the probe picked, duration, and the target's name and level. Only the last N fights are kept (setting). Fights shorter than a few seconds are dropped.

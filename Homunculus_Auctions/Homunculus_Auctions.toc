@@ -1,0 +1,13 @@
+## Interface: 16001
+## Title: |cff8788eeHomunculus|r Auctions
+## Notes: Your auctions anywhere, auction prices in item tooltips, and shopping lists. /hom auctions
+## Author: Phil Henning
+## Version: @project-version@
+## RequiredDeps: Homunculus
+## SavedVariables: HomunculusAuctionsDB
+## Group: Homunculus
+## Category: Homunculus
+
+Auctions.lua
+Prices.lua
+Shopping.lua

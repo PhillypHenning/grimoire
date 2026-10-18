@@ -1,0 +1,31 @@
+## Interface: 16001
+## Title: |cff8788eeHomunculus|r
+## Notes: Modular UI replacement for WoW Forever.
+## Author: Phil Henning
+## Version: @project-version@
+## SavedVariables: HomunculusDB
+## Group: Homunculus
+## Category: Homunculus
+
+# Interface 16001 = Forever client build 1.60.1 (a Classic-family client). After a client
+# patch, check with /dump select(4, GetBuildInfo()) and update every .toc in the repo.
+# Group/Category tidy the in-game AddOns list; clients that don't know them ignore them.
+
+Core\Init.lua
+Core\Log.lua
+Core\Util.lua
+Core\Serialize.lua
+Core\Database.lua
+Core\Combat.lua
+Core\Characters.lua
+Core\Containers.lua
+Core\Items.lua
+Core\Widgets.lua
+Core\Modules.lua
+Core\Movers.lua
+Core\UnitFrames.lua
+Core\Commands.lua
+Core\Menu.lua
+Core\Layout.lua
+Core\AddOnButtons.lua
+Core\Bootstrap.lua

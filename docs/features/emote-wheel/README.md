@@ -1,14 +1,14 @@
 # Emote wheel
 
-- **Add-on:** `Grimoire_Emotes`
+- **Add-on:** `Homunculus_Emotes`
 - **Module(s):** `EmoteWheel`
 - **Status:** Scaffolded, untested in game
 - **Replaces:** emote-wheel add-ons; typing `/wave`, `/dance` …
-- **Opened by:** holding its key (Key Bindings ▸ Grimoire ▸ *Emote wheel (hold)*), the [Grimoire menu](../menu/README.md) (*Open ▸ Emote wheel*), or `/grim emotes`
+- **Opened by:** holding its key (Key Bindings ▸ Homunculus ▸ *Emote wheel (hold)*), the [Homunculus menu](../menu/README.md) (*Open ▸ Emote wheel*), or `/hom emotes`
 
 ## Summary
 
-A ring of eight emotes that opens at the mouse while you hold a key. Point toward one and let go: your character does it (with the usual chat line, aimed at your target if you have one). Letting go near the centre does nothing. Opened from the menu or `/grim emotes`, the wheel stays open until you click an emote or press Esc.
+A ring of eight emotes that opens at the mouse while you hold a key. Point toward one and let go: your character does it (with the usual chat line, aimed at your target if you have one). Letting go near the centre does nothing. Opened from the menu or `/hom emotes`, the wheel stays open until you click an emote or press Esc.
 
 ## What it solves
 
@@ -25,7 +25,7 @@ sequenceDiagram
     participant Binding as Key binding (runOnUp)
     participant Wheel
     Phil->>Binding: key down
-    Binding->>Wheel: GrimoireEmoteWheel_OnKey("down") → open at cursor
+    Binding->>Wheel: HomunculusEmoteWheel_OnKey("down") → open at cursor
     loop every frame
         Wheel->>Wheel: angle from centre → highlight that emote (dead zone in the middle)
     end
@@ -35,15 +35,15 @@ sequenceDiagram
 
 ## Code highlights
 
-**Hold-and-release from one binding** ([`Bindings.xml`](../../../Grimoire_Emotes/Bindings.xml)). `runOnUp="true"` calls the binding on both press and release, with `keystate` set to `"down"` or `"up"`.
+**Hold-and-release from one binding** ([`Bindings.xml`](../../../Homunculus_Emotes/Bindings.xml)). `runOnUp="true"` calls the binding on both press and release, with `keystate` set to `"down"` or `"up"`.
 
-**Picking by angle** ([`EmoteWheel.lua`](../../../Grimoire_Emotes/EmoteWheel.lua)). The first emote sits at the top, the rest clockwise; the pointer's angle from the centre is rounded to the nearest slice, so you only need to move toward an emote, not onto it:
+**Picking by angle** ([`EmoteWheel.lua`](../../../Homunculus_Emotes/EmoteWheel.lua)). The first emote sits at the top, the rest clockwise; the pointer's angle from the centre is rounded to the nearest slice, so you only need to move toward an emote, not onto it:
 
 ```lua
 local index = math.floor((math.pi / 2 - atan2(dy, dx)) / step + 0.5) % #EMOTES + 1
 ```
 
-**Classic art** (ADR 0001). Each emote is a `Grimoire.CreateRoundButton` (minimap-button style, fixed size) on a faint disc made from the minimap button's background.
+**Classic art** (ADR 0001). Each emote is a `Homunculus.CreateRoundButton` (minimap-button style, fixed size) on a faint disc made from the minimap button's background.
 
 ## Design decisions
 
@@ -57,7 +57,7 @@ local index = math.floor((math.pi / 2 - atan2(dy, dx)) / step + 0.5) % #EMOTES +
 
 ## Settings
 
-None yet. Bind the key in **Key Bindings ▸ Grimoire ▸ Emote wheel (hold)**.
+None yet. Bind the key in **Key Bindings ▸ Homunculus ▸ Emote wheel (hold)**.
 
 ## Screenshots
 

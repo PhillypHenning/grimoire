@@ -3,8 +3,8 @@
 -- Exits 1 on the first failure.
 
 local here = arg[0]:match("^(.*)[/\\]") or "."
-local Cycles = dofile(here .. "/../../Grimoire_Tempo/Cycles.lua")
-local Share = dofile(here .. "/../../Grimoire_Tempo/Share.lua")
+local Cycles = dofile(here .. "/../../Homunculus_Tempo/Cycles.lua")
+local Share = dofile(here .. "/../../Homunculus_Tempo/Share.lua")
 
 local failures = 0
 local function check(cond, message)

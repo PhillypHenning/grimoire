@@ -1,26 +1,26 @@
 # Auras
 
-- **Add-on:** `Grimoire_Auras`
+- **Add-on:** `Homunculus_Auras`
 - **Modules:** `Buffs` (and `Debuffs` on clients with a separate debuff frame)
 - **Status:** Scaffolded, untested in game
 - **Replaces:** Buff-mover add-ons
 
 ## Summary
 
-Blizzard's own buff frame, made into a Grimoire frame: drag it, group it with other frames, dim it when idle, and pick its size from the menu. Because the buttons are still Blizzard's, everything about them works as before: right-click to cancel, weapon enchants (Firestone, Spellstone, poisons), tooltips and timers.
+Blizzard's own buff frame, made into a Homunculus frame: drag it, group it with other frames, dim it when idle, and pick its size from the menu. Because the buttons are still Blizzard's, everything about them works as before: right-click to cancel, weapon enchants (Firestone, Spellstone, poisons), tooltips and timers.
 
 ## What it solves
 
 ```mermaid
 flowchart LR
-    D[Buffs fixed next to the minimap] ==> G[Buffs wherever you want them,<br/>grouped, dimmed and sized with the rest of Grimoire]
+    D[Buffs fixed next to the minimap] ==> G[Buffs wherever you want them,<br/>grouped, dimmed and sized with the rest of Homunculus]
 ```
 
 ## How it works
 
 ```mermaid
 flowchart LR
-    B[BuffFrame + TemporaryEnchantFrame] -- SetParent + pin TOPRIGHT --> H[GrimoireBuffsHolder<br/>a normal Grimoire mover]
+    B[BuffFrame + TemporaryEnchantFrame] -- SetParent + pin TOPRIGHT --> H[HomunculusBuffsHolder<br/>a normal Homunculus mover]
     H --> M[Move mode, groups, dimming, reset]
     Blz[Blizzard re-anchors BuffFrame] --> Hook[SetPoint hook] -- pin again --> H
     UA[UNIT_AURA player] --> N[NotifyMoverActivity] --> Dim[core idle dimming]
@@ -30,7 +30,7 @@ On Classic, debuffs are laid out inside `BuffFrame` under the buffs, so they mov
 
 ## Code highlights
 
-**Reparent and pin** ([`Auras.lua`](../../../Grimoire_Auras/Auras.lua)). Making the holder the parent means the Blizzard frame follows the holder's position and the alpha core sets for dimming:
+**Reparent and pin** ([`Auras.lua`](../../../Homunculus_Auras/Auras.lua)). Making the holder the parent means the Blizzard frame follows the holder's position and the alpha core sets for dimming:
 
 ```lua
 frame:SetParent(self.holder)
@@ -63,7 +63,7 @@ end)
 
 ## Settings
 
-Stored in `GrimoireDB.profiles[<profile>].modules.Buffs` / `.Debuffs`. In the menu: **Components ▸ Auras**.
+Stored in `HomunculusDB.profiles[<profile>].modules.Buffs` / `.Debuffs`. In the menu: **Components ▸ Auras**.
 
 | Key | Default | Menu choices | Description |
 | --- | --- | --- | --- |

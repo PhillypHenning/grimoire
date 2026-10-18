@@ -1,12 +1,12 @@
 # Core framework
 
-- **Add-on:** `Grimoire`
+- **Add-on:** `Homunculus`
 - **Status:** Scaffolded
 - **Replaces:** Nothing directly. It's the shared foundation that lets every other feature replace an add-on.
 
 ## Summary
 
-The core holds no visible features. It provides the shared infrastructure that every Grimoire feature builds on: a module system, per-character profiles, draggable frames, combat-safe deferral, a callback bus, and `/grimoire` commands. Class- and feature-specific code lives in separate `Grimoire_*` add-ons that plug into it.
+The core holds no visible features. It provides the shared infrastructure that every Homunculus feature builds on: a module system, per-character profiles, draggable frames, combat-safe deferral, a callback bus, and `/homunculus` commands. Class- and feature-specific code lives in separate `Homunculus_*` add-ons that plug into it.
 
 ## What it solves
 
@@ -19,11 +19,11 @@ flowchart LR
         A2[Add-on B<br/>own DB, movers, slash cmd]
         A3[Add-on C<br/>own DB, movers, slash cmd]
     end
-    subgraph After["After: Grimoire"]
-        Core[Grimoire core<br/>DB · movers · commands · combat · callbacks]
-        F1[Grimoire_Warlock] --> Core
-        F2[Grimoire_Bags] --> Core
-        F3[Grimoire_…] --> Core
+    subgraph After["After: Homunculus"]
+        Core[Homunculus core<br/>DB · movers · commands · combat · callbacks]
+        F1[Homunculus_Warlock] --> Core
+        F2[Homunculus_Bags] --> Core
+        F3[Homunculus_…] --> Core
         Ext[Third-party add-ons] -. callbacks .-> Core
     end
     Before ==> After
@@ -36,14 +36,14 @@ flowchart LR
 ```mermaid
 sequenceDiagram
     participant WoW
-    participant Core as Grimoire (core)
-    participant Class as Grimoire_Warlock (LoadOnDemand)
-    WoW->>Core: ADDON_LOADED "Grimoire"
-    Core->>Core: InitializeDatabase() → GrimoireDB profile
+    participant Core as Homunculus (core)
+    participant Class as Homunculus_Warlock (LoadOnDemand)
+    WoW->>Core: ADDON_LOADED "Homunculus"
+    Core->>Core: InitializeDatabase() → HomunculusDB profile
     WoW->>Core: PLAYER_LOGIN
-    Core->>Core: LoadClassAddOns() — scan for X-Grimoire-Class
+    Core->>Core: LoadClassAddOns() — scan for X-Homunculus-Class
     Core->>Class: C_AddOns.LoadAddOn (only if class matches)
-    Class->>Core: Grimoire:NewModule("WarlockResources")
+    Class->>Core: Homunculus:NewModule("WarlockResources")
     Core->>Class: OnInitialize() then OnEnable()
     Core->>Core: Fire("Ready")
 ```
@@ -62,10 +62,10 @@ stateDiagram-v2
 
 ## Code highlights
 
-**Declaring a module** gives you defaults merged into per-profile settings, a class gate, and conflict detection ([`Core/Modules.lua`](../../../Grimoire/Core/Modules.lua)):
+**Declaring a module** gives you defaults merged into per-profile settings, a class gate, and conflict detection ([`Core/Modules.lua`](../../../Homunculus/Core/Modules.lua)):
 
 ```lua
-local M = Grimoire:NewModule("WarlockResources", {
+local M = Homunculus:NewModule("WarlockResources", {
     class = "WARLOCK",
     conflicts = { "SomeOtherShardAddon" }, -- skip ourselves if the user still runs it
     defaults = { width = 220 },
@@ -76,7 +76,7 @@ local M = Grimoire:NewModule("WarlockResources", {
 
 ```lua
 local ADDON_NAME = ...
-local M = Grimoire:NewModule("Bags", {
+local M = Homunculus:NewModule("Bags", {
     addon = ADDON_NAME,
     label = "Bags",
     defaults = { columns = 10 },
@@ -90,13 +90,13 @@ function M:ApplySettings(key) --[[ re-layout ]] end
 
 `Module:RegisterMover(frame, label, default, { dim, isBusy, suffix })` registers a mover keyed `module.name .. (suffix or "")`. `isBusy` returning true keeps the frame and its group from dimming.
 
-The `conflicts` list is what makes gradual migration safe. You can keep an old add-on installed while Grimoire's replacement matures, and the two won't fight.
+The `conflicts` list is what makes gradual migration safe. You can keep an old add-on installed while Homunculus's replacement matures, and the two won't fight.
 
 **Class packages load on demand**, driven by TOC metadata rather than hard-coded lists:
 
 ```
 ## LoadOnDemand: 1
-## X-Grimoire-Class: WARLOCK
+## X-Homunculus-Class: WARLOCK
 ```
 
 **Events belong to the module**, so disabling it can never leave a stray handler running:
@@ -106,19 +106,19 @@ self:RegisterUnitEvent("UNIT_POWER_FREQUENT", "player", "OnPowerEvent")
 -- DisableModule() → UnregisterAllEvents() + UnregisterAllCallbacks(module)
 ```
 
-**Combat-safe deferral** ([`Core/Combat.lua`](../../../Grimoire/Core/Combat.lua)). Protected frames can't move in combat, so the change is queued:
+**Combat-safe deferral** ([`Core/Combat.lua`](../../../Homunculus/Core/Combat.lua)). Protected frames can't move in combat, so the change is queued:
 
 ```lua
-Grimoire:RunOutOfCombat(function()
+Homunculus:RunOutOfCombat(function()
     frame:ClearAllPoints()
     frame:SetPoint(...)
 end)
 ```
 
-**Secret-value guards** ([`Core/Util.lua`](../../../Grimoire/Core/Util.lua)):
+**Secret-value guards** ([`Core/Util.lua`](../../../Homunculus/Core/Util.lua)):
 
 ```lua
-if Grimoire.AnySecret(current, max) then
+if Homunculus.AnySecret(current, max) then
     bar.text:SetText(current)      -- widgets may display secrets
 else
     bar.text:SetFormattedText("%d%%", current / max * 100) -- maths only on plain values
@@ -127,9 +127,9 @@ end
 
 ### Movers, groups and idle dimming
 
-Any frame registered with `Grimoire:RegisterMover(frame, key, label, default, { dim = true })` gets a move-mode overlay (from the Launcher or `/grimoire unlock`). Windows from `CreateWindow` are movers automatically.
+Any frame registered with `Homunculus:RegisterMover(frame, key, label, default, { dim = true })` gets a move-mode overlay (from the Launcher or `/homunculus unlock`). Windows from `CreateWindow` are movers automatically.
 
-`Grimoire:SetMoverScale(key, scale)` resizes a mover without moving it: positions are saved in the frame's own (scaled) units, so it rescales the saved offsets along with the frame. A frame built at a saved scale is scaled before its position is applied.
+`Homunculus:SetMoverScale(key, scale)` resizes a mover without moving it: positions are saved in the frame's own (scaled) units, so it rescales the saved offsets along with the frame. A frame built at a saved scale is scaled before its position is applied.
 
 ```mermaid
 flowchart LR
@@ -145,12 +145,12 @@ flowchart LR
 
 - **Groups** merge: grouping a frame that's already in a group pulls the whole group in. A group left with one member dissolves.
 - **Dimming is per group.** "Dim when idle" applies to every member, and a group stays bright while any member is changing, hovered or busy (`isBusy`, e.g. a bar that isn't full).
-- **Core owns mover alpha.** Modules report changes with `Grimoire:NotifyMoverActivity(key)` and never call `SetAlpha` on their mover frame.
+- **Core owns mover alpha.** Modules report changes with `Homunculus:NotifyMoverActivity(key)` and never call `SetAlpha` on their mover frame.
 
 ## Design decisions
 
 - **Own framework instead of Ace3.** The needs are small, and the code stays readable and dependency-free. AceDB/AceConfig can be pulled in via `.pkgmeta` externals if an options panel grows complex.
-- **Global `Grimoire` table.** Required for cross-add-on modules, and it doubles as a public API for third-party integration.
+- **Global `Homunculus` table.** Required for cross-add-on modules, and it doubles as a public API for third-party integration.
 - **Unknown events are skipped.** Forever is a Classic-family client whose API may differ from both Classic Era and retail, so modules can register legacy *and* modern events and only the real ones are used.
 - **Own `inCombat` flag.** `InCombatLockdown()` still reports false inside the `PLAYER_REGEN_DISABLED` handler.
 
@@ -167,13 +167,13 @@ flowchart LR
 | --- | --- | --- |
 | `Ready` | — | After login and initial module setup |
 | `CombatStart` / `CombatEnd` | — | Entering / leaving combat |
-| `MoversUnlocked` / `MoversLocked` | — | `/grimoire unlock` / `lock` (or combat auto-lock) |
+| `MoversUnlocked` / `MoversLocked` | — | `/homunculus unlock` / `lock` (or combat auto-lock) |
 | `ModuleEnabled` / `ModuleDisabled` | `name` | Module state changes |
 | `UnitPortraitStyleChanged` | `name` | A unit portrait module (player, pet frame) applied its settings; its bars check whether the Portrait bar style covers them |
 | `MoverGroupsChanged` | — | Movers were grouped, ungrouped or selection cleared |
 | `PositionsReset` | — | Layout ▸ Reset all positions (frames that aren't movers, like the launcher, reset themselves) |
-| `BankScanned` | — | `Grimoire_Bank` saved a new snapshot |
-| `AuctionsScanned` | — | `Grimoire_Auctions` saved a new snapshot |
+| `BankScanned` | — | `Homunculus_Bank` saved a new snapshot |
+| `AuctionsScanned` | — | `Homunculus_Auctions` saved a new snapshot |
 
 ## Shared toolkit
 
@@ -181,37 +181,37 @@ Code that more than one component needs lives in core, so components never depen
 
 | Helper | File | Purpose |
 | --- | --- | --- |
-| `Grimoire:CreateWindow(key, title, owner?)` | `Core/Widgets.lua` | Classic dialog window: header, close button, Escape to close; registered as mover `<key>Window` (listed in `owner`'s menu) |
-| `Grimoire.OpenMenu(anchor, entries)` | `Core/Widgets.lua` | Context menu (nested via `children`) using Blizzard's Menu API, or `UIDropDownMenu` on older clients; `anchor` nil opens at the cursor |
-| `Grimoire:GetMainMenu()` | `Core/Menu.lua` | The [manager menu](../menu/README.md); also `/grim menu` |
-| `Grimoire:SetModuleSetting(module, key, value)` | `Core/Modules.lua` | Change a declared setting and apply it live (`ApplySettings`) |
-| `Grimoire:RegisterMover` / `Module:RegisterMover` / `NotifyMoverActivity` | `Core/Movers.lua`, `Core/Modules.lua` | Move mode, groups, idle dimming (see above); the module version records the key for the menu |
-| `Grimoire:HideBlizzardFrame(frame)` | `Core/Util.lua` | Hide a default frame a component replaces, in place: events off (with its child frames), unit watch stopped, secure state driver keeps it hidden; never reparented ([ADR 0007](../../adr/0007-hide-blizzard-frames-in-place.md)). `/reload` after disabling restores it |
-| `Grimoire.CreateStatusBar` / `UpdateUnitBar` / `SetUnitRightClickMenu` / `UnitLevelText` / `BindingLabel` | `Core/UnitFrames.lua` | Pieces for frames holding several units in one mover (party, target): bars with Dead/Ghost/Offline, the unit menu, difficulty-coloured level, short keybind labels |
-| `Grimoire:NewUnitBar(name, opts)` / `NewUnitPortrait(name, opts)` | `Core/UnitFrames.lua` | Health/power bar and portrait modules for any unit (player, pet); hide without the unit, except in move mode. A bar with `portrait = <module>` hides while that portrait uses the Portrait bar style |
-| `Grimoire.CreatePortraitBar` / `PortraitBarSize` / `SetPortraitBarModel` / `UpdatePortraitBar` | `Core/UnitFrames.lua` | The Portrait bar style: the unit's 3D model behind a see-through health fill, a thin power strip, name and level on the bar; the name gives way to the health % once hurt, the value sits at the side. Player, pet, target and party frames |
-| `Grimoire.SetUnitValueText(text, unit, kind, current, max, showValue, showPercent)` | `Core/UnitFrames.lua` | "84 - 84%", "84" or "84%". With secret values the % comes from the client (`UnitHealthPercent` / `UnitPowerPercent`, scaled to 100) where it has them; otherwise the raw value |
-| `Grimoire.CreateStatusBar` / `UpdateUnitBar` / `SetUnitRightClickMenu` / `UnitLevelText` / `BindingLabel` | `Core/UnitFrames.lua` | Pieces for frames holding several units in one mover (party, target): bars with Dead/Ghost/Offline, the unit menu, difficulty-coloured level, short keybind labels |
-| `Grimoire:GetAddOnButtonMenu()` / `GetAddOnButtons()` | `Core/AddOnButtons.lua` | Other add-ons' minimap buttons (LibDBIcon/LDB via `LibStub`, plus loose minimap buttons) as menu entries: Open, Options, Show on minimap; hidden ones saved in `profile.addonButtons` |
-| `Grimoire.CreateRoundButton(name, parent?)` | `Core/Widgets.lua` | Minimap-style round button (Grimoire button, Notes button); set `button.icon` |
-| `Grimoire.CreateScrollArea(parent, name, child?)` | `Core/Widgets.lua` | Scroll frame with scrollbar |
-| `Grimoire.CreateDisplaySlot` / `SetDisplaySlotItem` | `Core/Widgets.lua` | Read-only item slot (tooltip, shift-click link) for cached items |
-| `Grimoire.GetBagIDs` / `GetBankIDs` / `ReadContainer` | `Core/Containers.lua` | Inventory reading, including both bank-bag and bank-tab layouts |
-| `Grimoire:GetCharacterStore()` | `Core/Characters.lua` | Account-wide, per-character storage in `GrimoireDB.global.characters` |
-| `Grimoire:FormatCharacterName` / `ClassColorText` / `GetClassColor` | `Core/Characters.lua` | Class-colored character names and text ([ADR 0003](../../adr/0003-show-character-and-class-color.md)) |
-| `Grimoire:GetCharactersWith(field)` | `Core/Characters.lua` | Characters with stored data, current first |
-| `Grimoire.CreateCharacterPicker(parent, field, onChange)` | `Core/Widgets.lua` | Class-colored character selector (uses `OpenMenu`, or cycles if no menu API) |
-| `Grimoire.FormatAgo` / `FormatMoney` | `Core/Util.lua` | "3h ago", coin strings |
-| `Grimoire.Font(name, fallback, …)` | `Core/Util.lua` | The first Blizzard font object that exists on this client (Forever lacks some) |
-| `Grimoire.MakeBold(fontString, extraSize?)` | `Core/Util.lua` | Bold look (thick outline, slightly larger), e.g. the level on portraits |
+| `Homunculus:CreateWindow(key, title, owner?)` | `Core/Widgets.lua` | Classic dialog window: header, close button, Escape to close; registered as mover `<key>Window` (listed in `owner`'s menu) |
+| `Homunculus.OpenMenu(anchor, entries)` | `Core/Widgets.lua` | Context menu (nested via `children`) using Blizzard's Menu API, or `UIDropDownMenu` on older clients; `anchor` nil opens at the cursor |
+| `Homunculus:GetMainMenu()` | `Core/Menu.lua` | The [manager menu](../menu/README.md); also `/hom menu` |
+| `Homunculus:SetModuleSetting(module, key, value)` | `Core/Modules.lua` | Change a declared setting and apply it live (`ApplySettings`) |
+| `Homunculus:RegisterMover` / `Module:RegisterMover` / `NotifyMoverActivity` | `Core/Movers.lua`, `Core/Modules.lua` | Move mode, groups, idle dimming (see above); the module version records the key for the menu |
+| `Homunculus:HideBlizzardFrame(frame)` | `Core/Util.lua` | Hide a default frame a component replaces, in place: events off (with its child frames), unit watch stopped, secure state driver keeps it hidden; never reparented ([ADR 0007](../../adr/0007-hide-blizzard-frames-in-place.md)). `/reload` after disabling restores it |
+| `Homunculus.CreateStatusBar` / `UpdateUnitBar` / `SetUnitRightClickMenu` / `UnitLevelText` / `BindingLabel` | `Core/UnitFrames.lua` | Pieces for frames holding several units in one mover (party, target): bars with Dead/Ghost/Offline, the unit menu, difficulty-coloured level, short keybind labels |
+| `Homunculus:NewUnitBar(name, opts)` / `NewUnitPortrait(name, opts)` | `Core/UnitFrames.lua` | Health/power bar and portrait modules for any unit (player, pet); hide without the unit, except in move mode. A bar with `portrait = <module>` hides while that portrait uses the Portrait bar style |
+| `Homunculus.CreatePortraitBar` / `PortraitBarSize` / `SetPortraitBarModel` / `UpdatePortraitBar` | `Core/UnitFrames.lua` | The Portrait bar style: the unit's 3D model behind a see-through health fill, a thin power strip, name and level on the bar; the name gives way to the health % once hurt, the value sits at the side. Player, pet, target and party frames |
+| `Homunculus.SetUnitValueText(text, unit, kind, current, max, showValue, showPercent)` | `Core/UnitFrames.lua` | "84 - 84%", "84" or "84%". With secret values the % comes from the client (`UnitHealthPercent` / `UnitPowerPercent`, scaled to 100) where it has them; otherwise the raw value |
+| `Homunculus.CreateStatusBar` / `UpdateUnitBar` / `SetUnitRightClickMenu` / `UnitLevelText` / `BindingLabel` | `Core/UnitFrames.lua` | Pieces for frames holding several units in one mover (party, target): bars with Dead/Ghost/Offline, the unit menu, difficulty-coloured level, short keybind labels |
+| `Homunculus:GetAddOnButtonMenu()` / `GetAddOnButtons()` | `Core/AddOnButtons.lua` | Other add-ons' minimap buttons (LibDBIcon/LDB via `LibStub`, plus loose minimap buttons) as menu entries: Open, Options, Show on minimap; hidden ones saved in `profile.addonButtons` |
+| `Homunculus.CreateRoundButton(name, parent?)` | `Core/Widgets.lua` | Minimap-style round button (Homunculus button, Notes button); set `button.icon` |
+| `Homunculus.CreateScrollArea(parent, name, child?)` | `Core/Widgets.lua` | Scroll frame with scrollbar |
+| `Homunculus.CreateDisplaySlot` / `SetDisplaySlotItem` | `Core/Widgets.lua` | Read-only item slot (tooltip, shift-click link) for cached items |
+| `Homunculus.GetBagIDs` / `GetBankIDs` / `ReadContainer` | `Core/Containers.lua` | Inventory reading, including both bank-bag and bank-tab layouts |
+| `Homunculus:GetCharacterStore()` | `Core/Characters.lua` | Account-wide, per-character storage in `HomunculusDB.global.characters` |
+| `Homunculus:FormatCharacterName` / `ClassColorText` / `GetClassColor` | `Core/Characters.lua` | Class-colored character names and text ([ADR 0003](../../adr/0003-show-character-and-class-color.md)) |
+| `Homunculus:GetCharactersWith(field)` | `Core/Characters.lua` | Characters with stored data, current first |
+| `Homunculus.CreateCharacterPicker(parent, field, onChange)` | `Core/Widgets.lua` | Class-colored character selector (uses `OpenMenu`, or cycles if no menu API) |
+| `Homunculus.FormatAgo` / `FormatMoney` | `Core/Util.lua` | "3h ago", coin strings |
+| `Homunculus.Font(name, fallback, …)` | `Core/Util.lua` | The first Blizzard font object that exists on this client (Forever lacks some) |
+| `Homunculus.MakeBold(fontString, extraSize?)` | `Core/Util.lua` | Bold look (thick outline, slightly larger), e.g. the level on portraits |
 | `Module:RegisterEvent` | `Core/Modules.lua` | Silently skips events this client doesn't have |
 
 ## Screenshots
 
-_Not applicable beyond `/grimoire unlock` mover overlays. Add one once tested in game._
+_Not applicable beyond `/homunculus unlock` mover overlays. Add one once tested in game._
 
 ## Open questions / roadmap
 
 - More setting types (sliders, colours) for the [manager menu](../menu/README.md) ([ADR 0005](../../adr/0005-modules-describe-their-settings.md)).
 - Profile copy/delete commands.
-- DB migrations keyed on `GrimoireDB.version`.
+- DB migrations keyed on `HomunculusDB.version`.

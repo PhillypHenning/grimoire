@@ -1,0 +1,11 @@
+## Interface: 16001
+## Title: |cff8788eeHomunculus|r Tweaks
+## Notes: Game settings Blizzard's options don't offer: sharper image, denser grass, longer camera zoom. /hom cvars lists every setting.
+## Author: Phil Henning
+## Version: @project-version@
+## RequiredDeps: Homunculus
+## SavedVariables: HomunculusTweaksDB
+## Group: Homunculus
+## Category: Homunculus
+
+Graphics.lua

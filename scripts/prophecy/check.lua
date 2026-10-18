@@ -1,11 +1,11 @@
 -- Checks a Prophecy plan file against the format (docs/prophecy/FORMAT.md).
 --   lua scripts/prophecy/check.lua <plan file>
 -- Prints errors and warnings with line numbers and a summary; exits 1 on errors.
--- Uses the add-on's own parser (Grimoire_Prophecy/Parser.lua), so it accepts exactly
+-- Uses the add-on's own parser (Homunculus_Prophecy/Parser.lua), so it accepts exactly
 -- what the game does.
 
 local here = arg[0]:match("^(.*)[/\\]") or "."
-local Parser = dofile(here .. "/../../Grimoire_Prophecy/Parser.lua")
+local Parser = dofile(here .. "/../../Homunculus_Prophecy/Parser.lua")
 
 local path = arg[1]
 if not path then

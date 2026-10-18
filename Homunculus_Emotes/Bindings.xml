@@ -1,0 +1,6 @@
+<Bindings>
+	<!-- runOnUp: the wheel opens on key down and does the chosen emote on key up. -->
+	<Binding name="HOMUNCULUS_EMOTE_WHEEL" runOnUp="true" header="HOMUNCULUS" category="ADDONS">
+		HomunculusEmoteWheel_OnKey(keystate)
+	</Binding>
+</Bindings>

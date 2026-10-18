@@ -1,6 +1,6 @@
 # Party frames
 
-- **Add-on:** `Grimoire_Party` ([`Party.lua`](../../../Grimoire_Party/Party.lua))
+- **Add-on:** `Homunculus_Party` ([`Party.lua`](../../../Homunculus_Party/Party.lua))
 - **Module:** `Party`
 - **Status:** Scaffolded, untested in game
 - **Replaces:** Blizzard's party frames; unit-frame add-ons' party frames
@@ -20,7 +20,7 @@ flowchart LR
 
 ```mermaid
 flowchart TD
-    subgraph Mover["GrimoirePartyFrame (one mover)"]
+    subgraph Mover["HomunculusPartyFrame (one mover)"]
         M1[party1: SecureUnitButton] --- M2[party2] --- M3[party3] --- M4[party4]
     end
     UW[RegisterUnitWatch per member] --> M1 & M2 & M3 & M4
@@ -33,7 +33,7 @@ flowchart TD
 
 ## Code highlights
 
-**Members are widgets, not movers** ([`Party.lua`](../../../Grimoire_Party/Party.lua)). Each member is a secure unit button laid out inside one holder frame, and only the holder is registered as a mover. That's what makes the party move as one (Phil's request):
+**Members are widgets, not movers** ([`Party.lua`](../../../Homunculus_Party/Party.lua)). Each member is a secure unit button laid out inside one holder frame, and only the holder is registered as a mover. That's what makes the party move as one (Phil's request):
 
 ```lua
 button:SetPoint("TOPLEFT", self.holder, "TOPLEFT", 0, -(i - 1) * step)
@@ -43,18 +43,18 @@ self:RegisterMover(holder, "Party", { "TOPLEFT", "UIParent", "TOPLEFT", 20, -160
 
 **No group header.** Forever lacks `SecureAuraHeaderTemplate`, and `SecureGroupHeaderTemplate` ships in the same Blizzard file, so it may be missing too. Party units always fill `party1`..`partyN` in order, so four fixed slots, each shown by `RegisterUnitWatch`, give the same result and work in combat.
 
-**Keybinding badge.** `Grimoire.BindingLabel("TARGETPARTYMEMBER2")` returns the first key bound to that command, shortened for a badge (`F3`, `s2` for Shift-2, `cN3` for Ctrl-Numpad 3), and it refreshes on `UPDATE_BINDINGS`.
+**Keybinding badge.** `Homunculus.BindingLabel("TARGETPARTYMEMBER2")` returns the first key bound to that command, shortened for a badge (`F3`, `s2` for Shift-2, `cN3` for Ctrl-Numpad 3), and it refreshes on `UPDATE_BINDINGS`.
 
-**Shared pieces from core** ([`Core/UnitFrames.lua`](../../../Grimoire/Core/UnitFrames.lua)): `CreateStatusBar`, `UpdateUnitBar` (health or power, with Dead/Ghost/Offline), `SetUnitRightClickMenu`, `BindingLabel`. The target frame uses the same ones.
+**Shared pieces from core** ([`Core/UnitFrames.lua`](../../../Homunculus/Core/UnitFrames.lua)): `CreateStatusBar`, `UpdateUnitBar` (health or power, with Dead/Ghost/Offline), `SetUnitRightClickMenu`, `BindingLabel`. The target frame uses the same ones.
 
 ## Design decisions
 
 - **Classic art** ([ADR 0001](../../adr/0001-prefer-classic-style-ui.md)): Blizzard's `UI-PartyFrame` texture with the portrait and bars in its slots, and names in class colour ([ADR 0003](../../adr/0003-show-character-and-class-color.md)).
 - **Portrait bar style** (Phil, 2026-10-17): the same look as the player, pet and target frames' Portrait bar, one 168×37 bar per member (before scaling) with their 3D model behind the health. The keybind badge sits on the bar's left end. Classic is still the default.
 - **One mover, fixed slots** (Phil's request): nothing can be dragged apart. Size and spacing are settings instead.
-- **Hidden in raids by default**, until Grimoire has raid frames (backlog).
+- **Hidden in raids by default**, until Homunculus has raid frames (backlog).
 - **Out-of-range fading** sets the member's own alpha; the frame's idle dimming (core) is separate and off by default. Forever can return the range check as secret booleans (seen 2026-10-17); those go to `SetAlphaFromBoolean` untested, and where that call doesn't exist the member stays fully visible.
-- **Blizzard's party frames are hidden** ([ADR 0004](../../adr/0004-components-replace-blizzard-ui.md)). Their party-pet frames are children and go with them; Grimoire has no party-pet frames yet.
+- **Blizzard's party frames are hidden** ([ADR 0004](../../adr/0004-components-replace-blizzard-ui.md)). Their party-pet frames are children and go with them; Homunculus has no party-pet frames yet.
 
 ## Combat & secret-value constraints
 
@@ -63,7 +63,7 @@ self:RegisterMover(holder, "Party", { "TOPLEFT", "UIParent", "TOPLEFT", 20, -160
 
 ## Settings
 
-Stored in `GrimoireDB.profiles[<profile>].modules.Party`. In the menu: **Components ▸ Party**.
+Stored in `HomunculusDB.profiles[<profile>].modules.Party`. In the menu: **Components ▸ Party**.
 
 | Key | Default | Menu choices | Description |
 | --- | --- | --- | --- |

@@ -1,0 +1,18 @@
+## Interface: 16001
+## Title: |cff8788eeHomunculus|r Prophecy
+## Notes: Levelling plans written outside the game: paste one in, follow it step by step. /prophecy
+## Author: Phil Henning
+## Version: @project-version@
+## RequiredDeps: Homunculus
+## SavedVariables: HomunculusProphecyDB
+## Group: Homunculus
+## Category: Homunculus
+
+Parser.lua
+Prophecy.lua
+Quests.lua
+Import.lua
+Viewer.lua
+Tracker.lua
+Waypoint.lua
+Plans\troll-warlock-1-30.lua

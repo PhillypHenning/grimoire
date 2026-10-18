@@ -1,5 +1,5 @@
 {
   "$schema": "https://raw.githubusercontent.com/LuaLS/vscode-lua/master/setting/schema.json",
   "runtime.version": "Lua 5.1",
-  "diagnostics.globals": ["Grimoire", "GrimoireDB", "SLASH_GRIMOIRE1", "SLASH_GRIMOIRE2", "issecretvalue", "GrimoireTweaksDB", "GrimoireProphecyDB", "SLASH_PROPHECY1"]
+  "diagnostics.globals": ["Homunculus", "HomunculusDB", "SLASH_HOMUNCULUS1", "SLASH_HOMUNCULUS2", "SLASH_HOMUNCULUS3", "issecretvalue", "HomunculusTweaksDB", "HomunculusProphecyDB", "SLASH_PROPHECY1"]
 }

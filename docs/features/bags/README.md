@@ -1,6 +1,6 @@
 # Bags
 
-- **Add-on:** `Grimoire_Bags`
+- **Add-on:** `Homunculus_Bags`
 - **Module:** `Bags`
 - **Status:** Tested in game (2026-10-16: the window opens, the new-item glow clears on hover)
 - **Replaces:** Bagnon / Baganator / AdiBags / ArkInventory (declared as conflicts)
@@ -19,13 +19,13 @@ flowchart LR
         B2[No search]
         B3[No quick way to see<br/>bank or auctions away from town]
     end
-    subgraph Grimoire["Grimoire Bags"]
+    subgraph Homunculus["Homunculus Bags"]
         S1[One combined window]
         S2[Search dims non-matches]
         S3[Sort button]
         S4[Bank / Auctions buttons<br/>open saved snapshots]
     end
-    Default ==> Grimoire
+    Default ==> Homunculus
 ```
 
 ## How it works
@@ -34,7 +34,7 @@ flowchart LR
 sequenceDiagram
     participant Player
     participant Blizzard as Blizzard bag functions
-    participant Bags as Grimoire Bags
+    participant Bags as Homunculus Bags
     Player->>Blizzard: press B (ToggleAllBags)
     Blizzard->>Blizzard: opens its bag frames
     Blizzard-->>Bags: hooksecurefunc → Request("toggle")
@@ -56,7 +56,7 @@ flowchart LR
 
 ## Code highlights
 
-**Usable item buttons without custom secure code** ([`Bags.lua`](../../../Grimoire_Bags/Bags.lua)). Each bag gets a holder frame whose ID is the bag; each button's ID is its slot. Blizzard's `ContainerFrameItemButtonTemplate` reads those IDs, so using and moving items goes through Blizzard's own code:
+**Usable item buttons without custom secure code** ([`Bags.lua`](../../../Homunculus_Bags/Bags.lua)). Each bag gets a holder frame whose ID is the bag; each button's ID is its slot. Blizzard's `ContainerFrameItemButtonTemplate` reads those IDs, so using and moving items goes through Blizzard's own code:
 
 ```lua
 holder:SetID(bag)
@@ -74,18 +74,18 @@ end
 
 **New-item glow is cleared like Blizzard's bags.** The client keeps "new" flags (`C_NewItems`) until a bag UI clears them. The first version never did, so every item glowed every time (Phil, 2026-10-16). Now a slot glows while `C_NewItems.IsNewItem` says so, hovering it calls `RemoveNewItem`, and closing the window calls `ClearAll`. The flags live in the client, so "seen" survives reloads.
 
-**Who owns an item** (2026-10-16, learned from Syndicator). Core's shared item data (`Grimoire/Core/Items.lua`) keeps each character's bag counts current (`bagCounts`, rescanned when bags settle) and reads bank counts from the Bank component's snapshot. `Grimoire:GetItemCounts(itemID)` answers for any component; Bags adds the class-coloured owner lines to item tooltips (`TooltipDataProcessor`, or `OnTooltipSetItem` on older clients).
+**Who owns an item** (2026-10-16, learned from Syndicator). Core's shared item data (`Homunculus/Core/Items.lua`) keeps each character's bag counts current (`bagCounts`, rescanned when bags settle) and reads bank counts from the Bank component's snapshot. `Homunculus:GetItemCounts(itemID)` answers for any component; Bags adds the class-coloured owner lines to item tooltips (`TooltipDataProcessor`, or `OnTooltipSetItem` on older clients).
 
 **Bank bags are left alone.** Only frames for player bags are hidden, so the Blizzard bank still works:
 
 ```lua
-if frame and frame:IsShown() and Grimoire.IsPlayerBag(frame:GetID()) then frame:Hide() end
+if frame and frame:IsShown() and Homunculus.IsPlayerBag(frame:GetID()) then frame:Hide() end
 ```
 
 **Optional components ([ADR 0002](../../adr/0002-every-component-is-a-toggleable-addon.md)).** The Bank and Auctions buttons appear only when those add-ons are enabled. The search box stretches to fill whatever room the buttons leave:
 
 ```lua
-local module = Grimoire:GetModule("Bank")
+local module = Homunculus:GetModule("Bank")
 button:SetShown(module and module:IsEnabled())
 ```
 
@@ -93,7 +93,7 @@ button:SetShown(module and module:IsEnabled())
 
 - **Sort uses Blizzard's `C_Container.SortBags()`.** It physically rearranges items. The button disables itself if the client lacks the API.
 - **Search dims rather than hides.** Slots stay in place, so muscle memory keeps working.
-- **Search language** (2026-10-16, learned from Baganator; [`Search.lua`](../../../Grimoire_Bags/Search.lua), tested by `lua scripts/bags/test.lua`): words match names, item types and subtypes; `junk`/`poor`, `common` … `legendary`; `boe`, `bop`; slots (`head`, `chest`, `feet`, `finger`, `trinket`, `ranged`, `bag` …); item level `>20`, `<10`, `10-15`; a space or `&` is and, `|` is or, `!` is not. Hovering the box lists them.
+- **Search language** (2026-10-16, learned from Baganator; [`Search.lua`](../../../Homunculus_Bags/Search.lua), tested by `lua scripts/bags/test.lua`): words match names, item types and subtypes; `junk`/`poor`, `common` … `legendary`; `boe`, `bop`; slots (`head`, `chest`, `feet`, `finger`, `trinket`, `ranged`, `bag` …); item level `>20`, `<10`, `10-15`; a space or `&` is and, `|` is or, `!` is not. Hovering the box lists them.
 - **Icon corners** (learned from Baganator): equipment shows its item level bottom-left, and items that bind when equipped show BoE top-left (setting `iconInfo`).
 - **Classic art ([ADR 0001](../../adr/0001-prefer-classic-style-ui.md)):** dialog border, header, empty-slot texture, quality borders, Blizzard bag sounds.
 
@@ -104,7 +104,7 @@ button:SetShown(module and module:IsEnabled())
 
 ## Settings
 
-Stored in `GrimoireDB.profiles[<profile>].modules.Bags`. In the menu: **Components ▸ Bags**. A new column count is laid out straight away (`ApplySettings` clears the layout signature and refreshes an open window).
+Stored in `HomunculusDB.profiles[<profile>].modules.Bags`. In the menu: **Components ▸ Bags**. A new column count is laid out straight away (`ApplySettings` clears the layout signature and refreshes an open window).
 
 | Key | Default | Menu choices | Description |
 | --- | --- | --- | --- |
